@@ -7,7 +7,7 @@
 清洗后的产品数据
 G:\Kuangyu_Temp\Outsource\bianma.dta
 
-其次是本次找出的发票层面的数据，位置在G:\Kuangyu_Temp\Outsource\productivity。文件夹内所有的csv文件都是本次需要用到的。其中，文件前缀是1701，1702，1703分别代表了不同的批次，合并在一起是2017年的总数。
+其次是本次找出的发票层面的数据，位置在G:\Kuangyu_Temp\Outsource\productivity。文件夹内所有的csv文件都是本次需要用到的。
 和之前对于数据的描述有区别。由于数据量过于庞大，如果直接导出数据，数量应该在10亿左右，python无法支撑，所以目前的操作方法是先在sql中进行了合并，然后再输出到csv，所以导致列名和原数据是由区别的。我目前分成这4类
 1. 购方企业数据：文件后缀是firm_buy.csv。这里是按照购方企业id来加总的企业采购数据。主要列名有：购方企业id，项目代码，金额合计，数量合计。其中，购方企业id对应full_data中的firm_id,项目代码是product_id，金额合计是统计得到的总交易额，数量合计是交易数量。因此我们想得到单价，用这金额除以数量就可以了
 2. 销方企业数据：文件后缀是firm_sell.csv。同样，这里是按照销方企业id来加总的企业销售数据。要列名有：销方企业id，项目代码，金额合计，数量合计。各列数据和上述雷同，不再赘述
@@ -15,5 +15,31 @@ G:\Kuangyu_Temp\Outsource\bianma.dta
 4. 销方地区数据：文件后缀是city_sell.csv。这里是按照销方企业id和购方地区来加总的企业采购数据。主要列名有：销方地区，项目代码，金额合计，数量合计。其中，销方地区是四位地区代码，用来衡量一个地区的market condition
 请注意，四个数据表中的企业id，地区代码，项目代码应该都是用字符串进行储存的。
 
-## 两个任务
-鉴于数据量比较大，我们分两步进行。首先，我们只做1701的数据，先看情况，给老师一个答复。我这边同时在sql里面抓1702，1703的数据，等数据齐全后，我们可以继续全样本的分析。
+## SQL代码
+```sql
+SELECT [购方企业ID], 项目代码, 
+SUM(开票金额) AS 金额合计, 
+SUM(TRY_CAST(数量 AS float)) AS 数量合计 
+FROM ( 
+SELECT [购方企业ID],项目代码,开票金额,数量 FROM dbo.GX1701 
+UNION ALL SELECT [购方企业ID],项目代码,开票金额,数量 FROM dbo.GX1702 
+UNION ALL SELECT [购方企业ID],项目代码,开票金额,数量 FROM dbo.GX1703
+ ) a 
+ 
+WHERE EXISTS (SELECT 1 FROM dbo.tmp_sample_cid s WHERE s.cid = a.[购方企业ID]) 
+GROUP BY [购方企业ID], 项目代码;
+```
+
+```sql
+SELECT [购方地区], 项目代码, 
+SUM(开票金额) AS 金额合计, 
+SUM(TRY_CAST(数量 AS float)) AS 数量合计 
+FROM ( 
+SELECT [购方企业ID], [购方地区],项目代码,开票金额,数量 FROM dbo.GX1701 
+UNION ALL SELECT [购方企业ID], [购方地区],项目代码,开票金额,数量 FROM dbo.GX1702 
+UNION ALL SELECT [购方企业ID], [购方地区],项目代码,开票金额,数量 FROM dbo.GX1703
+ ) a 
+ 
+WHERE EXISTS (SELECT 1 FROM dbo.tmp_sample_cid s WHERE s.cid = a.[购方企业ID]) 
+GROUP BY [购方地区], 项目代码;
+```
