@@ -1,0 +1,12 @@
+base url
+https://aihubmix.com/v1
+
+claude-opus-4-7
+
+H1
+
+sk-Fv4rmsBxZhEvxJFIA37dA43137F240E4B2Be83CaEe4c44Ad
+
+H2
+
+sk-F60YtyvpCpWMTika3cBb12581b364b0fBf571d9bAaC541Cb
