@@ -1,0 +1,674 @@
+\documentclass[11pt,a4paper]{article}
+
+% Page layout and typography
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{setspace}
+\usepackage{parskip}
+\usepackage{enumitem}
+
+% Math and tables
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+
+% Links and PDF metadata
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+    pdftitle={Meeting Minutes: Determinants of Outsourcing Prices and Empirical Regression Design},
+    pdfauthor={Shengyu Li},
+    pdfsubject={Outsourcing price meeting notes},
+    pdfkeywords={outsourcing, price, regression, meeting minutes}
+}
+
+\setstretch{1.18}
+\setlist[itemize]{leftmargin=2em}
+\setlist[enumerate]{leftmargin=2em}
+
+\title{\textbf{Meeting Minutes: Determinants of Outsourcing Prices and Empirical Regression Design}}
+\author{Prepared for: Shengyu Li}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section*{Note}
+These minutes were organized based on the content recorded during the voice discussion. Details that were not explicitly stated in the discussion are marked as items to be confirmed rather than added as assumptions.
+
+\section{Meeting Topic}
+
+The meeting focused on a research and modeling question:
+
+\begin{quote}
+How can the outsourcing-related theoretical model be simplified, and how can data be used to test the determinants of outsourcing prices?
+\end{quote}
+
+The core idea discussed was that, at the current stage, the outsourcing price can be treated as an observable or constructible variable rather than being fully endogenized inside the theoretical model. The team can then use data to analyze how outsourcing prices are related to firm characteristics, market conditions, and input/output-related factors.
+
+\section{Main Discussion Points}
+
+\subsection{Model Simplification}
+
+The discussion began with how to simplify the existing model. One important proposal was:
+
+\begin{itemize}
+    \item treat the outsourcing price as an exogenous variable;
+    \item avoid fully modeling how outsourcing prices are endogenously determined through firm-to-firm transactions, bargaining, or market equilibrium at this stage;
+    \item first use data regressions to study the determinants of outsourcing prices;
+    \item reduce the complexity of the theoretical model so that the current research can move forward more easily.
+\end{itemize}
+
+The advantage of this approach is that the model can initially focus on the main mechanism, while the formation of outsourcing prices can be examined empirically. If the empirical results are clear, the team can later decide whether the theoretical model should formally incorporate the price formation mechanism.
+
+\subsection{Empirical Objective}
+
+A key task discussed in the meeting was:
+
+\begin{quote}
+Use data to analyze which factors determine outsourcing prices.
+\end{quote}
+
+In other words, the goal is not merely to take outsourcing prices as given, but also to understand their sources and variation empirically.
+
+A basic empirical strategy would be to use the outsourcing price faced by a firm for a given product or input as the dependent variable and examine the following groups of explanatory variables:
+
+\begin{enumerate}
+    \item firm-level characteristics;
+    \item product-level or market-level transaction conditions;
+    \item market information on purchase and sales prices;
+    \item firm fixed effects and other control variables;
+    \item productivity, input efficiency, and other production-related variables after production data are merged.
+\end{enumerate}
+
+\section{Dependent Variable: Definition of the Outsourcing Price}
+
+\subsection{Basic Definition}
+
+The meeting clarified that the firm's purchase price can be used as a measure of the outsourcing price.
+
+Specifically:
+
+\begin{itemize}
+    \item the focus is on the price paid by the firm when purchasing a product or input from outside;
+    \item it is not necessary to simultaneously consider whether the firm later sells the same product;
+    \item regardless of inventory adjustment, the current stage focuses mainly on the purchase-side price;
+    \item the outsourcing price can be interpreted as the unit cost faced by the firm when obtaining external products or inputs through the market or a transaction network.
+\end{itemize}
+
+Therefore, the outsourcing price in the empirical analysis can be initially defined as:
+
+\[
+\text{Outsourcing Price}_{i p c t}
+=
+\frac{\text{Purchase Value}_{i p c t}}{\text{Purchase Quantity}_{i p c t}}
+\]
+
+where:
+
+\begin{itemize}
+    \item \(i\): firm;
+    \item \(p\): product;
+    \item \(c\): city or region;
+    \item \(t\): year or time period;
+    \item Purchase Value: purchase value or invoice amount;
+    \item Purchase Quantity: purchase quantity.
+\end{itemize}
+
+\subsection{Constructing Prices Using Invoice Value Divided by Quantity}
+
+The discussion also mentioned that, if more detailed raw data can be obtained, unit prices can be constructed as:
+
+\[
+\text{Unit Price}
+=
+\frac{\text{Invoice Value}}{\text{Quantity}}
+\]
+
+That is, the unit price can be constructed by dividing invoice value by quantity.
+
+This means that an important next step in the data work is to confirm whether sufficiently detailed raw transaction data are available, including both transaction value and quantity. If these variables are available, more precise transaction-level or firm-product-level price measures can be constructed.
+
+\section{Explanatory Variable Group 1: Firm Characteristics}
+
+The meeting discussed several firm-level explanatory variables that can be used to analyze which types of firms face higher or lower outsourcing prices.
+
+\subsection{Firm Size}
+
+Firm size is an important factor. The discussion noted that, before the data are fully merged, the following variables can be used as proxies for firm size:
+
+\begin{itemize}
+    \item total sales;
+    \item or other aggregate firm-level variables.
+\end{itemize}
+
+A preliminary specification could be:
+
+\[
+\text{Outsourcing Price}_{i p c t}
+=
+\beta_1 \text{Firm Size}_{it}
++ \cdots
+\]
+
+where firm size can temporarily be measured by total sales.
+
+After more production data are merged, the team may also consider using:
+
+\begin{itemize}
+    \item total output;
+    \item total employment;
+    \item total assets;
+    \item total capital;
+    \item total transaction scale;
+\end{itemize}
+
+as size measures or robustness checks.
+
+\subsection{Capital Size}
+
+The meeting also explicitly mentioned that capital size can be tested as a potential determinant.
+
+Capital size may affect a firm's bargaining power, production capacity, outsourcing demand, and range of supplier choices. Therefore, the regression can include a capital variable such as:
+
+\[
+\text{Capital}_{it}
+\]
+
+This can be used to test whether firms with larger capital obtain lower outsourcing prices, or whether they pay higher prices because they purchase higher-quality products or inputs.
+
+\subsection{Production Quantity}
+
+Production quantity was also discussed as a possible explanatory variable.
+
+Production quantity may affect purchase volume, purchase frequency, bargaining power, and supply-chain relationships. For example, firms with larger production quantities may:
+
+\begin{itemize}
+    \item have more stable or larger-scale procurement needs;
+    \item be more likely to build long-term relationships with suppliers;
+    \item be more likely to obtain quantity discounts;
+    \item also potentially purchase higher-quality outsourced products or inputs.
+\end{itemize}
+
+Therefore, production quantity can be an important firm characteristic in explaining outsourcing prices.
+
+\subsection{Productivity and Input Efficiency}
+
+The discussion also noted that productivity and input efficiency are important factors. However, before production data are merged, these indicators may not be directly available.
+
+If production data can be successfully merged later, the following variables can be added:
+
+\begin{itemize}
+    \item firm productivity;
+    \item input efficiency;
+    \item cost efficiency;
+    \item other firm-level efficiency measures estimated from production functions.
+\end{itemize}
+
+These variables can help analyze:
+
+\begin{itemize}
+    \item whether high-productivity firms obtain lower outsourcing prices;
+    \item whether more efficient firms have stronger supplier selection ability;
+    \item whether outsourcing prices reflect firm capability, bargaining power, or procurement quality.
+\end{itemize}
+
+\section{Explanatory Variable Group 2: Market Conditions}
+
+In addition to firm characteristics, the meeting emphasized the importance of market conditions.
+
+\subsection{Product Market Transaction Activity}
+
+The discussion noted that the number of transactions for a given product in a market should be considered. That is, the level of transaction activity in a product market may affect outsourcing prices.
+
+For example, the following variables can be constructed:
+
+\begin{itemize}
+    \item the number of transactions for a product in a city;
+    \item the transaction value for a product in a city;
+    \item the number of participating firms for a product in a city;
+    \item the number of buyers for a product in a city;
+    \item the number of sellers for a product in a city.
+\end{itemize}
+
+These variables can reflect market thickness or market liquidity.
+
+The basic logic is:
+
+\begin{itemize}
+    \item if a product has many transactions in a city, the market is thicker;
+    \item a thicker market may make it easier for firms to find suppliers;
+    \item stronger competition may reduce purchase prices;
+    \item however, if active transactions reflect strong demand, prices may also be higher.
+\end{itemize}
+
+Therefore, the direction of the effect of market transaction conditions on outsourcing prices needs to be tested empirically.
+
+\subsection{Average Transaction Price at the Product-City Level}
+
+The meeting explicitly mentioned calculating the average transaction price of each product within a city, regardless of whether the firm is a buyer or a seller.
+
+This can serve as a market-level price condition that helps explain the outsourcing price faced by firms. For example:
+
+\[
+\overline{P}_{p c t}
+\]
+
+represents the average transaction price of product \(p\) in city \(c\) at time \(t\).
+
+This variable can help control for the overall price level in the local product market, so that firm-level price differences are not fully conflated with differences in market-wide price levels.
+
+\subsection{Distinguishing Purchase Prices and Sales Prices}
+
+The meeting also discussed that average transaction prices can be further separated into:
+
+\begin{itemize}
+    \item average purchase prices;
+    \item average sales prices.
+\end{itemize}
+
+This distinction is important because purchase-side and sales-side prices may have different economic meanings:
+
+\begin{itemize}
+    \item purchase prices are closer to the outsourcing cost faced by the firm as a buyer;
+    \item sales prices are closer to the market price received by the firm as a supplier or seller;
+    \item the gap between purchase and sales prices may reflect transaction costs, distribution margins, quality differences, or market power.
+\end{itemize}
+
+Therefore, the following variables can be constructed:
+
+\[
+\overline{P}^{buy}_{p c t}
+\]
+
+\[
+\overline{P}^{sell}_{p c t}
+\]
+
+which represent the average purchase price and average sales price at the product-city-time level, respectively.
+
+\section{Demand-Side and Supply-Side Factors}
+
+The meeting noted that demand-side and supply-side factors should be distinguished.
+
+Market conditions can be further decomposed into the following components.
+
+\subsection{Demand-Side Factors}
+
+Demand-side factors may include:
+
+\begin{itemize}
+    \item total purchase quantity of a product within a city;
+    \item number of buying firms;
+    \item buyer concentration;
+    \item strength of demand;
+    \item downstream industry demand intensity;
+    \item product transaction value or transaction frequency.
+\end{itemize}
+
+If demand is strong, the outsourcing price may rise because more firms compete to purchase the same product or input.
+
+\subsection{Supply-Side Factors}
+
+Supply-side factors may include:
+
+\begin{itemize}
+    \item number of selling firms;
+    \item seller concentration;
+    \item total supply of a product within a city;
+    \item degree of supplier competition;
+    \item supplier production capacity or sales scale.
+\end{itemize}
+
+If supply is more abundant or supplier competition is stronger, purchase prices may fall. Conversely, if there are fewer suppliers or the market is more concentrated, outsourcing prices may be higher.
+
+\subsection{Market Prices Are Jointly Determined by Buyers and Sellers}
+
+The discussion can be summarized as follows: outsourcing prices are determined not only by the purchasing firm's own characteristics, but also by the interaction between buyers and sellers in the product market.
+
+Therefore, the empirical analysis can include:
+
+\begin{itemize}
+    \item firm-level characteristics;
+    \item product-city-level demand conditions;
+    \item product-city-level supply conditions;
+    \item product-city average prices;
+    \item time fixed effects;
+    \item firm fixed effects;
+    \item product or city fixed effects.
+\end{itemize}
+
+\section{Fixed Effects and Control Variables}
+
+\subsection{Firm Fixed Effects}
+
+The meeting specifically mentioned adding firm fixed effects.
+
+Firm fixed effects help control for firm characteristics that do not vary over time but may affect outsourcing prices, such as:
+
+\begin{itemize}
+    \item long-term firm productivity;
+    \item managerial capability;
+    \item long-term bargaining power;
+    \item long-term supplier networks;
+    \item quality positioning;
+    \item stable differences in firm size or business model.
+\end{itemize}
+
+After adding firm fixed effects, identification relies more on variation within the same firm across different products, time periods, or markets.
+
+A basic specification can be written as:
+
+\[
+\log P^{buy}_{i p c t}
+=
+\beta X_{i t}
++
+\gamma Z_{p c t}
++
+\alpha_i
++
+\delta_t
++
+\varepsilon_{i p c t}
+\]
+
+where:
+
+\begin{itemize}
+    \item \(P^{buy}_{i p c t}\): the purchase price paid by firm \(i\) for product \(p\) in city \(c\) at time \(t\);
+    \item \(X_{it}\): firm-level variables;
+    \item \(Z_{pct}\): product-city-time-level market conditions;
+    \item \(\alpha_i\): firm fixed effects;
+    \item \(\delta_t\): time fixed effects;
+    \item \(\varepsilon_{ipct}\): error term.
+\end{itemize}
+
+\subsection{Other Possible Fixed Effects}
+
+Depending on the data structure, the team can also consider adding:
+
+\begin{itemize}
+    \item product fixed effects;
+    \item city fixed effects;
+    \item year fixed effects;
+    \item product-year fixed effects;
+    \item city-year fixed effects;
+    \item product-city fixed effects.
+\end{itemize}
+
+These fixed effects can help control for unobserved heterogeneity at different levels.
+
+\section{Data Issues and Next Data Work}
+
+\subsection{The I/O Table Does Not Contain Price Information}
+
+The meeting noted that the original input-output table does not contain price information.
+
+This means that relying only on the I/O table may not allow the team to directly analyze outsourcing prices. Therefore, it is necessary to check whether more detailed raw transaction data can be obtained.
+
+\subsection{Full Data May Now Be Available}
+
+Later in the discussion, it was mentioned that the full data may now be available. This is important because, if the complete raw data can be obtained, the team can more accurately construct:
+
+\begin{itemize}
+    \item transaction prices;
+    \item purchase prices;
+    \item sales prices;
+    \item firm-product-city-level average prices;
+    \item product-city market transaction conditions;
+    \item firm purchase quantities and purchase values.
+\end{itemize}
+
+\subsection{Confirm Whether Raw Data Include Value and Quantity}
+
+The next step is to confirm whether the data include:
+
+\begin{itemize}
+    \item invoice value;
+    \item transaction quantity;
+    \item product code;
+    \item firm code;
+    \item buyer/seller identity;
+    \item city or region information;
+    \item time information.
+\end{itemize}
+
+If both value and quantity are available, unit prices can be constructed. If quantity is missing, the price variable will be substantially limited.
+
+\subsection{Random-Sample Testing}
+
+The meeting discussed first drawing a random sample of the data for testing.
+
+The purpose of this step includes:
+
+\begin{itemize}
+    \item checking data loading and processing speed;
+    \item checking whether variables are complete;
+    \item checking whether price variables can be constructed reasonably;
+    \item understanding the difficulty of data cleaning;
+    \item finding a balance between processing speed and reliability before processing the full large-scale data.
+\end{itemize}
+
+This step is a key preparation for the subsequent empirical work.
+
+\section{Preliminary Empirical Design}
+
+Based on the meeting discussion, the following preliminary empirical framework can be formed.
+
+\subsection{Stage 1: Construct Basic Variables}
+
+The team should first construct the following basic variables:
+
+\begin{longtable}{p{0.22\textwidth} p{0.27\textwidth} p{0.41\textwidth}}
+\toprule
+Type & Variable & Description \\
+\midrule
+\endfirsthead
+\toprule
+Type & Variable & Description \\
+\midrule
+\endhead
+Dependent variable & Purchase unit price & Invoice value divided by quantity \\
+Firm size & Total sales & Can be used before merging production data \\
+Capital size & Capital variable & Tests the effect of capital size on price \\
+Production scale & Output quantity & If data are available \\
+Market thickness & Product-city transaction count & Measures market activity \\
+Market price & Product-city average transaction price & Can distinguish purchase and sales prices \\
+Demand conditions & Number of buyers, purchase quantity & Reflects demand strength \\
+Supply conditions & Number of sellers, sales quantity & Reflects supply strength \\
+\bottomrule
+\end{longtable}
+
+\subsection{Stage 2: Baseline Regression}
+
+The analysis can begin with a simple regression:
+
+\[
+\log P^{buy}_{i p c t}
+=
+\beta_1 \log Sales_{it}
++
+\beta_2 \log Capital_{it}
++
+\beta_3 MarketCondition_{pct}
++
+\varepsilon_{ipct}
+\]
+
+Then fixed effects can be added gradually:
+
+\[
+\log P^{buy}_{i p c t}
+=
+\beta X_{it}
++
+\gamma Z_{pct}
++
+\alpha_i
++
+\delta_t
++
+\varepsilon_{ipct}
+\]
+
+\subsection{Stage 3: Separate Demand-Side and Supply-Side Market Conditions}
+
+The specification can be further written as:
+
+\[
+\log P^{buy}_{i p c t}
+=
+\beta X_{it}
++
+\gamma_1 Demand_{pct}
++
+\gamma_2 Supply_{pct}
++
+\gamma_3 \overline{P}_{pct}
++
+FE
++
+\varepsilon_{ipct}
+\]
+
+where:
+
+\begin{itemize}
+    \item \(Demand_{pct}\): product-city-level demand conditions;
+    \item \(Supply_{pct}\): product-city-level supply conditions;
+    \item \(\overline{P}_{pct}\): average market transaction price;
+    \item \(FE\): the set of fixed effects.
+\end{itemize}
+
+\subsection{Stage 4: Extension After Merging Production Data}
+
+If production data can later be merged, the following variables can be added:
+
+\begin{itemize}
+    \item productivity;
+    \item input efficiency;
+    \item firm cost capability;
+    \item product quality or quality proxy variables;
+    \item firm production scale;
+    \item product scope;
+    \item other production-side variables.
+\end{itemize}
+
+This can further test whether outsourcing prices are related to firm capability, quality choice, or production efficiency.
+
+\section{Treatment of Purchase Prices, Sales Prices, and Inventory}
+
+The meeting discussed that the purchase price can currently be used as the outsourcing price, without considering whether the firm immediately sells the purchased product.
+
+That is:
+
+\begin{itemize}
+    \item the outsourcing price is defined from the purchase side;
+    \item even if the firm adjusts inventory, this does not affect the current definition of the outsourcing price;
+    \item sales quantity does not need to be used to redefine the purchase price;
+    \item the focus is on the unit price paid by the firm as a buyer in the transaction.
+\end{itemize}
+
+This treatment helps keep the variable definition clear.
+
+However, if future research focuses on inventory, resale, or carry-along trade, it may be necessary to further distinguish:
+
+\begin{itemize}
+    \item purchases used for production;
+    \item purchases used for resale;
+    \item purchases that enter inventory;
+    \item time gaps between purchases and sales.
+\end{itemize}
+
+These issues can be treated as extensions rather than the main task at the current stage.
+
+\section{Action Items}
+
+Based on the meeting discussion, the following action items can be summarized.
+
+\subsection{Data Acquisition and Confirmation}
+
+\begin{itemize}
+    \item Confirm whether the complete raw transaction data can be obtained.
+    \item Confirm whether the data include invoice value and quantity.
+    \item Confirm whether buyers, sellers, products, cities, and time can be identified.
+    \item Confirm whether purchase transactions and sales transactions can be distinguished.
+\end{itemize}
+
+\subsection{Data Sampling Test}
+
+\begin{itemize}
+    \item Randomly draw a subset of the data.
+    \item Test data reading and processing speed.
+    \item Check variable completeness.
+    \item Construct unit prices using value divided by quantity.
+    \item Check whether the price distribution is reasonable.
+    \item Find a balance between processing speed and reliability.
+\end{itemize}
+
+\subsection{Variable Construction}
+
+\begin{itemize}
+    \item Construct firm-level purchase prices.
+    \item Construct product-city-level average transaction prices.
+    \item Distinguish average purchase prices and average sales prices.
+    \item Construct product-city transaction counts.
+    \item Construct demand-side and supply-side market conditions.
+    \item Construct firm size variables, such as total sales.
+    \item After merging production data, construct productivity, input efficiency, and related variables.
+\end{itemize}
+
+\subsection{Regression Analysis}
+
+\begin{itemize}
+    \item Begin with baseline regressions.
+    \item Add firm size, capital, production quantity, and other variables.
+    \item Add market condition variables.
+    \item Add firm fixed effects.
+    \item Gradually add product, city, year, and other fixed effects.
+    \item Compare whether the results are robust across different specifications.
+\end{itemize}
+
+\subsection{Follow-Up Communication}
+
+\begin{itemize}
+    \item If the data structure or variable definitions remain unclear, further confirmation with the data provider or collaborators is needed.
+    \item It is especially important to confirm whether the raw data support the construction of transaction prices.
+    \item If the data volume is very large, more efficient data processing approaches should be discussed.
+\end{itemize}
+
+\section{Meeting Conclusions}
+
+The meeting produced a relatively clear research direction:
+
+\begin{enumerate}
+    \item In the theoretical model, the outsourcing price can initially be treated as an exogenous variable in order to simplify the model.
+    \item In the empirical analysis, transaction data can be used to study the determinants of outsourcing prices.
+    \item The outsourcing price can initially be measured by the purchase unit price, namely invoice value divided by quantity.
+    \item Firm size, capital, production quantity, productivity, and input efficiency are potential explanatory variables.
+    \item Product-city market conditions are also important, including transaction counts, average transaction prices, demand-side factors, and supply-side factors.
+    \item Firm fixed effects can be used to control for long-term unobserved firm heterogeneity.
+    \item The key current task is to confirm whether complete raw data can be obtained and to first test data quality and processing speed using a random sample.
+    \item After the data are prepared, the team can gradually conduct regression analysis and decide, based on the results, whether the theoretical model needs to be extended.
+\end{enumerate}
+
+\section{Concise Action Checklist}
+
+\begin{itemize}
+    \item[$\square$] Confirm whether complete raw transaction data can be obtained.
+    \item[$\square$] Check whether the raw data include value and quantity.
+    \item[$\square$] Construct unit prices using value divided by quantity.
+    \item[$\square$] Distinguish purchase prices and sales prices.
+    \item[$\square$] Construct product-city-level average prices and transaction activity measures.
+    \item[$\square$] Construct firm size, capital, and production quantity variables.
+    \item[$\square$] First use total sales as a proxy for firm size.
+    \item[$\square$] After merging production data, add productivity and input efficiency.
+    \item[$\square$] First test data processing speed and reliability using a random sample.
+    \item[$\square$] Run baseline regressions and gradually add fixed effects and market condition variables.
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"C:/Users/HKUBS/Documents/aproject/Outsourcing/code/description/\" | head -60)",
+      "Bash(python -c ' *)",
+      "Bash(where python *)",
+      "Bash(where conda *)",
+      "Read(//c/Users/HKUBS/AppData/Local/Programs/**)",
+      "Bash(ls \"C:/Users/HKUBS/anaconda3/\" 2>&1 | head -5; ls \"C:/Users/HKUBS/miniconda3/\" 2>&1 | head -5; ls \"C:/Users/HKUBS/AppData/Local/Programs/Python/\" 2>&1)",
+      "Bash(C:/Users/HKUBS/anaconda3/python.exe -c ' *)",
+      "Bash(C:/Users/HKUBS/anaconda3/python.exe -X utf8 -c ' *)"
+    ]
+  }
+}
