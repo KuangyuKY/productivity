@@ -35,8 +35,11 @@ use "invoice_panel.dta", clear
 count
 display "DV obs (firm × prod × city × year): " r(N)
 
-* --- 该 firm 自己的供应商数（避免和 market_conds 里的 n_sellers 撞名） ---
-rename n_sellers n_sellers_firm
+* --- 兼容旧版 invoice_panel：如果主面板里有 firm 自己的供应商数，则改名避免和 market_conds 撞名 ---
+capture confirm variable n_sellers
+if !_rc {
+    rename n_sellers n_sellers_firm
+}
 
 * --- 合并市场条件 ---
 merge m:1 product_id city year using "market_conds.dta", keep(master match) nogen
