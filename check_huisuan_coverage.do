@@ -10,10 +10,13 @@ set more off
 cd "G:\Kuangyu_Temp\Outsource\productivity"
 
 * ------------------------------------------------------------------------------
-* Step 1：从 full_data.dta 只读 firm_id 一列，去重得到样本企业列表
+* Step 1：从 full_data.dta 只读 firm_id，destring 成数值型 cid，去重
 * ------------------------------------------------------------------------------
 use firm_id using "G:\Kuangyu_Temp\Outsource\full_data.dta", clear
-duplicates drop firm_id, force
+destring firm_id, gen(cid) force
+drop firm_id
+duplicates drop cid, force
+drop if missing(cid)
 count
 display "样本企业总数（full_data 中）: " r(N)
 save "tmp_sample_cids.dta", replace
@@ -21,7 +24,7 @@ save "tmp_sample_cids.dta", replace
 * ------------------------------------------------------------------------------
 * Step 2：第一跳 — cid → 桥表 → id / entid
 * ------------------------------------------------------------------------------
-merge 1:1 firm_id using ///
+merge 1:1 cid using ///
     "E:\HZhang_Xing\data\merged_parquet\csv_2017\cid_entid_unique.dta", ///
     keepusing(id entid)
 
@@ -114,7 +117,7 @@ drop if rep_no > 1
 drop rep_no
 drop year
 keep id
-merge 1:1 id using "tmp_sample_with_id.dta"
+merge 1:m id using "tmp_sample_with_id.dta"
 count if _merge == 3
 local after_huisuan = r(N)
 
