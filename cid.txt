@@ -1,0 +1,70 @@
+############################################################
+1. Firm Data （F:\SupplyChain\Data\firmdata）:
+############################################################
+1）注册：
+COMPANY folder: 公司注册原始数据（包括股东信息等）（识别码：company_id，id）
+这个文件夹里的basic是注册信息（应该是有2.4亿条记录），category是行业，category_code是行业的codebook （F:\SupplyChain\Data\firmdata\COMPANY\Company）
+basic_ali: 注册公司年报数据对应的注册信息，近8000万条记录（识别码：entid）
+entid_id：两套注册数据（原始版本和有年报版本）的ID对照码
+H:\Link_Tables\NAME_USCCODE_SOE 有公司ID（company_ID) 对应的公司名称
+说明：
+公司注册信息优先使用注册的原始数据
+当需要企业performance的时候，再匹配年报信息
+1.5）注册+股权 (equity network): F:\SupplyChain\Data\firmdata\COMPANY\shareholder_final_cleaned_1
+2）asset_soe_merged: 注册公司年报数据
+socialfee：年报中的缴纳社保人数
+3）注册数据坐标：根据注册地址匹配的精确坐标
+4）soe_network folder: 用最终持股人计算国企的过程
+5）inv: 公司股权结构变动
+We constructed firm investment flow from this dataset. Please let me know if you need it
+6）地址：
+以firm_location_unique4为主版本（使用统一的2020的county代码）
+company_id_citycode_cleaned： 根据坐标+注册号识别的地级市信息
+entid_cityid_final: 根据坐标+注册号识别的地级市信息
+7）1718revenue：发票匹配汇算清缴数据
+8）tax survey folder: 税调数据。这个数据是用哪个变量清哪个的（以clean_donation.do为例），不同年份之间公司代码有些格式上的变化，需要使用clean_org_ID.do进行清理匹配，
+tax_use_2008-2016是一份比较干净的版本（只包括一百多个清理过的变量），org_ID和nsrsbh是和公司注册数据进行匹配使用的。
+
+############################################################
+2. VAT Transaction Data:
+############################################################
+
+1) 原始数据：Navicat -> SQL -> GX开头的数据库
+
+2) 发票数据年度加总： G:\VAT_Collapsed
+ （1）文件夹 positive+ 反向negative： 发票金额加总至yearly level, 金额为负的调换买卖方 （已确认买卖方命名正确）
+（2）文件夹 positive+negative直接加总： 发票金额加总至yearly level（已确认买卖方命名正确）
+
+3) 发票数据月度加总： F:\SupplyChain\Data\firmdata\14-18monthly.dta (please use the cleaner version in 4)
+
+4) 原始发票数据按交易金额为正，为负，正值剔除最大万分之一，负值剔除最大万分之一分8列： F:\SupplyChain\Data\firmdata\eightcolumns.dta
+trans_num_pos &trans_pos: 交易金额为正数的交易金额 、交易笔数
+trans_num_neg &trans_neg: 交易金额为负数的交易金额 、交易笔数
+trans_num_postr &trans_postr: 交易金额为正数的交易金额 、交易笔数且剔除最大万分之一
+trans_num_negtr &trans_negtr: 交易金额为负数的交易金额 、交易笔数且剔除最小万分之一
+
+【发票数据按月份从SQL导出到stata的过程见：F:\SupplyChain\Data\firmdata\exportdatafromsql.txt】
+
+5) by sector collapsed: G:\VAT_Collapsed\by sector
+
+6) 桥接数据： F:\SupplyChain\Data\firmdata\Identifier: 
+（1） cid_company_id_14-18_short： 发票ID匹配公司注册数据的company_id 
+（2）cid_entid_unique: 发票ID匹配公司注册数据的entid 
+
+############################################################
+3. Others:
+############################################################
+We have merged the database to other databases including:
+- Export/Import
+- Lawsuits
+- Patents
+- Land transaction
+- economic census
+- 汇算清缴 14-18 (more dimensions of firm performance)
+Please ask me before you clean it yourself 
+
+
+
+
+
+
