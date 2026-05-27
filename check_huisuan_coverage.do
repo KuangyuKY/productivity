@@ -61,15 +61,19 @@ count
 display ""
 display "汇算 2017 去重后行数: " r(N)
 
-merge 1:1 id using "tmp_sample_with_id.dta"
+save "tmp_huisuan_slim.dta", replace
+
+* 以样本为 master，汇算为 using（m:1：多个 cid 可对应同一 id）
+use "tmp_sample_with_id.dta", clear
+merge m:1 id using "tmp_huisuan_slim.dta"
 
 display ""
 display "===== Step 3：id → 汇算数据 覆盖率 ====="
 count if _merge == 3
 display "  matched（有汇算变量）: " r(N)
-count if _merge == 2
-display "  sample only（有 id 但汇算无记录）: " r(N)
 count if _merge == 1
+display "  sample only（有 id 但汇算无记录）: " r(N)
+count if _merge == 2
 display "  huisuan only（汇算有但样本无）: " r(N)
 
 keep if _merge == 3
@@ -109,16 +113,10 @@ use "tmp_sample_with_id.dta", clear
 count
 local after_bridge = r(N)
 
-* 合并汇算后计数需要从 Step 3 结果读取，这里重新跑一遍快速 merge
-use "H:\汇算数据\2017.dta", clear
-gen year = 2017
-bysort id year: gen rep_no = _n
-drop if rep_no > 1
-drop rep_no
-drop year
-keep id
-merge 1:m id using "tmp_sample_with_id.dta"
-count if _merge == 3
+* 第二跳覆盖数：重用 tmp_huisuan_slim 和 tmp_sample_with_id
+use "tmp_sample_with_id.dta", clear
+merge m:1 id using "tmp_huisuan_slim.dta", keep(match) nogen
+count
 local after_huisuan = r(N)
 
 display "样本企业总数:                    `total'"
@@ -128,6 +126,7 @@ display "第二跳后（有汇算变量）:          `after_huisuan'  (" %5.1f (
 * 清理临时文件
 erase "tmp_sample_cids.dta"
 erase "tmp_sample_with_id.dta"
+erase "tmp_huisuan_slim.dta"
 
 display ""
 display "检查完毕。"
