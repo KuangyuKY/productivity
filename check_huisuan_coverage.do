@@ -10,15 +10,20 @@ set more off
 cd "G:\Kuangyu_Temp\Outsource\productivity"
 
 * ------------------------------------------------------------------------------
-* Step 1：从 full_data.dta 只读 firm_id，destring 成数值型 cid，去重
+* Step 1：从 firm_buy.csv 读样本企业 ID（只含 3,410 家样本企业）
 * ------------------------------------------------------------------------------
-use firm_id using "G:\Kuangyu_Temp\Outsource\full_data.dta", clear
-destring firm_id, gen(cid) force
-drop firm_id
+import delimited "G:\Kuangyu_Temp\Outsource\productivity\firm_buy.csv", ///
+    stringcols(_all) clear
+* firm_buy.csv 的购方企业ID列名——根据实际列名调整
+* 常见列名：购方企业id / firm_id / 购方企业ID
+ds
+* 把企业ID列 destring 成数值型 cid（改下面的 varname 为实际列名）
+destring 购方企业id, gen(cid) force
+keep cid
 duplicates drop cid, force
 drop if missing(cid)
 count
-display "样本企业总数（full_data 中）: " r(N)
+display "样本企业总数（firm_buy 中）: " r(N)
 save "tmp_sample_cids.dta", replace
 
 * ------------------------------------------------------------------------------
