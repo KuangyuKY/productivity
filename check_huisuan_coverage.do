@@ -1,0 +1,130 @@
+* ==============================================================================
+* 汇算数据覆盖率检查
+*
+* 目的：确认 3,410 家样本企业通过 cid → id → 汇算 两跳合并的覆盖情况
+* 运行前提：invoice_panel.dta 和 firm_chars.dta 已由 01_clean.ipynb 生成
+* ==============================================================================
+
+clear all
+set more off
+cd "G:\Kuangyu_Temp\Outsource\productivity"
+
+* ------------------------------------------------------------------------------
+* Step 1：从 full_data.dta 只读 firm_id 一列，去重得到样本企业列表
+* ------------------------------------------------------------------------------
+use firm_id using "G:\Kuangyu_Temp\Outsource\full_data.dta", clear
+duplicates drop firm_id, force
+count
+display "样本企业总数（full_data 中）: " r(N)
+save "tmp_sample_cids.dta", replace
+
+* ------------------------------------------------------------------------------
+* Step 2：第一跳 — cid → 桥表 → id / entid
+* ------------------------------------------------------------------------------
+merge 1:1 firm_id using ///
+    "E:\HZhang_Xing\data\merged_parquet\csv_2017\cid_entid_unique.dta", ///
+    keepusing(id entid)
+
+display ""
+display "===== Step 2：cid → cid_entid_unique 覆盖率 ====="
+count if _merge == 3
+display "  matched（有 id）: " r(N)
+count if _merge == 1
+display "  master only（无 id）: " r(N)
+count if _merge == 2
+display "  using only（桥表有但样本无）: " r(N)
+
+* 只保留 matched，继续往下
+keep if _merge == 3
+drop _merge
+count
+display "进入第二跳的企业数: " r(N)
+save "tmp_sample_with_id.dta", replace
+
+* ------------------------------------------------------------------------------
+* Step 3：第二跳 — id → 汇算数据
+* ------------------------------------------------------------------------------
+use "H:\汇算数据\2017.dta", clear
+
+* 汇算数据按 id 去重（学长脚本中的处理）
+gen year = 2017
+bysort id year: gen rep_no = _n
+drop if rep_no > 1
+drop rep_no
+drop year
+
+keep id 从业人数 资产总额 行业代码
+count
+display ""
+display "汇算 2017 去重后行数: " r(N)
+
+merge 1:1 id using "tmp_sample_with_id.dta"
+
+display ""
+display "===== Step 3：id → 汇算数据 覆盖率 ====="
+count if _merge == 3
+display "  matched（有汇算变量）: " r(N)
+count if _merge == 2
+display "  sample only（有 id 但汇算无记录）: " r(N)
+count if _merge == 1
+display "  huisuan only（汇算有但样本无）: " r(N)
+
+keep if _merge == 3
+drop _merge
+
+* ------------------------------------------------------------------------------
+* Step 4：汇算关键变量的缺失诊断
+* ------------------------------------------------------------------------------
+display ""
+display "===== Step 4：汇算变量质量 ====="
+count if missing(从业人数)  | 从业人数  <= 0
+display "  Labor 缺失或非正: " r(N)
+count if missing(资产总额)  | 资产总额  <= 0
+display "  Capital 缺失或非正: " r(N)
+count if missing(行业代码)
+display "  industry 缺失: " r(N)
+
+rename (从业人数 资产总额 行业代码) (Labor Capital industry)
+gen ln_Labor   = ln(Labor)   if Labor   > 0 & !missing(Labor)
+gen ln_Capital = ln(Capital) if Capital > 0 & !missing(Capital)
+summarize Labor Capital ln_Labor ln_Capital
+
+* ------------------------------------------------------------------------------
+* Step 5：汇总覆盖率
+* ------------------------------------------------------------------------------
+display ""
+display "============================================="
+display "覆盖率汇总（相对于 firm_chars 中的样本企业）"
+display "============================================="
+
+* 取总样本数
+use "tmp_sample_cids.dta", clear
+count
+local total = r(N)
+
+use "tmp_sample_with_id.dta", clear
+count
+local after_bridge = r(N)
+
+* 合并汇算后计数需要从 Step 3 结果读取，这里重新跑一遍快速 merge
+use "H:\汇算数据\2017.dta", clear
+gen year = 2017
+bysort id year: gen rep_no = _n
+drop if rep_no > 1
+drop rep_no
+drop year
+keep id
+merge 1:1 id using "tmp_sample_with_id.dta"
+count if _merge == 3
+local after_huisuan = r(N)
+
+display "样本企业总数:                    `total'"
+display "第一跳后（有 id）:               `after_bridge'  (" %5.1f (100*`after_bridge'/`total') "%)"
+display "第二跳后（有汇算变量）:          `after_huisuan'  (" %5.1f (100*`after_huisuan'/`total') "%)"
+
+* 清理临时文件
+erase "tmp_sample_cids.dta"
+erase "tmp_sample_with_id.dta"
+
+display ""
+display "检查完毕。"
