@@ -2,9 +2,10 @@
 * 外包价格的决定因素 —— 主回归
 *
 * 输入（位于 G:\Kuangyu_Temp\Outsource\productivity\）:
-*   invoice_panel.dta   firm × product × city × year，主面板，含 ln_p_net (DV)
-*   market_conds.dta    product × city × year，市场厚度 + 市场均价
-*   firm_chars.dta      firm × year，企业规模、产品数、是否中介
+*   invoice_panel.dta          firm × product × city × year，主面板，含 ln_p_net (DV)
+*   market_conds.dta           product × city × year，旧市场条件；这里主要保留 seller-side 变量
+*   market_conds_buy_full.dta  product × city × year，全城市 purchase-side market condition
+*   firm_chars.dta             firm × year，企业规模、产品数、是否中介
 *
 * 输出 (4 张表，落在同目录下):
 *   T1_baseline.txt     逐步加 FE 的基准
@@ -41,10 +42,27 @@ if !_rc {
     rename n_sellers n_sellers_firm
 }
 
-* --- 合并市场条件 ---
+* --- 合并旧市场条件 ---
+* 旧 market_conds.dta 的 purchase-side 变量来自样本内城市聚合，不再作为主 market condition。
+* 这里先合并旧文件，主要保留 ln_n_sellers 等 seller-side 变量。
 merge m:1 product_id city year using "market_conds.dta", keep(master match) nogen
 count
-display "after merging market_conds: " r(N)
+display "after merging old market_conds: " r(N)
+
+* --- 将旧 purchase-side 变量改名为备份变量，避免和全城市口径冲突 ---
+foreach v in mkt_value mkt_qty p_mkt ln_p_mkt ln_mkt_qty n_buyers ln_n_buyers {
+    capture confirm variable `v'
+    if !_rc {
+        rename `v' sample_`v'
+    }
+}
+
+* --- 合并全城市 purchase-side market condition ---
+* 这些变量来自 city.csv -> clean_city.ipynb -> market_conds_buy_full.dta。
+* 后续回归中的 ln_n_buyers、ln_mkt_qty、ln_p_mkt 均使用这个全城市口径。
+merge m:1 product_id city year using "market_conds_buy_full.dta", keep(master match) nogen
+count
+display "after merging full-city purchase market conditions: " r(N)
 
 * --- 合并企业特征 ---
 merge m:1 firm_id year using "firm_chars.dta", keep(master match) nogen
@@ -55,7 +73,13 @@ display "after merging firm_chars: " r(N)
 count if missing(ln_firm_output)
 display "missing ln_firm_output: " r(N)
 count if missing(ln_p_mkt)
-display "missing ln_p_mkt: " r(N)
+display "missing full-city ln_p_mkt: " r(N)
+count if missing(ln_mkt_qty)
+display "missing full-city ln_mkt_qty: " r(N)
+count if missing(ln_n_buyers)
+display "missing full-city ln_n_buyers: " r(N)
+count if missing(ln_n_sellers)
+display "missing seller-side ln_n_sellers: " r(N)
 
 * --- 极端价格修剪：去掉每产品 0.5% 和 99.5% 分位之外的极值 ---
 gegen p1  = pctile(p_net), by(product_id) p(0.5)
