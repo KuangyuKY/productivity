@@ -81,13 +81,6 @@ display "missing full-city ln_n_buyers: " r(N)
 count if missing(ln_n_sellers)
 display "missing seller-side ln_n_sellers: " r(N)
 
-* --- 极端价格修剪：去掉每产品 0.5% 和 99.5% 分位之外的极值 ---
-gegen p1  = pctile(p_net), by(product_id) p(0.5)
-gegen p99 = pctile(p_net), by(product_id) p(99.5)
-count if p_net < p1 | p_net > p99
-display "trimming top/bottom 0.5%: " r(N)
-drop if p_net < p1 | p_net > p99
-drop p1 p99
 
 * --- 数值化 ID 给 reghdfe ---
 gegen firm_n = group(firm_id)
