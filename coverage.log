@@ -1,0 +1,305 @@
+----------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  G:\Kuangyu_Temp\Outsource\productivity\coverage.log
+  log type:  text
+ opened on:  27 May 2026, 16:01:56
+
+. * ------------------------------------------------------------------------------
+. * Step 1：从 full_data.dta 只读 firm_id，destring 成数值型 cid，去重
+. * ------------------------------------------------------------------------------
+. use firm_id using "G:\Kuangyu_Temp\Outsource\full_data.dta", clear
+
+. destring firm_id, gen(cid) force
+firm_id: all characters numeric; cid generated as long
+
+. drop firm_id
+
+. duplicates drop cid, force
+
+Duplicates in terms of cid
+
+(83,104,773 observations deleted)
+
+. drop if missing(cid)
+(0 observations deleted)
+
+. count
+  7,191,877
+
+. display "样本企业总数（full_data 中）: " r(N)
+样本企业总数（full_data 中）: 7191877
+
+. save "tmp_sample_cids.dta", replace
+file tmp_sample_cids.dta saved
+
+. 
+. * ------------------------------------------------------------------------------
+. * Step 2：第一跳 — cid → 桥表 → id / entid
+. * ------------------------------------------------------------------------------
+. merge 1:1 cid using ///
+>     "E:\HZhang_Xing\data\merged_parquet\csv_2017\cid_entid_unique.dta", ///
+>     keepusing(id entid)
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                     7,409,565
+        from master                   608,562  (_merge==1)
+        from using                  6,801,003  (_merge==2)
+
+    Matched                         6,583,315  (_merge==3)
+    -----------------------------------------
+
+. 
+. display ""
+
+
+. display "===== Step 2：cid → cid_entid_unique 覆盖率 ====="
+===== Step 2：cid → cid_entid_unique 覆盖率 =====
+
+. count if _merge == 3
+  6,583,315
+
+. display "  matched（有 id）: " r(N)
+  matched（有 id）: 6583315
+
+. count if _merge == 1
+  608,562
+
+. display "  master only（无 id）: " r(N)
+  master only（无 id）: 608562
+
+. count if _merge == 2
+  6,801,003
+
+. display "  using only（桥表有但样本无）: " r(N)
+  using only（桥表有但样本无）: 6801003
+
+. 
+. * 只保留 matched，继续往下
+. keep if _merge == 3
+(7,409,565 observations deleted)
+
+. drop _merge
+
+. count
+  6,583,315
+
+. display "进入第二跳的企业数: " r(N)
+进入第二跳的企业数: 6583315
+
+. save "tmp_sample_with_id.dta", replace
+file tmp_sample_with_id.dta saved
+
+. 
+. * ------------------------------------------------------------------------------
+. * Step 3：第二跳 — id → 汇算数据
+. * ------------------------------------------------------------------------------
+. use "H:\汇算数据\2017.dta", clear
+
+. 
+. * 汇算数据按 id 去重（学长脚本中的处理）
+. gen year = 2017
+
+. bysort id year: gen rep_no = _n
+
+. drop if rep_no > 1
+(363,481 observations deleted)
+
+. drop rep_no
+
+. drop year
+
+. 
+. keep id 从业人数 资产总额 行业代码
+
+. count
+  17,140,696
+
+. display ""
+
+
+. display "汇算 2017 去重后行数: " r(N)
+汇算 2017 去重后行数: 17140696
+
+. 
+. save "tmp_huisuan_slim.dta", replace
+(file tmp_huisuan_slim.dta not found)
+file tmp_huisuan_slim.dta saved
+
+. 
+. * 以样本为 master，汇算为 using（m:1：多个 cid 可对应同一 id）
+. use "tmp_sample_with_id.dta", clear
+
+. merge m:1 id using "tmp_huisuan_slim.dta"
+(variable id was long, now double to accommodate using data's values)
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                    20,278,969
+        from master                 4,858,913  (_merge==1)
+        from using                 15,420,056  (_merge==2)
+
+    Matched                         1,724,402  (_merge==3)
+    -----------------------------------------
+
+. 
+. display ""
+
+
+. display "===== Step 3：id → 汇算数据 覆盖率 ====="
+===== Step 3：id → 汇算数据 覆盖率 =====
+
+. count if _merge == 3
+  1,724,402
+
+. display "  matched（有汇算变量）: " r(N)
+  matched（有汇算变量）: 1724402
+
+. count if _merge == 1
+  4,858,913
+
+. display "  sample only（有 id 但汇算无记录）: " r(N)
+  sample only（有 id 但汇算无记录）: 4858913
+
+. count if _merge == 2
+  15,420,056
+
+. display "  huisuan only（汇算有但样本无）: " r(N)
+  huisuan only（汇算有但样本无）: 15420056
+
+. 
+. keep if _merge == 3
+(20,278,969 observations deleted)
+
+. drop _merge
+
+. 
+. * ------------------------------------------------------------------------------
+. * Step 4：汇算关键变量的缺失诊断
+. * ------------------------------------------------------------------------------
+. display ""
+
+
+. display "===== Step 4：汇算变量质量 ====="
+===== Step 4：汇算变量质量 =====
+
+. count if missing(从业人数)  | 从业人数  <= 0
+  8,000
+
+. display "  Labor 缺失或非正: " r(N)
+  Labor 缺失或非正: 8000
+
+. count if missing(资产总额)  | 资产总额  <= 0
+  103,480
+
+. display "  Capital 缺失或非正: " r(N)
+  Capital 缺失或非正: 103480
+
+. count if missing(行业代码)
+  57,770
+
+. display "  industry 缺失: " r(N)
+  industry 缺失: 57770
+
+. 
+. rename (从业人数 资产总额 行业代码) (Labor Capital industry)
+
+. gen ln_Labor   = ln(Labor)   if Labor   > 0 & !missing(Labor)
+(8,000 missing values generated)
+
+. gen ln_Capital = ln(Capital) if Capital > 0 & !missing(Capital)
+(103,480 missing values generated)
+
+. summarize Labor Capital ln_Labor ln_Capital
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+       Labor |  1,724,159     38.8311    29372.83          0   3.85e+07
+     Capital |  1,724,402    4.84e+10    4.61e+13   -1580000   5.99e+16
+    ln_Labor |  1,716,402    1.207307    1.182509          0   17.46619
+  ln_Capital |  1,620,922    12.79561    3.379237    4.60517   38.63119
+
+. 
+. * ------------------------------------------------------------------------------
+. * Step 5：汇总覆盖率
+. * ------------------------------------------------------------------------------
+. display ""
+
+
+. display "============================================="
+=============================================
+
+. display "覆盖率汇总（相对于 firm_chars 中的样本企业）"
+覆盖率汇总（相对于 firm_chars 中的样本企业）
+
+. display "============================================="
+=============================================
+
+. 
+. * 取总样本数
+. use "tmp_sample_cids.dta", clear
+
+. count
+  7,191,877
+
+. local total = r(N)
+
+. 
+. use "tmp_sample_with_id.dta", clear
+
+. count
+  6,583,315
+
+. local after_bridge = r(N)
+
+. 
+. * 第二跳覆盖数：重用 tmp_huisuan_slim 和 tmp_sample_with_id
+. use "tmp_sample_with_id.dta", clear
+
+. merge m:1 id using "tmp_huisuan_slim.dta", keep(match) nogen
+(variable id was long, now double to accommodate using data's values)
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                             0
+    Matched                         1,724,402  
+    -----------------------------------------
+
+. count
+  1,724,402
+
+. local after_huisuan = r(N)
+
+. 
+. display "样本企业总数:                    `total'"
+样本企业总数:                    7191877
+
+. display "第一跳后（有 id）:               `after_bridge'  (" %5.1f (100*`after_bridge'
+> /`total') "%)"
+第一跳后（有 id）:               6583315  ( 91.5%)
+
+. display "第二跳后（有汇算变量）:          `after_huisuan'  (" %5.1f (100*`after_huisua
+> n'/`total') "%)"
+第二跳后（有汇算变量）:          1724402  ( 24.0%)
+
+. 
+. * 清理临时文件
+. erase "tmp_sample_cids.dta"
+
+. erase "tmp_sample_with_id.dta"
+
+. erase "tmp_huisuan_slim.dta"
+
+. 
+. display ""
+
+
+. display "检查完毕。"
+检查完毕。
+
+. log close
+      name:  <unnamed>
+       log:  G:\Kuangyu_Temp\Outsource\productivity\coverage.log
+  log type:  text
+ closed on:  27 May 2026, 16:09:51
+----------------------------------------------------------------------------------------
