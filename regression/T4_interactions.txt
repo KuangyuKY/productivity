@@ -1,7 +1,7 @@
-DV: ln(purchase price). Firm-size × market interactions.
+DV: ln(purchase price). Firm-size x market condition interactions.
 ---------------------------------------------------------------------------
                  (1)          (2)          (3)          (4)          (5)   
-            Baseline    +Size×N~y    +Size×N~l    +Size×P~t          All   
+            Baseline    +Size*N~y    +Size*N~l    +Size*P~t          All   
 ---------------------------------------------------------------------------
 ln_firm_~t     0.000        0.000        0.000        0.000        0.000   
                  (.)          (.)          (.)          (.)          (.)   
