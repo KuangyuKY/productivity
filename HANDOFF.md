@@ -194,14 +194,15 @@ G:\Kuangyu_Temp\Outsource\
 
 **文件**：`02_price_reg.do`（Stata，无循环，一个回归一个 block）
 
-输出目录：`G:\Kuangyu_Temp\Outsource\productivity\output\`
+输出目录：`G:\Kuangyu_Temp\Outsource\productivity\regression\`
 
 | 输出文件 | 内容 |
 |---|---|
-| `T1_baseline.txt` | 逐步加 FE 的基准回归（6 列） |
-| `T2_demand_supply.txt` | 需求侧 vs 供给侧拆分（4 列） |
-| `T3_interactions.txt` | 企业规模 × 市场条件交互（5 列） |
-| `T4_no_inter.txt` | 去掉中介企业的稳健性（3 列） |
+| `T1_baseline.txt` | 逐步加 FE（5 列）：OLS-bare → OLS-full → +FirmFE → +Firm+Prod → +Firm+Prod+City |
+| `T2_demand_supply.txt` | 需求 vs 供给侧分解（4 列），对应会议纪要 Stage 3 |
+| `T3_similarity.txt` | 投入/产出相似度 S_mj, C_mj（4 列），对应结构模型核心变量 ★ |
+| `T4_interactions.txt` | 企业规模 × 市场条件交互（5 列） |
+| `T5_robustness.txt` | 去掉中介企业（3 列），col 3 额外加相似度稳健性 |
 
 **风格约定**（与 `diversification_complete.do` 保持一致）：
 - 每张表前 `clear all` + 重置 `global esttab_opts`
@@ -213,21 +214,21 @@ G:\Kuangyu_Temp\Outsource\
 
 ## 8. 回归方程设计
 
-**主方程**：
+对应结构模型 Step 2（外包成本方程）：
 
-$$\log P^{buy}_{ipt} = \beta_1 \log \text{FirmSize}_{it} + \beta_2 n\text{Products}_{it} + \gamma_1 \log n\text{Buyers}_{pct} + \gamma_2 \log n\text{Sellers}_{pct} + \gamma_3 \log \text{MktQty}_{pct} + \gamma_4 \log \bar P_{pct} + \alpha_i + \alpha_p + \alpha_c + \varepsilon_{ipt}$$
+$$\log c^B_{fjt} = \delta^B_{jct} + x^{B\prime}_{ft}\,\gamma_B + z^{B\prime}_{jct}\,\lambda_B$$
 
-其中：
-- $i$ = 购方企业，$p$ = 9 位产品码，$c$ = 购方地区，$t$ = 年（当前只有 2017）
-- **DV**：`ln_p_buy` = log(净金额 / 净数量)
-- **企业特征** $X_{it}$：`ln_firm_output`, `n_products`（来自 full_data.dta）
-- **需求侧** $D_{pct}$：`ln_n_buyers`, `ln_mkt_qty`（来自 city_buy）
-- **供给侧** $S_{pct}$：`ln_n_sellers`（来自 city_sell）
-- **市场均价** $\bar P_{pct}$：`ln_p_mkt`（来自 city_buy 的金额/数量）
-- **固定效应**：firm FE ($\alpha_i$)、product FE ($\alpha_p$)、city FE ($\alpha_c$)
-- **聚类标准误**：firm 层
+| 组件 | 对应变量 | 说明 |
+|---|---|---|
+| $\delta^B_{jct}$ | Firm FE + Product FE + City FE | 产品×城市×时间固定效应（分开加入） |
+| $x^B_{ft}$（企业特征） | `ln_firm_output`, `ln_Capital`, `n_products` | 单年数据下被 Firm FE 吸收，仅 OLS 可识别 |
+| $z^B_{jct}$（市场条件） | `ln_n_buyers`, `ln_n_sellers`, `ln_mkt_qty`, `ln_p_mkt` | FE 规格下可识别 |
+| $S_{mj}$（投入相似度） | `input_similarity`（来自 full_data.dta） | firm×product 层面变化，FE 规格下可识别 ★ |
+| $C_{mj}$（产出互补性） | `output_similarity`（来自 full_data.dta） | 同上 ★ |
 
-**表 3 额外交互项**：`ln_firm_output × ln_n_buyers`，`ln_firm_output × ln_n_sellers`，`ln_firm_output × ln_p_mkt`（检验规模对市场条件的异质性反应）
+**PART 1 额外 merge（在 02_price_reg.do 中完成）**：
+- `full_data.dta` → `input_similarity`, `output_similarity`（merge on firm_id × product_id × year）
+- `cid_entid_unique.dta` + `H:\汇算数据\2017.dta` → `ln_Capital`（merge on cid → id）
 
 ---
 
@@ -252,23 +253,21 @@ $$\log P^{buy}_{ipt} = \beta_1 \log \text{FirmSize}_{it} + \beta_2 n\text{Produc
 - [x] 确定数据来源和 SQL 抽取逻辑
 - [x] 确定 4 类 CSV 的结构（含 SQL 代码核实）
 - [x] 确定各项设计决策（表见上）
-- [x] `01_clean.ipynb` 框架写好（Step 1–10）
-- [x] `02_price_reg.do` 框架写好（4 张表）
-
-### 进行中
-
-- [ ] `firm_region.csv`：SQL 正在跑 firm_id → 购方地区映射，完成后推送 git
+- [x] `01_clean.ipynb` 在虚拟机上可跑通
+- [x] `02_price_reg.do` 重写：5 张表，加入 input_similarity / output_similarity / ln_Capital
 
 ### 待完成（按优先级）
 
-1. **`01_clean.ipynb` 修改**：根据新 CSV 结构（4 类而非原始发票逐行）重写 Step 1–10；city_buy/city_sell 分开处理；合并 firm_region；删去原来假设逐行发票的逻辑（红冲按行对冲、逐行单价等）
-2. **跑 `01_clean.ipynb`**：在虚拟机上验证各步骤（尤其：项目代码匹配率、merge 覆盖率、价格分布诊断）
-3. **跑 `02_price_reg.do`**：生成 4 张结果表，返回初步结果
-4. **结果解读 + 调整**：看 T1–T4，确认系数方向，决定是否保留/调整 FE 规格或变量选择
+1. **跑 `02_price_reg.do`**：同步到虚拟机后运行，重点观察 T3 相似度系数方向和显著性
+2. **结果解读**：T1 firm chars OLS 系数、T2 需供分解符号、T3 S_mj/C_mj 经济解释
+3. **ln_Capital 覆盖率确认**：汇算数据桥接后实际覆盖多少观测（预期 ~48%）；若太低考虑单独列一张 OLS 表
+4. **结果调整**：根据跑出结果决定是否增加 product×city 交互 FE、winsorize ln_p_net 等
 
-### 需要等待的外部条件
+### 已知限制（单年数据）
 
-- `firm_region.csv` 落盘并推送到 git（仅 Step 8 需要）；Step 1–7 可先独立运行和诊断
+- `ln_firm_output`, `ln_Capital`, `n_products` 在 FE 规格中被 Firm FE 吸收（显示 0/.）
+- 仅 OLS 规格（T1 col 1–2）可识别 firm-level 变量的截面效应
+- `input_similarity`, `output_similarity` 在 firm×product 层面变化 → FE 规格下**可以识别** ✓
 
 ---
 

@@ -1,0 +1,1185 @@
+\documentclass[11pt,a4paper]{article}
+
+% ------------------------------------------------------------
+% Preamble
+% ------------------------------------------------------------
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{setspace}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage{tabularx}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!55!black,
+    citecolor=blue!55!black,
+    urlcolor=blue!55!black,
+    pdftitle={Structural Model and Estimation Strategy: Product Diversification, Outsourcing, Mixed Sourcing, Material Prices, and VAT},
+    pdfauthor={Prepared for Shengyu Li},
+    pdfsubject={Static structural model with mixed sourcing, material prices, VAT, simplified cost shocks, and closed-form choice probabilities},
+    pdfkeywords={product scope, outsourcing, mixed sourcing, structural estimation, VAT, material prices}
+}
+
+\setstretch{1.18}
+\setlist[itemize]{leftmargin=2em}
+\setlist[enumerate]{leftmargin=2em}
+
+\newtheorem{assumption}{Assumption}
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+\newtheorem{definition}{Definition}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\one}{\mathbf{1}}
+\newcommand{\mc}{\mathcal}
+\newcommand{\M}{\mathrm{M}}
+\newcommand{\B}{\mathrm{B}}
+\newcommand{\X}{\mathrm{X}}
+\newcommand{\OFC}{\mathrm{O}}
+\newcommand{\VAT}{\mathrm{VAT}}
+\newcommand{\dd}{\mathrm{d}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator{\Var}{Var}
+
+\title{\textbf{Product Diversification, Outsourcing, and Mixed Sourcing}\\[0.35em]
+\large Static Structural Model and Empirical Estimation Strategy with Material Prices and Value-Added Tax}
+\author{Prepared for Shengyu Li}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+% ------------------------------------------------------------
+\section{Model Environment}
+% ------------------------------------------------------------
+
+A firm $f$ in year $t$ has an exogenously given core product $m=m_{ft}$. The model is static. There is no product-market clearing condition, no strategic interaction across firms, and no capacity constraint. The firm takes residual demand curves, input prices, the local outsourcing environment, value-added tax rules, and its own state as given. It chooses which secondary products to offer, how to source each offered product, total quantities, source-specific quantities, and prices.
+
+The full product universe is
+\[
+    \mc{J}=\{1,2,\ldots,J\},\qquad J\simeq 3000,
+\]
+and the set of secondary products is $\mc{J}^{-m}_{ft}=\mc{J}\setminus\{m_{ft}\}$. The core product is always offered. Secondary products are chosen endogenously.
+
+The model uses two product-pair variables:
+\begin{align*}
+    S_{mj}&\in[0,1], &&\text{input similarity between core product $m$ and product $j$},\\
+    C_{mj}&\in[0,1], &&\text{output complementarity between core product $m$ and product $j$}.
+\end{align*}
+A high $S_{mj}$ means that product $j$ uses inputs, technologies, or production routines similar to the firm's core product. A high $C_{mj}$ means that product $j$ fits the firm's customer base or distribution network inherited from the core product.
+
+The firm state is
+\begin{equation}
+    \Omega_{ft}
+    =\left(
+        m_{ft},
+        A^0_{ft},
+        D^0_{ft},
+        K_{ft},
+        w_{ct},
+        x_{ft},
+        z_{ct},
+        \tau_t,
+        \{S_{m_{ft}j},C_{m_{ft}j},PM_{fjt},\chi^{\M}_{fjt},\chi^{\B}_{fjt}\}_{j\in\mc{J}}
+    \right),
+    \label{eq:state}
+\end{equation}
+where $A^0_{ft}$ is the firm's core-product productivity, $D^0_{ft}$ is the core-product demand shifter, $K_{ft}$ is capital, $w_{ct}$ is the local wage, $x_{ft}$ are firm characteristics, $z_{ct}$ are local market conditions, $\tau_t$ is the known VAT rate, $PM_{fjt}$ is the material price index relevant for producing product $j$ in-house, and $\chi^{\M}_{fjt}$ and $\chi^{\B}_{fjt}$ are the creditable-input shares of in-house variable cost and outsourcing purchases. The baseline assumes that the VAT rate is common across products. If the statutory rate is constant over the sample, $\tau_t=\tau$.
+
+The inherited demand or distribution base is
+\begin{equation}
+    h_{ft}\equiv \log D^0_{ft}.
+    \label{eq:h_def}
+\end{equation}
+This is a maintained modelling choice. The inherited demand base is a primitive core-demand shifter. It is not optimized core revenue, optimized core quantity, or a function of the firm's realized core sourcing choice.
+
+% ------------------------------------------------------------
+\section{Demand and VAT Pricing Convention}
+% ------------------------------------------------------------
+
+The model uses VAT-inclusive buyer prices in the demand system. Let $P_{fjt}$ denote the gross price paid by the buyer, including VAT. If the data report tax-exclusive prices $p^{net}_{fjt}$, the corresponding gross price is $P_{fjt}=(1+\tau_t)p^{net}_{fjt}$. If the data report VAT-inclusive invoice prices, $P_{fjt}$ is directly observed.
+
+For any product $j$ sold by firm $f$ in year $t$, residual demand is isoelastic in the VAT-inclusive buyer price:
+\begin{equation}
+    q_{fjt}(P)=D_{fjt}P^{-\sigma_j},
+    \qquad \sigma_j>1.
+    \label{eq:demand}
+\end{equation}
+Equivalently, inverse demand and gross sales revenue as functions of total quantity $q$ are
+\begin{align}
+    P_{fjt}(q)&=D_{fjt}^{1/\sigma_j}q^{-1/\sigma_j},
+    \label{eq:inverse_demand}\\
+    R^G_{fjt}(q)&=P_{fjt}(q)q
+    =D_{fjt}^{1/\sigma_j}q^{(\sigma_j-1)/\sigma_j}.
+    \label{eq:gross_revenue}
+\end{align}
+Here $R^G$ is gross invoice revenue, including VAT collected from buyers. Define
+\begin{equation}
+    \eta_j\equiv\frac{\sigma_j-1}{\sigma_j},
+    \qquad
+    \mu_j\equiv\frac{\sigma_j}{\sigma_j-1}=\frac{1}{\eta_j}.
+    \label{eq:eta_mu}
+\end{equation}
+Gross marginal revenue is
+\begin{equation}
+    MR^G_{fjt}(q)
+    =\eta_jD_{fjt}^{1/\sigma_j}q^{-1/\sigma_j}
+    =\frac{P_{fjt}(q)}{\mu_j}.
+    \label{eq:gross_mr}
+\end{equation}
+Because only the tax-exclusive part of sales revenue is retained after remitting output VAT, the choice-relevant marginal revenue net of output VAT is
+\begin{equation}
+    MR^{net}_{fjt}(q)
+    =\frac{1}{1+\tau_t}MR^G_{fjt}(q)
+    =\frac{P_{fjt}(q)}{(1+\tau_t)\mu_j}.
+    \label{eq:net_mr}
+\end{equation}
+
+For the core product $j=m_{ft}$,
+\begin{equation}
+    D_{f,m_{ft},t}=D^0_{ft}.
+    \label{eq:core_demand}
+\end{equation}
+For a secondary product $j\neq m_{ft}$,
+\begin{equation}
+    \log D_{fjt}
+    =\delta^D_{jt}
+    +x^{D\prime}_{ft}\beta_D
+    +\rho_D h_{ft}
+    +\left(\beta_C+\beta_{Ch}h_{ft}\right)C_{m_{ft}j}
+    +\xi^D_{fjt}.
+    \label{eq:secondary_demand}
+\end{equation}
+The output-complementarity restriction is
+\begin{equation}
+    \beta_C+\beta_{Ch}h_{ft}>0.
+    \label{eq:output_restriction}
+\end{equation}
+Thus, conditional on the firm's inherited demand base, output complementarity raises the residual demand shifter for a secondary product.
+
+The demand shock $\xi^D_{fjt}$ is a structural shock observed by the firm before product-scope, sourcing, quantity, and price decisions. It is unobserved by the econometrician for products that are not offered. For offered products with reliable gross price and quantity data, it can be recovered from $D^{obs}_{fjt}=q^{obs}_{fjt}(P^{obs}_{fjt})^{\sigma_j}$ after estimating $\sigma_j$.
+
+% ------------------------------------------------------------
+\section{Costs, Material Prices, VAT Credits, and Fixed Costs}
+% ------------------------------------------------------------
+
+Let $q_{fjt}$ be total units sold, $Q^{\M}_{fjt}$ be units made in-house, and $Q^{\B}_{fjt}$ be units bought from outside suppliers. Feasibility requires
+\begin{equation}
+    q_{fjt}=Q^{\M}_{fjt}+Q^{\B}_{fjt},
+    \qquad
+    Q^{\M}_{fjt}\geq0,
+    \qquad
+    Q^{\B}_{fjt}\geq0.
+    \label{eq:quantity_decomp}
+\end{equation}
+
+\subsection{Modelling choice for VAT}
+
+The model uses a cost-function approach rather than replacing the cost side with a full production function. This is the preferred baseline because it preserves the existing sourcing cutoff and the closed-form fixed-cost likelihood. A production-function version would require modelling input choices, material quantities, and capital-labor substitution for each of roughly 3000 products, which would substantially increase dimensionality without being necessary for the make-buy mechanism.
+
+VAT is implemented as a credit-invoice tax. For a product with gross revenue $R^G(q)$, gross in-house variable cost $C^{\M}(Q^{\M})$, and gross outsourcing purchase cost $c^{\B}Q^{\B}$, VAT remittance is
+\begin{equation}
+    T^{\VAT}(q,Q^{\M},Q^{\B})
+    =\frac{\tau_t}{1+\tau_t}R^G(q)
+    -\frac{\tau_t}{1+\tau_t}
+    \left[\chi^{\M}_{fjt}C^{\M}(Q^{\M})+\chi^{\B}_{fjt}c^{\B}Q^{\B}\right].
+    \label{eq:vat_liability}
+\end{equation}
+The first term is output VAT on sales. The second term is the creditable input VAT paid on eligible in-house material purchases and eligible outsourcing purchases. The baseline treats outsourced units purchased for resale as creditable input purchases, so $\chi^{\B}_{fjt}=1$ unless the data indicate otherwise. The in-house creditable share $\chi^{\M}_{fjt}\in[0,1]$ is constructed from observed material cost shares, VAT input invoices, or input-output information. It is treated as observed or externally calibrated, not as a free structural parameter, because a common VAT rate provides limited independent variation for identifying it from choices alone.
+
+Subtracting VAT remittance from cash flow gives the choice-relevant variable profit before fixed costs:
+\begin{align}
+    &R^G(q)-C^{\M}(Q^{\M})-c^{\B}Q^{\B}-T^{\VAT}(q,Q^{\M},Q^{\B}) \notag\\
+    &\qquad =\frac{1}{1+\tau_t}R^G(q)
+    -\kappa^{\M}_{fjt}C^{\M}(Q^{\M})
+    -\kappa^{\B}_{fjt}c^{\B}Q^{\B},
+    \label{eq:profit_after_vat}
+\end{align}
+where
+\begin{equation}
+    \kappa^{\M}_{fjt}=1-\frac{\tau_t}{1+\tau_t}\chi^{\M}_{fjt},
+    \qquad
+    \kappa^{\B}_{fjt}=1-\frac{\tau_t}{1+\tau_t}\chi^{\B}_{fjt}.
+    \label{eq:kappa_def}
+\end{equation}
+Thus VAT scales down retained sales revenue and reduces the effective cost of creditable purchases. If an input purchase is fully creditable, its after-credit cost is its gross cost divided by $1+\tau_t$. If it is not creditable, its after-credit cost equals its gross cost.
+
+Fixed costs are treated as real resource costs measured in the same post-VAT profit units. The baseline assumes that offering and in-house activation fixed costs are not creditable for VAT purposes. If later data show that a specific fixed-cost component is creditable, it can be converted into an after-credit fixed cost before entering the model without changing the sourcing cutoff.
+
+\subsection{In-house marginal cost with material prices}
+
+For $Q^{\M}_{fjt}>0$, gross in-house marginal cost before input VAT credits is
+\begin{align}
+    \log c^{\M}_{fjt}(Q^{\M}_{fjt})
+    =&\ \delta^{\M}_{jt}
+    +\gamma_Q\log Q^{\M}_{fjt}
+    +\gamma_{PM}\log PM_{fjt}
+    +\gamma_w\log w_{ct}
+    +\gamma_K\log K_{ft}
+    -\gamma_A\log A^0_{ft} \notag\\
+    &-\left(\theta_S+\theta_{SK}\log K_{ft}\right)S_{m_{ft}j}.
+    \label{eq:mc_make_log}
+\end{align}
+The material price $PM_{fjt}$ is the price index for the materials required to produce product $j$ in-house. If firm $f$ produces product $j$ in-house, $PM_{fjt}$ is observed from the firm's material purchases when the purchase data are reliable. If firm $f$ does not produce product $j$ in-house, $PM_{fjt}$ is imputed from local product-input markets, preferably as a leave-one-out county-product-year mean among firms that produce product $j$, with broader prefecture, province, industry, or national product-year means used when the local cell is thin. This imputed value is interpreted as the material price the firm would face if it chose to make product $j$.
+
+The maintained restrictions are
+\begin{equation}
+    \gamma_Q>0,
+    \qquad
+    \gamma_{PM}>0.
+    \label{eq:gamma_restrictions}
+\end{equation}
+The first restriction generates increasing in-house marginal cost in own in-house quantity. The second says that higher material prices raise in-house production cost.
+
+Define the gross in-house cost shifter
+\begin{equation}
+    a^{\M}_{fjt}
+    \equiv
+    \exp\left\{
+    \begin{aligned}
+        &\delta^{\M}_{jt}
+        +\gamma_{PM}\log PM_{fjt}
+        +\gamma_w\log w_{ct}
+        +\gamma_K\log K_{ft}
+        -\gamma_A\log A^0_{ft} \\
+        &-\left(\theta_S+\theta_{SK}\log K_{ft}\right)S_{m_{ft}j}
+    \end{aligned}
+    \right\}.
+    \label{eq:aM_def}
+\end{equation}
+Then
+\begin{equation}
+    c^{\M}_{fjt}(Q)=a^{\M}_{fjt}Q^{\gamma_Q},
+    \qquad Q>0,
+    \label{eq:mc_make_power}
+\end{equation}
+and the gross variable cost of making $Q$ units in-house is
+\begin{equation}
+    C^{\M}_{fjt}(Q)
+    =\int_0^Q a^{\M}_{fjt}s^{\gamma_Q}\,\dd s
+    =\frac{a^{\M}_{fjt}}{1+\gamma_Q}Q^{1+\gamma_Q}.
+    \label{eq:make_var_cost}
+\end{equation}
+The after-credit in-house marginal-cost shifter is
+\begin{equation}
+    \widetilde a^{\M}_{fjt}\equiv \kappa^{\M}_{fjt}a^{\M}_{fjt}.
+    \label{eq:aM_tilde}
+\end{equation}
+
+Input similarity lowers the gross and after-credit in-house marginal-cost schedules when
+\begin{equation}
+    \theta_S+\theta_{SK}\log K_{ft}>0.
+    \label{eq:input_restriction}
+\end{equation}
+Under this restriction,
+\begin{equation}
+    \frac{\partial\log c^{\M}_{fjt}(Q)}{\partial S_{m_{ft}j}}
+    =-\left(\theta_S+\theta_{SK}\log K_{ft}\right)<0.
+    \label{eq:mc_input_derivative}
+\end{equation}
+
+There is no structural cost shock $\omega^{\M}_{fjt}$ in equation \eqref{eq:mc_make_log}. Residual variation in the empirical in-house marginal-cost equation is treated as measurement error, input-price imputation error, or specification error. It is not part of the firm's information set and is not integrated over in the choice likelihood.
+
+\subsection{Outsourcing unit cost}
+
+The gross unit cost of outsourcing product $j$ is exogenous to the firm and constant in the firm's own outsourced quantity:
+\begin{equation}
+    \log c^{\B}_{fjt}
+    =\delta^{\B}_{jct}
+    +x^{B\prime}_{ft}\gamma_B
+    +z^{B\prime}_{jct}\lambda_B.
+    \label{eq:buy_cost}
+\end{equation}
+The firm takes $c^{\B}_{fjt}$ as given. Its product-scope and sourcing choices do not affect $c^{\B}_{fjt}$. The after-credit outsourcing unit cost is
+\begin{equation}
+    \widetilde c^{\B}_{fjt}\equiv \kappa^{\B}_{fjt}c^{\B}_{fjt}.
+    \label{eq:cB_tilde}
+\end{equation}
+Under the baseline resale-credit assumption, $\chi^{\B}_{fjt}=1$ and $\widetilde c^{\B}_{fjt}=c^{\B}_{fjt}/(1+\tau_t)$.
+
+There is no structural cost shock $\omega^{\B}_{fjt}$ in equation \eqref{eq:buy_cost}. Residual variation in the empirical procurement-cost equation is treated as measurement error or specification error, not as payoff heterogeneity observed by the firm.
+
+\subsection{Fixed costs with exponential shocks}
+
+There are two fixed-cost components for secondary products. A secondary product has a fixed cost of being offered, paid whenever the product is sold regardless of sourcing mode:
+\begin{align}
+    F^{\OFC}_{fjt}&=\bar F^{\OFC}_{fjt}\varepsilon^{\OFC}_{fjt},
+    \qquad j\neq m_{ft},
+    \label{eq:offer_fixed_cost}\\
+    \bar F^{\OFC}_{fjt}&=\exp\left(\phi^{\OFC}_{jt}+x^{F\prime}_{ft}\psi_{\OFC}\right),
+    \label{eq:offer_fixed_mean}\\
+    \varepsilon^{\OFC}_{fjt}&\sim \operatorname{Exp}(1).
+    \label{eq:offer_fixed_shock}
+\end{align}
+Thus $F^{\OFC}_{fjt}$ is exponentially distributed with mean $\bar F^{\OFC}_{fjt}$ and rate
+\begin{equation}
+    \lambda^{\OFC}_{fjt}=1/\bar F^{\OFC}_{fjt}.
+    \label{eq:offer_rate}
+\end{equation}
+
+A product also has a fixed cost of activating in-house production:
+\begin{align}
+    F^{\M}_{fjt}&=\bar F^{\M}_{fjt}\varepsilon^{\M}_{fjt},
+    \label{eq:make_fixed_cost}\\
+    \bar F^{\M}_{fjt}&=\exp\left(\phi^{\M}_{jt}+x^{F\prime}_{ft}\psi_{\M}\right),
+    \label{eq:make_fixed_mean}\\
+    \varepsilon^{\M}_{fjt}&\sim \operatorname{Exp}(1),
+    \label{eq:make_fixed_shock}
+\end{align}
+with rate
+\begin{equation}
+    \lambda^{\M}_{fjt}=1/\bar F^{\M}_{fjt}.
+    \label{eq:make_rate}
+\end{equation}
+This cost is paid if and only if $Q^{\M}_{fjt}>0$. There is no fixed cost of outsourcing. Thus a mixed product pays the same fixed costs as a pure-make product: the offering fixed cost plus the in-house activation fixed cost.
+
+The shocks $\varepsilon^{\OFC}_{fjt}$ and $\varepsilon^{\M}_{fjt}$ are observed by the firm before decisions and are unobserved by the econometrician. They are retained because they are needed to generate smooth offer and sourcing probabilities. In particular, $F^{\M}_{fjt}$ allows pure outsourcing to occur even when the first internally made units have low marginal cost.
+
+For the core product, the offering fixed cost is normalized to zero because the core product is always offered. Under the maintained model, pure outsourcing of the core product is ruled out because the empirical core product is defined by self-production value. The core therefore has positive in-house production and can be pure make or mixed. The in-house fixed cost of the core product is not identified from a core make/no-make margin and is omitted from the choice-relevant core problem. It can be included later as an accounting term only if an external measure is available.
+
+% ------------------------------------------------------------
+\section{Sourcing, Pricing, and Product-Level Decision Rules}
+% ------------------------------------------------------------
+
+This section states the solution of the product-level problem. Suppress subscripts temporarily and write $a^{\M}$, $c^{\B}$, $\kappa^{\M}$, $\kappa^{\B}$, $\widetilde a^{\M}=\kappa^{\M}a^{\M}$, $\widetilde c^{\B}=\kappa^{\B}c^{\B}$, $D$, $\sigma$, and $\tau$.
+
+\subsection{Least-cost sourcing conditional on total quantity}
+
+Conditional on selling total quantity $q$ and conditional on activating in-house production, the firm chooses $Q^{\M}\in[0,q]$ to minimize after-credit procurement cost:
+\begin{equation}
+    \kappa^{\M}C^{\M}(Q^{\M})+\widetilde c^{\B}(q-Q^{\M}).
+    \label{eq:least_cost}
+\end{equation}
+The first-order condition for an interior solution is
+\begin{equation}
+    \widetilde a^{\M}(Q^{\M})^{\gamma_Q}=\widetilde c^{\B}.
+\end{equation}
+Define the VAT-adjusted make-buy cutoff
+\begin{equation}
+    \bar Q^{\tau}
+    \equiv
+    \left(\frac{\widetilde c^{\B}}{\widetilde a^{\M}}\right)^{1/\gamma_Q}.
+    \label{eq:qbar}
+\end{equation}
+Then
+\begin{align}
+    Q^{\M}(q)&=\min\{q,\bar Q^{\tau}\},
+    \label{eq:make_qty_conditional}\\
+    Q^{\B}(q)&=(q-\bar Q^{\tau})_+.
+    \label{eq:buy_qty_conditional}
+\end{align}
+The after-credit procurement cost conditional on active in-house production is
+\begin{equation}
+    H^{\tau}(q)=
+    \begin{cases}
+        \dfrac{\widetilde a^{\M}}{1+\gamma_Q}q^{1+\gamma_Q},
+        & 0\leq q\leq\bar Q^{\tau},\\[0.9em]
+        \dfrac{\widetilde a^{\M}}{1+\gamma_Q}(\bar Q^{\tau})^{1+\gamma_Q}
+        +\widetilde c^{\B}(q-\bar Q^{\tau}),
+        & q>\bar Q^{\tau}.
+    \end{cases}
+    \label{eq:H_piecewise}
+\end{equation}
+The cutoff $\bar Q^{\tau}$ is the quantity at which after-credit in-house marginal cost equals after-credit outsourcing unit cost. If desired sales are below $\bar Q^{\tau}$, active in-house production implies pure make. If desired sales exceed $\bar Q^{\tau}$, the firm makes $\bar Q^{\tau}$ units and outsources the rest.
+
+\subsection{Pure outsourcing}
+
+Under pure outsourcing, the firm sets $Q^{\M}=0$, $Q^{\B}=q$, and chooses $q$ to maximize
+\begin{equation}
+    \frac{1}{1+\tau}R^G(q)-\widetilde c^{\B}q.
+\end{equation}
+The first-order condition $MR^{net}(q)=\widetilde c^{\B}$ gives
+\begin{align}
+    q^{\B *}&=D\left((1+\tau)\mu\widetilde c^{\B}\right)^{-\sigma},
+    \label{eq:qB_star}\\
+    P^{\B *}&=(1+\tau)\mu\widetilde c^{\B},
+    \label{eq:pB_star}\\
+    G^{\B}&=\frac{1}{1+\tau}R^G(q^{\B *})-\widetilde c^{\B}q^{\B *}
+    =\frac{1}{\sigma(1+\tau)}D\left((1+\tau)\mu\widetilde c^{\B}\right)^{1-\sigma}.
+    \label{eq:GB}
+\end{align}
+Here $G^{\B}$ is net-of-VAT variable profit before fixed costs. If outsourced purchases are fully creditable, $\widetilde c^{\B}=c^{\B}/(1+\tau)$ and the gross buyer price is $P^{\B *}=\mu c^{\B}$.
+
+\subsection{Active in-house production}
+
+Conditional on activating in-house production, the firm chooses total quantity $q$ to maximize
+\begin{equation}
+    \frac{1}{1+\tau}R^G(q)-H^{\tau}(q).
+\end{equation}
+In the pure-make region, the first-order condition is
+\begin{equation}
+    \frac{\eta D^{1/\sigma}q^{-1/\sigma}}{1+\tau}=\widetilde a^{\M}q^{\gamma_Q}.
+\end{equation}
+The unconstrained pure-make quantity is
+\begin{equation}
+    q^{\M u}
+    =\left(\frac{\eta D^{1/\sigma}}{(1+\tau)\widetilde a^{\M}}\right)^{1/(\gamma_Q+1/\sigma)}.
+    \label{eq:qMu}
+\end{equation}
+If $q^{\M u}\leq\bar Q^{\tau}$, active in-house production yields pure make:
+\begin{equation}
+    q^{I*}=q^{\M u},
+    \qquad
+    Q^{\M,I*}=q^{\M u},
+    \qquad
+    Q^{\B,I*}=0,
+    \qquad
+    P^{I*}=(1+\tau)\mu\widetilde a^{\M}(q^{\M u})^{\gamma_Q}.
+    \label{eq:pure_make_solution}
+\end{equation}
+If $q^{\M u}>\bar Q^{\tau}$, active in-house production yields mixed sourcing:
+\begin{equation}
+    q^{I*}=q^{\B *},
+    \qquad
+    Q^{\M,I*}=\bar Q^{\tau},
+    \qquad
+    Q^{\B,I*}=q^{\B *}-\bar Q^{\tau}>0,
+    \qquad
+    P^{I*}=(1+\tau)\mu\widetilde c^{\B}.
+    \label{eq:mix_solution}
+\end{equation}
+The active-in-house variable profit net of VAT is
+\begin{equation}
+    G^{I}=\frac{1}{1+\tau}R^G(q^{I*})-H^{\tau}(q^{I*}).
+    \label{eq:GI}
+\end{equation}
+
+In the mixed region, active in-house production differs from pure outsourcing only by replacing the first $\bar Q^{\tau}$ outsourced units with internally made units and paying the in-house fixed cost. The variable-cost saving from doing so is
+\begin{equation}
+    \Delta G^{\X}
+    =G^{I}-G^{\B}
+    =\frac{\gamma_Q}{1+\gamma_Q}\widetilde c^{\B}\bar Q^{\tau}.
+    \label{eq:mix_saving}
+\end{equation}
+Thus, in the mixed region, active in-house production dominates pure buying before the offering fixed cost if and only if
+\begin{equation}
+    \frac{\gamma_Q}{1+\gamma_Q}\widetilde c^{\B}\bar Q^{\tau}\geq F^{\M}.
+    \label{eq:mix_buy_cutoff}
+\end{equation}
+This cutoff is central to the model. Without $F^{\M}$, pure buying would be difficult to rationalize when the marginal cost of the first internally made units is low.
+
+\subsection{Secondary-product decision rule}
+
+For a secondary product $j\neq m_{ft}$, define
+\begin{align}
+    V^{\B}_{fjt}&=G^{\B}_{fjt}-F^{\OFC}_{fjt},
+    \label{eq:VB}\\
+    V^{I}_{fjt}&=G^{I}_{fjt}-F^{\OFC}_{fjt}-F^{\M}_{fjt},
+    \label{eq:VI}\\
+    V^0_{fjt}&=0.
+\end{align}
+The firm chooses
+\begin{equation}
+    \max\{V^0_{fjt},V^{\B}_{fjt},V^{I}_{fjt}\}.
+    \label{eq:secondary_max}
+\end{equation}
+The realized action is
+\begin{equation}
+    a^*_{fjt}= 
+    \begin{cases}
+        0, & \max\{V^{\B}_{fjt},V^{I}_{fjt}\}\leq0,\\
+        \B, & V^{\B}_{fjt}\geq\max\{0,V^{I}_{fjt}\},\\
+        \M, & V^{I}_{fjt}\geq\max\{0,V^{\B}_{fjt}\}\text{ and }q^{I*}_{fjt}\leq\bar Q^{\tau}_{fjt},\\
+        \X, & V^{I}_{fjt}\geq\max\{0,V^{\B}_{fjt}\}\text{ and }q^{I*}_{fjt}>\bar Q^{\tau}_{fjt}.
+    \end{cases}
+    \label{eq:action_rule}
+\end{equation}
+Here $\B$ denotes pure buy, $\M$ denotes pure make, and $\X$ denotes mixed make-and-buy.
+
+The resulting quantities are
+\begin{equation}
+    (q^*_{fjt},Q^{\M *}_{fjt},Q^{\B *}_{fjt})=
+    \begin{cases}
+        (0,0,0), & a^*_{fjt}=0,\\
+        (q^{\B *}_{fjt},0,q^{\B *}_{fjt}), & a^*_{fjt}=\B,\\
+        (q^{I *}_{fjt},q^{I *}_{fjt},0), & a^*_{fjt}=\M,\\
+        (q^{I *}_{fjt},\bar Q^{\tau}_{fjt},q^{I *}_{fjt}-\bar Q^{\tau}_{fjt}), & a^*_{fjt}=\X.
+    \end{cases}
+    \label{eq:quantities_by_action}
+\end{equation}
+
+\subsection{Core-product decision rule}
+
+The core product is always offered. It has demand shifter $D^0_{ft}$ and no offering fixed cost. The maintained core rule is that pure outsourcing of the core product is ruled out because the empirical core product is defined by self-production value. The core can be pure make or mixed.
+
+Apply the same in-house marginal cost schedule and VAT treatment to the core product, setting $j=m_{ft}$. Define
+\begin{align}
+    a^{\M,0}_{ft}&\equiv a^{\M}_{f,m_{ft},t},\\
+    \widetilde a^{\M,0}_{ft}&\equiv \kappa^{\M}_{f,m_{ft},t}a^{\M,0}_{ft},\\
+    c^{\B,0}_{ft}&\equiv c^{\B}_{f,m_{ft},t},\\
+    \widetilde c^{\B,0}_{ft}&\equiv \kappa^{\B}_{f,m_{ft},t}c^{\B,0}_{ft},\\
+    \bar Q^{0,\tau}_{ft}&\equiv\left(\frac{\widetilde c^{\B,0}_{ft}}{\widetilde a^{\M,0}_{ft}}\right)^{1/\gamma_Q}.
+\end{align}
+The unconstrained pure-make core quantity is
+\begin{equation}
+    q^{0,\M u}_{ft}
+    =\left(
+        \frac{\eta_{m_{ft}}(D^0_{ft})^{1/\sigma_{m_{ft}}}}
+             {(1+\tau_t)\widetilde a^{\M,0}_{ft}}
+      \right)^{1/(\gamma_Q+1/\sigma_{m_{ft}})}.
+    \label{eq:core_qMu}
+\end{equation}
+The core quantity is
+\begin{equation}
+    q^{0*}_{ft}= 
+    \begin{cases}
+        q^{0,\M u}_{ft}, & q^{0,\M u}_{ft}\leq\bar Q^{0,\tau}_{ft},\\[0.3em]
+        D^0_{ft}\left((1+\tau_t)\mu_{m_{ft}}\widetilde c^{\B,0}_{ft}\right)^{-\sigma_{m_{ft}}}, & q^{0,\M u}_{ft}>\bar Q^{0,\tau}_{ft}.
+    \end{cases}
+    \label{eq:core_qstar}
+\end{equation}
+The core in-house and outsourced quantities are
+\begin{align}
+    Q^{\M,0*}_{ft}&=\min\{q^{0*}_{ft},\bar Q^{0,\tau}_{ft}\},\\
+    Q^{\B,0*}_{ft}&=(q^{0*}_{ft}-\bar Q^{0,\tau}_{ft})_+.
+\end{align}
+The core is pure make if $q^{0*}_{ft}\leq\bar Q^{0,\tau}_{ft}$ and mixed if $q^{0*}_{ft}>\bar Q^{0,\tau}_{ft}$. It is never pure buy in the maintained model. If the empirical sample later includes firms whose main sold product has zero self-production, the core rule should be changed before estimation.
+
+\subsection{Firm-level profit and separability}
+
+The optimized secondary-product contribution is
+\begin{equation}
+    \Pi^*_{fjt}=\max\{0,V^{\B}_{fjt},V^{I}_{fjt}\},
+    \qquad j\neq m_{ft}.
+    \label{eq:secondary_profit}
+\end{equation}
+The choice-relevant optimized firm profit is
+\begin{equation}
+    \Pi^*_{ft}=G^{0*}_{ft}
+    +\sum_{j\in\mc{J}^{-m}_{ft}}\max\{0,V^{\B}_{fjt},V^{I}_{fjt}\},
+    \label{eq:firm_profit}
+\end{equation}
+where all variable-profit terms are net of VAT, and the core make fixed cost is omitted because it does not affect any current decision under the maintained core-product restriction. Because there are no market-clearing conditions, no strategic interactions, and no capacity constraints, the secondary-product problem is additively separable across products.
+
+% ------------------------------------------------------------
+\section{Shock Structure and Information Sets}
+\label{sec:shocks}
+% ------------------------------------------------------------
+
+The baseline model keeps three sources of structural heterogeneity:
+\begin{equation}
+    \xi^D_{fjt},
+    \qquad
+    \varepsilon^{\OFC}_{fjt},
+    \qquad
+    \varepsilon^{\M}_{fjt}.
+\end{equation}
+It removes $\omega^{\B}_{fjt}$ and $\omega^{\M}_{fjt}$.
+
+\begin{longtable}{L{0.17\linewidth}L{0.25\linewidth}L{0.25\linewidth}L{0.23\linewidth}}
+\toprule
+Object & Enters & Firm information set & Empirical role \\
+\midrule
+\endfirsthead
+\toprule
+Object & Enters & Firm information set & Empirical role \\
+\midrule
+\endhead
+$\xi^D_{fjt}$ & Secondary demand shifter $D_{fjt}$ & Observed by the firm before product-scope, sourcing, quantity, and price choices; unobserved by the econometrician for nonoffered products & Fits heterogeneous product demand and product revenues beyond observed output complementarity and fixed effects. \\
+\addlinespace
+$\varepsilon^{\OFC}_{fjt}$ & Offering fixed cost $F^{\OFC}_{fjt}$ & Observed by the firm before deciding whether to offer product $j$; unobserved by the econometrician & Rationalizes no-offer versus offer dispersion conditional on variable profits. \\
+\addlinespace
+$\varepsilon^{\M}_{fjt}$ & In-house activation fixed cost $F^{\M}_{fjt}$ & Observed by the firm before choosing sourcing; unobserved by the econometrician & Rationalizes pure buy versus active in-house production conditional on variable profit savings. \\
+\addlinespace
+$e^B_{fjt}$ & Observed procurement-cost equation only & Not observed by the firm and not payoff-relevant & Measurement error or specification error in observed outsourcing unit costs. \\
+\addlinespace
+$e^M_{fjt}$ & Empirical in-house marginal-cost equation only & Not observed by the firm and not payoff-relevant & Measurement error, approximation error, or material-price imputation error in markup-implied in-house marginal costs. \\
+\bottomrule
+\end{longtable}
+
+All structural shocks that enter profit are realized and observed by the firm before it chooses product scope, sourcing, quantities, and prices. They are unobserved by the econometrician. Measurement errors in recorded prices, quantities, procurement costs, material prices, or markup-implied marginal costs are different: they are not part of the firm's information set and do not enter the firm's objective.
+
+\subsection{Distributional assumptions}
+
+The fixed-cost shocks are independent unit-mean exponentials:
+\begin{equation}
+    \varepsilon^{\OFC}_{fjt}\sim\operatorname{Exp}(1),
+    \qquad
+    \varepsilon^{\M}_{fjt}\sim\operatorname{Exp}(1),
+    \label{eq:fixed_exp_assumption}
+\end{equation}
+independently across firms, products, and years conditional on observed covariates and product-year fixed effects. This assumption gives closed-form probabilities for pure buy, active in-house production, and no offer.
+
+For the demand shock, the baseline avoids continuous numerical integration by using a finite-support distribution. Let
+\begin{equation}
+    \xi^D_{fjt}\in\{s_1,s_2,\ldots,s_R\},
+    \qquad
+    \Pr(\xi^D_{fjt}=s_r)=\varrho_r,
+    \qquad
+    \sum_{r=1}^R\varrho_r=1,
+    \label{eq:finite_support_xi}
+\end{equation}
+with the location normalization
+\begin{equation}
+    \sum_{r=1}^R\varrho_r s_r=0.
+    \label{eq:xi_normalization}
+\end{equation}
+A practical baseline is $R=3$, corresponding to low, medium, and high residual demand states. The support and probabilities may be common across products in the baseline or allowed to vary by broad product group if the data strongly support that additional flexibility.
+
+For an offered product with reliable observed gross price and quantity, the econometrician recovers
+\begin{equation}
+    \xi^{D,obs}_{fjt}(\Theta_D)
+    =\log q^{obs}_{fjt}+\sigma_j\log P^{obs}_{fjt}
+    -\log \bar D_{fjt},
+    \label{eq:xi_observed}
+\end{equation}
+where
+\begin{equation}
+    \log \bar D_{fjt}
+    =\delta^D_{jt}
+    +x^{D\prime}_{ft}\beta_D
+    +\rho_D h_{ft}
+    +\left(\beta_C+\beta_{Ch}h_{ft}\right)C_{m_{ft}j}.
+    \label{eq:Dbar}
+\end{equation}
+For a nonoffered product, $\xi^D_{fjt}$ is latent. The probability contribution is computed by summing over the finite support in equation \eqref{eq:finite_support_xi}. Therefore the baseline requires no simulation over $\xi^D_{fjt}$ and no integration over cost shocks.
+
+% ------------------------------------------------------------
+\section{Empirical Choice Set and Dimensionality Reduction}
+\label{sec:choice_set}
+% ------------------------------------------------------------
+
+The full product universe has roughly 3000 products. Estimating the likelihood over all firm-product-year cells is computationally expensive. The structural model is product-level and requires product-specific prices, quantities, material prices, sourcing costs, and source categories. Therefore, the preferred dimensionality reduction keeps product identity and does not collapse residual products into a single composite product.
+
+For each core product $m$, define the high-relevance set
+\begin{equation}
+    \mc{H}_{m}^{100}
+    =\operatorname{Top}^{100}_{S}(m)\cup \operatorname{Top}^{100}_{C}(m),
+    \label{eq:high_relevance_set}
+\end{equation}
+where $\operatorname{Top}^{100}_{S}(m)$ is the set of the 100 products with the highest input similarity to $m$, and $\operatorname{Top}^{100}_{C}(m)$ is the set of the 100 products with the highest output complementarity to $m$. The union typically contains fewer than 200 products because the two lists overlap. This set is motivated by the empirical fact that the top-100 similarity set covers about 75 percent of secondary-product sales.
+
+For each firm-year, construct the estimation set
+\begin{equation}
+    \mc{C}^{E}_{ft}
+    =\mc{H}^{100}_{m_{ft}}
+    \cup \mc{A}^{out}_{ft}
+    \cup \mc{N}^{out}_{ft},
+    \label{eq:estimation_choice_set}
+\end{equation}
+where
+\begin{align*}
+    \mc{A}^{out}_{ft}
+    &=\{j\notin\mc{H}^{100}_{m_{ft}}: d^{obs}_{fjt}=1\},\\
+    \mc{N}^{out}_{ft}
+    &\subset \{j\notin\mc{H}^{100}_{m_{ft}}: d^{obs}_{fjt}=0\}.
+\end{align*}
+Thus all high-relevance products are included, all actually chosen non-high-relevance products are included, and a probability sample of nonchosen low-relevance products is included.
+
+\subsection{Choice of the likelihood weight \texorpdfstring{$\varpi_{fjt}$}{varpi}}
+
+The weight $\varpi_{fjt}$ in the discrete-choice likelihood is a Horvitz-Thompson sampling weight. Let $\pi_{fjt}$ denote the probability that product $j$ is included in $\mc{C}^{E}_{ft}$ under the sampling design. Then
+\begin{equation}
+    \varpi_{fjt}=\frac{1}{\pi_{fjt}}.
+    \label{eq:sampling_weight_general}
+\end{equation}
+In the recommended design, the inclusion probabilities are
+\begin{equation}
+    \pi_{fjt}=\begin{cases}
+        1, & j\in\mc{H}^{100}_{m_{ft}},\\
+        1, & j\notin\mc{H}^{100}_{m_{ft}}\text{ and }d^{obs}_{fjt}=1,\\
+        \pi^{N}_{fjt}, & j\notin\mc{H}^{100}_{m_{ft}}\text{ and }d^{obs}_{fjt}=0\text{ and sampled},
+    \end{cases}
+    \label{eq:sampling_prob}
+\end{equation}
+so that
+\begin{equation}
+    \varpi_{fjt}=\begin{cases}
+        1, & j\in\mc{H}^{100}_{m_{ft}}\cup\mc{A}^{out}_{ft},\\
+        1/\pi^{N}_{fjt}, & j\in\mc{N}^{out}_{ft}.
+    \end{cases}
+    \label{eq:sampling_weight}
+\end{equation}
+
+The recommended sampling design for $\mc{N}^{out}_{ft}$ is stratified random sampling. Define strata $b$ using broad core-product industry, broad candidate-product industry, input-similarity bins, output-complementarity bins, and national product popularity deciles. Within firm-year-stratum $b$, let
+\[
+    N_{ftb}=\#\{j\notin\mc{H}^{100}_{m_{ft}}:d^{obs}_{fjt}=0, j\in b\}
+\]
+and sample $n_{ftb}$ products without replacement. Then every sampled product in that stratum has
+\begin{equation}
+    \pi^{N}_{fjt}=\frac{n_{ftb}}{N_{ftb}},
+    \qquad
+    \varpi_{fjt}=\frac{N_{ftb}}{n_{ftb}}.
+    \label{eq:stratified_weight}
+\end{equation}
+A practical rule is to set a minimum number of sampled products per nonempty stratum and to oversample strata with higher input similarity, higher output complementarity, or higher national popularity, because these alternatives are more likely to be close substitutes for observed choices. The inverse-probability weight in equation \eqref{eq:stratified_weight} corrects for that oversampling.
+
+For numerical stability, the objective can use a normalized version of the same weights,
+\begin{equation}
+    \widetilde\varpi_{fjt}
+    =\varpi_{fjt}\cdot
+    \frac{J-1}{\sum_{k\in\mc{C}^{E}_{ft}}\varpi_{fkt}},
+    \label{eq:normalized_weight}
+\end{equation}
+so that each firm-year contributes the same total alternative weight as the full product universe. The normalized and unnormalized weights target the same population choice problem; the normalized version prevents firm-years with unusually large sampled outside sets from dominating the finite-sample objective. The baseline should report results using equation \eqref{eq:sampling_weight}; equation \eqref{eq:normalized_weight} is a robustness and numerical-stability device.
+
+This product-level sampling approach is preferable to a residual-product approach. A residual product would aggregate heterogeneous goods with different physical units, prices, demand elasticities, material prices, VAT creditability, and sourcing costs. Because the model uses quantity, price, marginal cost, and make-buy thresholds at the product level, such aggregation would break the structural interpretation of the first-order conditions.
+
+% ------------------------------------------------------------
+\section{Data Objects Required for Estimation}
+\label{sec:data}
+% ------------------------------------------------------------
+
+The estimation requires variables at the firm-year, product-year, firm-product-year, local-market, and tax-rule levels. Table \ref{tab:data_requirements} lists the required objects.
+
+\begin{longtable}{L{0.19\linewidth}L{0.31\linewidth}L{0.40\linewidth}}
+\caption{Data requirements by level}\label{tab:data_requirements}\\
+\toprule
+Level & Variables & Purpose \\
+\midrule
+\endfirsthead
+\toprule
+Level & Variables & Purpose \\
+\midrule
+\endhead
+Firm-year & Core product $m_{ft}$, capital $K_{ft}$, wage $w_{ct}$, firm controls $x_{ft}$, location $c$, ownership, age, exporter status if available & Firm state, cost shifters, fixed-cost shifters, and heterogeneity in product scope. \\
+\addlinespace
+Core-product firm-year & Core quantity $q^0_{ft}$, core gross revenue $R^{G,0}_{ft}$, core gross price $P^0_{ft}=R^{G,0}_{ft}/q^0_{ft}$, core in-house quantity $Q^{\M,0}_{ft}$, core outsourced quantity $Q^{\B,0}_{ft}$ if observed & Construction of $D^0_{ft}=q^0_{ft}(P^0_{ft})^{\sigma_{g(m)}}$ and $h_{ft}=\log D^0_{ft}$; estimation of core sourcing moments. \\
+\addlinespace
+Firm-product-year sales & Product sold indicator $d^{obs}_{fjt}$, gross revenue $R^{G,obs}_{fjt}$, quantity $q^{obs}_{fjt}$, gross price $P^{obs}_{fjt}$, in-house quantity $Q^{\M,obs}_{fjt}$, outsourced quantity $Q^{\B,obs}_{fjt}$, outsourcing share, source category $a^{obs}_{fjt}\in\{0,\B,\M,\X\}$ & Demand estimation, pricing moments, in-house marginal-cost estimation, and discrete sourcing choices. \\
+\addlinespace
+Firm-product-year outsourcing purchases & Purchase value and purchase quantity for outsourced units; gross unit procurement cost $c^{B,obs}_{fjt}$ when available; creditability share $\chi^{\B}_{fjt}$ & Direct measurement of outsourcing unit cost and VAT input credit for pure-buy and mixed products; validation of markup-implied outsourcing cost. \\
+\addlinespace
+Firm-product-year material inputs & Material price index $PM_{fjt}$ for products made in-house; local or broader imputed $PM_{fjt}$ for products not made in-house; in-house creditable material share $\chi^{\M}_{fjt}$ & In-house marginal-cost estimation, material-price variation, and VAT input-credit adjustment. \\
+\addlinespace
+Tax-rule level & VAT rate $\tau_t$; indicator that product and material purchases are VAT creditable; any documented exemptions if present & Conversion of gross revenues and gross costs into choice-relevant net-of-VAT variable profits. \\
+\addlinespace
+Product-pair & $S_{mj}$ and $C_{mj}$ for all ordered pairs or at least for all products in $\mc{C}^{E}_{ft}$ & Input-similarity cost advantage and output-complementarity demand advantage. \\
+\addlinespace
+Product-year and product-location-year & Product-year demand and cost fixed effects; local supplier-market controls $z^B_{jct}$; local material-market controls used to impute $PM_{fjt}$ & Product demand levels, product production cost levels, local outsourcing-market costs, and material input prices. \\
+\addlinespace
+Sampling design & Indicator for inclusion in $\mc{C}^{E}_{ft}$, stratum identifiers, stratum sizes $N_{ftb}$, sampled stratum sizes $n_{ftb}$, and inclusion probability $\pi_{fjt}$ & Weighted likelihood or weighted moments that recover the full product-space objective. \\
+\bottomrule
+\end{longtable}
+
+If physical quantities are missing or inconsistent for some product categories, the continuous demand and marginal-cost equations should use only product cells with reliable quantity units. The discrete product-scope and sourcing likelihood can still use revenue-based source categories for all cells, but the structural first-order conditions require prices and quantities.
+
+For material prices, the preferred implementation constructs $PM_{fjt}$ using the most local reliable information. For made products, use firm-specific input purchases if the mapping from inputs to product $j$ is reliable. For non-made products and for robustness, use a leave-one-out local market index so that $PM_{fjt}$ is available for every candidate product in the choice set and is not mechanically selected by the firm's own sourcing decision.
+
+% ------------------------------------------------------------
+\section{Parameters}
+\label{sec:parameters}
+% ------------------------------------------------------------
+
+Let the parameter vector be
+\begin{equation}
+    \Theta=
+    \left(
+        \Theta_D,
+        \Theta_M,
+        \Theta_B,
+        \Theta_F,
+        \Theta_\xi
+    \right),
+\end{equation}
+where
+\begin{align}
+    \Theta_D&=\{\sigma_g,\delta^D_{jt},\beta_D,\rho_D,\beta_C,\beta_{Ch}\},\\
+    \Theta_M&=\{\delta^{\M}_{jt},\gamma_Q,\gamma_{PM},\gamma_w,\gamma_K,\gamma_A,\theta_S,\theta_{SK}\},\\
+    \Theta_B&=\{\delta^{\B}_{jct},\gamma_B,\lambda_B\},\\
+    \Theta_F&=\{\phi^{\OFC}_{jt},\psi_{\OFC},\phi^{\M}_{jt},\psi_{\M}\},\\
+    \Theta_\xi&=\{s_r,\varrho_r\}_{r=1}^{R}.
+\end{align}
+Here $\sigma_g$ denotes demand elasticities estimated at a product-group level $g(j)$ rather than freely for all 3000 products. Product-specific elasticities are likely too high-dimensional. A practical baseline is to estimate elasticities by broad industry or product group, while retaining product-year fixed effects in demand and cost levels.
+
+The VAT rate $\tau_t$ and creditable shares $\chi^{\M}_{fjt}$ and $\chi^{\B}_{fjt}$ are treated as known tax objects or externally constructed data objects, not as structural parameters. This is important because a common VAT rate gives little independent variation for estimating creditability from firm choices. VAT affects choices through the effective cost multipliers $\kappa^{\M}_{fjt}$ and $\kappa^{\B}_{fjt}$ and through the wedge between gross buyer prices and retained sales revenue.
+
+There are no structural variance parameters for $\omega^{\M}$ or $\omega^{\B}$ because those shocks are removed. The dispersion of fixed costs is pinned down by the exponential distribution and the covariate-dependent means $\bar F^{\OFC}_{fjt}$ and $\bar F^{\M}_{fjt}$. If the empirical fit requires more fixed-cost dispersion later, a gamma fixed-cost distribution can be considered as a robustness extension, but the exponential baseline is preferred because it gives closed-form probabilities.
+
+The high-dimensional fixed effects $\delta^D_{jt}$, $\delta^{\M}_{jt}$, $\delta^B_{jct}$, $\phi^{\OFC}_{jt}$, and $\phi^{\M}_{jt}$ can be estimated with regularization or partial pooling if needed. The preferred approach is to retain product-year fixed effects as nuisance parameters and focus interpretation on the low-dimensional structural parameters: $\sigma_g$, $\rho_D$, $\beta_C$, $\beta_{Ch}$, $\gamma_Q$, $\gamma_{PM}$, $\gamma_w$, $\gamma_K$, $\gamma_A$, $\theta_S$, $\theta_{SK}$, $\gamma_B$, $\lambda_B$, $\psi_{\OFC}$, $\psi_{\M}$, and the finite-support demand-shock parameters.
+
+% ------------------------------------------------------------
+\section{Estimation Procedure}
+\label{sec:estimation}
+% ------------------------------------------------------------
+
+The recommended procedure is a sequential estimator with a final joint refinement. The sequential structure is computationally feasible for very large invoice data, while the final joint refinement ensures that the continuous and discrete parts of the model are mutually consistent.
+
+\subsection{Step 0: Construct the estimation sample}
+
+For every firm-year:
+\begin{enumerate}
+    \item Define the core product $m_{ft}$ using the maintained empirical rule, preferably the product with the highest self-production value.
+    \item Construct $\mc{H}^{100}_{m_{ft}}$ from input similarity and output complementarity.
+    \item Add all actually chosen products outside $\mc{H}^{100}_{m_{ft}}$.
+    \item Sample nonchosen products outside $\mc{H}^{100}_{m_{ft}}$ using stratified sampling and record the stratum-specific inclusion probability $\pi^{N}_{fjt}$.
+    \item Construct the weight $\varpi_{fjt}$ in equation \eqref{eq:sampling_weight}. Keep the normalized weight $\widetilde\varpi_{fjt}$ in equation \eqref{eq:normalized_weight} for numerical robustness checks.
+    \item Convert sales prices and sales revenues into the gross VAT-inclusive convention used in demand. If the raw data are tax-exclusive, use $P=(1+\tau_t)p^{net}$ and $R^G=(1+\tau_t)R^{net}$.
+    \item Construct $PM_{fjt}$ for every included product: observed from firm material purchases when the product is made and imputed from local material markets when it is not made.
+    \item Construct the VAT creditability variables $\chi^{\M}_{fjt}$ and $\chi^{\B}_{fjt}$ and the cost multipliers $\kappa^{\M}_{fjt}$ and $\kappa^{\B}_{fjt}$.
+    \item Classify each included firm-product-year into $a^{obs}_{fjt}\in\{0,\B,\M,\X\}$.
+\end{enumerate}
+
+For a sold secondary product, define
+\begin{align*}
+    \B &: Q^{\M,obs}_{fjt}=0,\quad Q^{\B,obs}_{fjt}>0,\\
+    \M &: Q^{\M,obs}_{fjt}>0,\quad Q^{\B,obs}_{fjt}=0,\\
+    \X &: Q^{\M,obs}_{fjt}>0,\quad Q^{\B,obs}_{fjt}>0.
+\end{align*}
+The same classification applies to the core product except that $\B$ is not allowed under the maintained core rule.
+
+\subsection{Step 1: Demand side}
+
+For a candidate elasticity vector $\{\sigma_g\}$, construct the core demand shifter from gross buyer prices:
+\begin{equation}
+    D^0_{ft}(\sigma)=q^{0,obs}_{ft}(P^{0,obs}_{ft})^{\sigma_{g(m_{ft})}},
+    \qquad
+    h_{ft}(\sigma)=\log D^0_{ft}(\sigma).
+    \label{eq:D0_empirical}
+\end{equation}
+For each sold secondary product with reliable price and quantity data, construct
+\begin{equation}
+    \log D^{obs}_{fjt}(\sigma)
+    =\log q^{obs}_{fjt}+\sigma_{g(j)}\log P^{obs}_{fjt}.
+    \label{eq:D_obs}
+\end{equation}
+The demand residual implied by equation \eqref{eq:secondary_demand} is
+\begin{equation}
+    \widehat{\xi}^{D}_{fjt}(\Theta_D)
+    =\log D^{obs}_{fjt}(\sigma)
+    -\delta^D_{jt}
+    -x^{D\prime}_{ft}\beta_D
+    -\rho_D h_{ft}(\sigma)
+    -\left(\beta_C+\beta_{Ch}h_{ft}(\sigma)\right)C_{m_{ft}j}.
+    \label{eq:demand_residual}
+\end{equation}
+
+Because price is chosen by the firm after observing $\xi^D_{fjt}$, the elasticity parameters should not be estimated by naive OLS of quantity on price. The preferred demand moments are
+\begin{equation}
+    \E\left[Z^D_{fjt}\widehat{\xi}^{D}_{fjt}(\Theta_D)\right]=0,
+    \label{eq:demand_moments}
+\end{equation}
+where $Z^D_{fjt}$ includes variables that shift marginal cost or sourcing cost but do not directly shift residual demand after controlling for product-year effects, firm controls, and output complementarity. Examples include local wages, local supplier-market conditions, material price shifters, input similarity interacted with capital, and cost-side product-location variables. The demand block identifies $\sigma_g$, $\rho_D$, $\beta_C$, and $\beta_{Ch}$.
+
+The finite-support distribution of $\xi^D$ can be initialized using quantiles of $\widehat\xi^D$ from sold products. In the final fixed-cost likelihood and joint refinement, the support points $s_r$ and probabilities $\varrho_r$ are estimated subject to the normalization in equation \eqref{eq:xi_normalization}. This avoids treating the selected-product residual distribution as automatically representative of all nonchosen products.
+
+\subsection{Step 2: Outsourcing-cost equation}
+
+When outsourced unit procurement cost is directly observed, define the gross procurement cost
+\begin{equation}
+    c^{B,obs}_{fjt}=\frac{\text{gross outsourced purchase value}_{fjt}}{Q^{\B,obs}_{fjt}}
+    \qquad\text{for }Q^{\B,obs}_{fjt}>0.
+\end{equation}
+If the raw purchase value is tax-exclusive, convert it to gross using $c^{B,obs}=(1+\tau_t)c^{B,net,obs}$ before applying the model. If procurement cost is not directly observed but the product is pure buy or mixed, the model implies
+\begin{equation}
+    c^{B,imp}_{fjt}
+    =\frac{P^{obs}_{fjt}}{(1+\tau_t)\mu_j\kappa^{\B}_{fjt}},
+    \qquad \mu_j=\frac{\sigma_j}{\sigma_j-1},
+    \label{eq:cB_implied}
+\end{equation}
+up to measurement error. Under the baseline resale-credit assumption $\chi^{\B}_{fjt}=1$, this reduces to $c^{B,imp}_{fjt}=P^{obs}_{fjt}/\mu_j$.
+
+For observations with $Q^{\B,obs}_{fjt}>0$, estimate
+\begin{equation}
+    \log c^{B,obs}_{fjt}
+    =\delta^{\B}_{jct}
+    +x^{B\prime}_{ft}\gamma_B
+    +z^{B\prime}_{jct}\lambda_B
+    +e^B_{fjt}.
+    \label{eq:buy_cost_empirical}
+\end{equation}
+The residual $e^B_{fjt}$ is not a structural shock. It captures measurement error in observed procurement costs, unit conversion problems, VAT-invoice reporting problems, and specification error. It is not observed by the firm, it does not enter the firm's profit, and it is not integrated over in the discrete-choice likelihood.
+
+This block identifies the systematic component of gross outsourcing cost, $\Theta_B=\{\delta^\B_{jct},\gamma_B,\lambda_B\}$. For products with no observed outsourcing, $c^{\B}_{fjt}$ is predicted from equation \eqref{eq:buy_cost}; it is not treated as a latent random cost in the baseline. The likelihood uses the after-credit cost $\widetilde c^{\B}_{fjt}=\kappa^{\B}_{fjt}c^{\B}_{fjt}$.
+
+\subsection{Step 3: In-house marginal-cost equation and \texorpdfstring{$\gamma_Q$}{gamma Q}}
+
+For products with positive in-house production, the model provides a marginal-cost equation at the marginal internally made unit. The first-order condition identifies the after-credit marginal cost:
+\begin{equation}
+    \widetilde{mc}^{obs}_{fjt}=\frac{P^{obs}_{fjt}}{(1+\tau_t)\mu_j}
+    \label{eq:effective_mc_target}
+\end{equation}
+when the marginal unit is priced on the demand curve. Equation \eqref{eq:mc_make_log}, however, is written for gross in-house marginal cost before input VAT credits. Therefore the target for the gross in-house marginal cost is
+\begin{equation}
+    mc^{M,obs}_{fjt}= 
+    \begin{cases}
+        \dfrac{P^{obs}_{fjt}}{(1+\tau_t)\mu_j\kappa^{\M}_{fjt}}, & a^{obs}_{fjt}=\M,\\[1.0em]
+        \dfrac{\kappa^{\B}_{fjt}c^{B,obs}_{fjt}}{\kappa^{\M}_{fjt}}, & a^{obs}_{fjt}=\X\text{ and direct procurement cost is observed},\\[1.0em]
+        \dfrac{P^{obs}_{fjt}}{(1+\tau_t)\mu_j\kappa^{\M}_{fjt}}, & a^{obs}_{fjt}=\X\text{ and direct procurement cost is unavailable}.
+    \end{cases}
+    \label{eq:mc_target}
+\end{equation}
+For pure-make products, the marginal internally made unit is the total quantity. For mixed products, the marginal internally made unit is the in-house quantity at the make-buy cutoff. Define
+\begin{equation}
+    \widetilde Q^{\M}_{fjt}=Q^{\M,obs}_{fjt}
+    =\begin{cases}
+        q^{obs}_{fjt}, & a^{obs}_{fjt}=\M,\\
+        Q^{\M,obs}_{fjt}, & a^{obs}_{fjt}=\X.
+    \end{cases}
+    \label{eq:Qtilde}
+\end{equation}
+Then equation \eqref{eq:mc_make_log} implies
+\begin{align}
+    \log mc^{M,obs}_{fjt}
+    =&\ \delta^{\M}_{jt}
+    +\gamma_Q\log \widetilde Q^{\M}_{fjt}
+    +\gamma_{PM}\log PM_{fjt}
+    +\gamma_w\log w_{ct}
+    +\gamma_K\log K_{ft}
+    -\gamma_A\log A^0_{ft} \notag\\
+    &-\left(\theta_S+\theta_{SK}\log K_{ft}\right)S_{m_{ft}j}
+    +e^M_{fjt}.
+    \label{eq:make_cost_empirical}
+\end{align}
+The residual $e^M_{fjt}$ is not a structural shock. It captures measurement error in prices, quantities, markup-implied marginal costs, procurement-cost measures used for mixed products, material-price imputation, and approximation error. It is not observed by the firm and is not integrated over in the discrete-choice likelihood.
+
+The in-house cost block identifies $\gamma_Q$, $\gamma_{PM}$, $\gamma_w$, $\gamma_K$, $\gamma_A$, $\theta_S$, and $\theta_{SK}$. The coefficient $\gamma_Q$ is identified by how the marginal-cost target changes with in-house quantity among pure-make and mixed products. Mixed products are particularly informative because the observed in-house quantity pins down the make-buy cutoff $\bar Q^{\tau}$. The coefficient $\gamma_{PM}$ is identified by variation in material prices across local product-input markets, after controlling for product-year fixed effects and other cost shifters.
+
+The corresponding residual is
+\begin{align}
+    \widehat e^{M}_{fjt}(\Theta_M)
+    =&\ \log mc^{M,obs}_{fjt}
+    -\delta^{\M}_{jt}
+    -\gamma_Q\log \widetilde Q^{\M}_{fjt}
+    -\gamma_{PM}\log PM_{fjt}
+    -\gamma_w\log w_{ct} \notag\\
+    &-\gamma_K\log K_{ft}
+    +\gamma_A\log A^0_{ft}
+    +\left(\theta_S+\theta_{SK}\log K_{ft}\right)S_{m_{ft}j}.
+    \label{eq:make_residual}
+\end{align}
+The cost moments are
+\begin{equation}
+    \E\left[Z^M_{fjt}\widehat e^{M}_{fjt}(\Theta_M)\right]=0,
+    \label{eq:make_moments}
+\end{equation}
+where $Z^M_{fjt}$ includes wage shifters, material price shifters, capital, core productivity, input similarity, and product-year fixed-effect instruments. Because source choices are selected outcomes, the final joint refinement below should include the discrete sourcing likelihood so that the continuous cost parameters are not interpreted solely from the selected active-in-house sample.
+
+\subsection{Step 4: Construct variable-profit objects for every included product}
+
+For each included product $j\in\mc{C}^{E}_{ft}$, use the current parameter values and observed covariates to compute
+\begin{equation}
+    \bar D_{fjt},
+    \qquad
+    a^{\M}_{fjt},
+    \qquad
+    c^{\B}_{fjt},
+    \qquad
+    \widetilde a^{\M}_{fjt}=\kappa^{\M}_{fjt}a^{\M}_{fjt},
+    \qquad
+    \widetilde c^{\B}_{fjt}=\kappa^{\B}_{fjt}c^{\B}_{fjt}.
+\end{equation}
+The gross cost objects $a^{\M}_{fjt}$ and $c^{\B}_{fjt}$ are deterministic functions of observed covariates and parameters. The VAT-adjusted objects $\widetilde a^{\M}_{fjt}$ and $\widetilde c^{\B}_{fjt}$ are the after-credit cost objects that enter the firm's choice problem. There is no integration over cost shocks.
+
+For a product with observed $D^{obs}_{fjt}$, set $D_{fjt}=D^{obs}_{fjt}$ when computing its conditional choice probabilities. For a product without observed demand, use the finite demand states
+\begin{equation}
+    D^{(r)}_{fjt}=\bar D_{fjt}\exp(s_r),
+    \qquad r=1,\ldots,R.
+    \label{eq:D_states}
+\end{equation}
+For each relevant demand value $D\in\{D^{obs}_{fjt}\}$ or $D\in\{D^{(r)}_{fjt}\}_{r=1}^R$, compute
+\begin{align}
+    \bar Q^{\tau}_{fjt}&=\left(\frac{\widetilde c^{\B}_{fjt}}{\widetilde a^{\M}_{fjt}}\right)^{1/\gamma_Q},
+    \label{eq:qbar_empirical}\\
+    q^{\B *}_{fjt}(D)&=D\left((1+\tau_t)\mu_j\widetilde c^{\B}_{fjt}\right)^{-\sigma_j},
+    \label{eq:qB_empirical}\\
+    G^{\B}_{fjt}(D)&=\frac{1}{\sigma_j(1+\tau_t)}D\left((1+\tau_t)\mu_j\widetilde c^{\B}_{fjt}\right)^{1-\sigma_j},
+    \label{eq:GB_empirical}\\
+    q^{\M u}_{fjt}(D)&=\left(\frac{\eta_jD^{1/\sigma_j}}{(1+\tau_t)\widetilde a^{\M}_{fjt}}\right)^{1/(\gamma_Q+1/\sigma_j)},
+    \label{eq:qMu_empirical}\\
+    q^{I*}_{fjt}(D)&=\begin{cases}
+        q^{\M u}_{fjt}(D), & q^{\M u}_{fjt}(D)\leq\bar Q^{\tau}_{fjt},\\
+        q^{\B *}_{fjt}(D), & q^{\M u}_{fjt}(D)>\bar Q^{\tau}_{fjt},
+    \end{cases}
+    \label{eq:qI_empirical}\\
+    G^{I}_{fjt}(D)&=\frac{1}{1+\tau_t}R^G_{fjt}(q^{I*}_{fjt}(D);D)-H^{\tau}_{fjt}(q^{I*}_{fjt}(D)).
+    \label{eq:GI_empirical}
+\end{align}
+These objects summarize the variable-profit part of the firm's problem. The fixed-cost parameters then govern whether the product is not offered, bought, or produced in-house.
+
+\subsection{Step 5: Closed-form fixed-cost likelihood}
+
+Conditional on $G^{\B}_{fjt}(D)$ and $G^I_{fjt}(D)$, the fixed-cost inequalities give closed-form choice probabilities under the exponential fixed-cost specification. To simplify notation, suppress $fjt$ and write $G^\B$, $G^I$, $\lambda_O$, and $\lambda_M$, where
+\[
+    \lambda_O=\lambda^{\OFC}_{fjt},
+    \qquad
+    \lambda_M=\lambda^{\M}_{fjt}.
+\]
+Define
+\begin{equation}
+    \Delta\equiv \max\{G^I-G^\B,0\}.
+    \label{eq:Delta_def}
+\end{equation}
+The probability of pure buying is
+\begin{equation}
+    \pi^{\B}(D)
+    =\left[1-\exp(-\lambda_O G^\B)\right]
+    \exp(-\lambda_M\Delta),
+    \label{eq:prob_buy_closed}
+\end{equation}
+where the first term is the probability that the offering fixed cost is below pure-buy variable profit, and the second term is the probability that the make fixed cost is high enough that active in-house production does not dominate pure buying.
+
+The probability of active in-house production is zero when $\Delta=0$. When $\Delta>0$ and $\lambda_O\neq\lambda_M$,
+\begin{align}
+    \pi^{I}(D)
+    =&\ 1-\exp(-\lambda_M\Delta)
+    -\exp(-\lambda_O G^I)
+      \frac{\lambda_M\left[\exp\{(\lambda_O-\lambda_M)\Delta\}-1\right]}
+           {\lambda_O-\lambda_M}.
+    \label{eq:prob_internal_closed}
+\end{align}
+When $\Delta>0$ and $\lambda_O=\lambda_M=\lambda$,
+\begin{equation}
+    \pi^{I}(D)
+    =1-\exp(-\lambda\Delta)-\lambda\Delta\exp(-\lambda G^I).
+    \label{eq:prob_internal_equal_rates}
+\end{equation}
+These expressions come from
+\begin{equation}
+    \pi^I(D)=\int_0^{\Delta}\left[1-\exp\{-\lambda_O(G^I-u)\}\right]\lambda_M\exp(-\lambda_M u)\,\dd u.
+    \label{eq:prob_internal_integral}
+\end{equation}
+Equation \eqref{eq:prob_internal_closed} is the closed-form value of the integral.
+
+The probability of not offering is
+\begin{equation}
+    \pi^0(D)=1-\pi^{\B}(D)-\pi^{I}(D).
+    \label{eq:prob_no_offer_closed}
+\end{equation}
+Active in-house production is classified as pure make or mixed according to the VAT-adjusted variable-cost cutoff:
+\begin{align}
+    \pi^{\M}(D)&=\pi^I(D)\cdot \one\{q^{I*}(D)\leq\bar Q^{\tau}\},
+    \label{eq:prob_make_closed}\\
+    \pi^{\X}(D)&=\pi^I(D)\cdot \one\{q^{I*}(D)>\bar Q^{\tau}\}.
+    \label{eq:prob_mix_closed}
+\end{align}
+If measurement error or classification error in source shares is important, the indicator functions in equations \eqref{eq:prob_make_closed} and \eqref{eq:prob_mix_closed} can be smoothed with a small classification-error probability. The baseline should start with exact classification.
+
+\subsection{Observed and latent demand in the likelihood}
+
+For an included product with observed demand $D^{obs}_{fjt}$, define
+\begin{equation}
+    \widetilde\pi^a_{fjt}=\pi^a_{fjt}(D^{obs}_{fjt}),
+    \qquad a\in\{0,\B,\M,\X\}.
+    \label{eq:pi_observed_D}
+\end{equation}
+For an included product without observed demand, including nonoffered products, define
+\begin{equation}
+    \widetilde\pi^a_{fjt}
+    =\sum_{r=1}^R \varrho_r\pi^a_{fjt}(D^{(r)}_{fjt}),
+    \qquad a\in\{0,\B,\M,\X\}.
+    \label{eq:pi_latent_D}
+\end{equation}
+Thus, latent demand uncertainty is handled by a finite sum over $R$ demand states. There is no simulation and no numerical integration. For nonoffered products, only $\widetilde\pi^0_{fjt}$ enters the likelihood. For offered products with missing or unreliable price and quantity data, the same finite-sum formula can be used for the observed source category.
+
+The weighted log likelihood for the discrete choices is
+\begin{align}
+    \mc{L}_F(\Theta_F,\Theta_\xi)
+    =&\sum_{f,t}\sum_{j\in\mc{C}^{E}_{ft}}\varpi_{fjt}
+    \Big[
+        \one\{a^{obs}_{fjt}=0\}\log \widetilde\pi^0_{fjt}
+        +\one\{a^{obs}_{fjt}=\B\}\log \widetilde\pi^{\B}_{fjt} \notag\\
+    &\hspace{7em}
+        +\one\{a^{obs}_{fjt}=\M\}\log \widetilde\pi^{\M}_{fjt}
+        +\one\{a^{obs}_{fjt}=\X\}\log \widetilde\pi^{\X}_{fjt}
+    \Big].
+    \label{eq:fixed_likelihood}
+\end{align}
+In implementation, replace any probability below a small numerical floor, such as $10^{-12}$, by that floor before taking logs. This is a numerical safeguard and not a modelling assumption.
+
+This block identifies the fixed-cost mean parameters $\phi^{\OFC}_{jt}$, $\psi_{\OFC}$, $\phi^{\M}_{jt}$, and $\psi_M$, together with the finite-support demand-shock parameters if they are estimated jointly. The pure-buy share is particularly informative about $F^{\M}$; the no-offer share is particularly informative about $F^{\OFC}$; the mixed share is informative about both $F^{\M}$ and $\gamma_Q$.
+
+\subsection{Step 6: Final joint refinement}
+
+The sequential estimates should be used as starting values for a final joint estimator. The joint objective combines demand moments, outsourcing-cost moments, in-house-cost moments, and the discrete-choice likelihood:
+\begin{equation}
+    \widehat\Theta
+    =\argmin_{\Theta}
+    \left[
+        g_D(\Theta)'W_Dg_D(\Theta)
+        +g_B(\Theta)'W_Bg_B(\Theta)
+        +g_M(\Theta)'W_Mg_M(\Theta)
+        -\lambda_L\mc{L}_F(\Theta)
+    \right],
+    \label{eq:joint_objective}
+\end{equation}
+where $g_D$, $g_B$, and $g_M$ are the stacked sample analogues of the demand, outsourcing-cost, and make-cost moments. The cost moment blocks use the measurement residuals $e^B$ and $e^M$, not structural cost shocks. The scalar $\lambda_L$ normalizes the likelihood relative to the moment blocks.
+
+A pure simulated method of moments version is also possible, but it is no longer necessary for the fixed-cost likelihood because the exponential fixed-cost model gives closed-form probabilities and the finite-support demand distribution gives finite sums. If a moment-based version is used, useful moments include:
+\begin{enumerate}
+    \item product-offer rates by input-similarity and output-complementarity bins;
+    \item pure-buy, pure-make, and mixed shares by similarity bins;
+    \item outsourcing shares by firm-size bins;
+    \item average product revenue and quantity by source category;
+    \item sales scope, production scope, and scope gap by firm-size decile;
+    \item material-price gradients in in-house production costs;
+    \item VAT-adjusted outsourcing-cost and in-house-cost margins;
+    \item core mixed share and secondary mixed share.
+\end{enumerate}
+The likelihood version is preferred for the baseline because it uses product-level action probabilities directly and avoids simulating latent cost shocks.
+
+% ------------------------------------------------------------
+\section{Identification Summary}
+% ------------------------------------------------------------
+
+The model is identified by combining continuous outcomes with discrete choices.
+
+\begin{longtable}{L{0.28\linewidth}L{0.32\linewidth}L{0.32\linewidth}}
+\toprule
+Parameter or object & Main source of variation & Main identifying outcomes \\
+\midrule
+\endfirsthead
+\toprule
+Parameter or object & Main source of variation & Main identifying outcomes \\
+\midrule
+\endhead
+Demand elasticities $\sigma_g$ & Cost shifters and markup restrictions & Price-quantity relationships, demand residual moments, and source-specific markup equations using gross VAT-inclusive prices. \\
+\addlinespace
+Output-complementarity demand effect $\beta_C,\beta_{Ch}$ & Variation in $C_{m_{ft}j}$ across candidate products within core-product groups and firm types & Product sales, product choice, new product importance, and demand shifters inferred from gross prices and quantities. \\
+\addlinespace
+Demand-shock support $\{s_r,\varrho_r\}$ & Residual dispersion in observed demand and offer/no-offer patterns for products with similar observables & Demand residual distribution among sold products and product choice probabilities for nonoffered products. \\
+\addlinespace
+Increasing marginal cost $\gamma_Q$ & Variation in in-house quantity among pure-make and mixed products & Gross in-house marginal-cost targets adjusted for VAT credits; mixed share by output scale. \\
+\addlinespace
+Material-price cost effect $\gamma_{PM}$ & Variation in $PM_{fjt}$ across local product-input markets after product-year fixed effects & Gross in-house marginal-cost targets and source choices as material prices change. \\
+\addlinespace
+Input-similarity cost effect $\theta_S,\theta_{SK}$ & Variation in $S_{m_{ft}j}$ and its interaction with capital & In-house marginal-cost residuals, pure-make versus pure-buy choices, mixed thresholds, and outsourcing shares. \\
+\addlinespace
+Outsourcing-cost parameters $\gamma_B,\lambda_B$ & Local supplier-market and product-location variation & Gross procurement costs for outsourced units and markup-implied outsourcing costs. \\
+\addlinespace
+VAT adjustment objects $\tau_t,\chi^{\M},\chi^{\B}$ & Known tax rules and constructed creditable cost shares & Conversion of gross revenues and costs into net-of-VAT variable profits; these are not primarily identified from choices when the VAT rate is common. \\
+\addlinespace
+Offering fixed-cost means $\phi^{\OFC},\psi_{\OFC}$ & Observed non-offer rates conditional on predicted net-of-VAT variable profits & Product-scope extensive margin and no-offer probabilities. \\
+\addlinespace
+Make fixed-cost means $\phi^{\M},\psi_M$ & Pure-buy versus active-in-house choices conditional on predicted variable-profit savings & Pure outsourcing share, pure make share, mixed share, and active in-house probability. \\
+\bottomrule
+\end{longtable}
+
+The most important model-specific identification comes from four margins. First, output complementarity raises demand and therefore product offering and sales. Second, input similarity lowers the in-house marginal cost schedule and raises the make-buy cutoff $\bar Q^{\tau}$. Third, material prices shift in-house marginal costs independently of demand. Fourth, the VAT credit mechanism converts gross material and outsourcing costs into after-credit costs, which enter the sourcing cutoff and variable-profit comparisons.
+
+% ------------------------------------------------------------
+\section{Implementation Checklist}
+% ------------------------------------------------------------
+
+The estimation can be implemented as follows.
+
+\begin{enumerate}
+    \item Build a firm-product-year panel for the estimation set $\mc{C}^{E}_{ft}$ with sampling weights $\varpi_{fjt}$.
+    \item Construct source categories $0$, $\B$, $\M$, and $\X$ from in-house and outsourced quantities or values.
+    \item Convert prices, revenues, procurement costs, and material prices into the gross VAT-inclusive convention used in the model. Record the known VAT rate $\tau_t$.
+    \item Construct $PM_{fjt}$ for every candidate product. Use observed firm-product material prices for made products when reliable and imputed local product-input prices for non-made products.
+    \item Construct creditable shares $\chi^{\M}_{fjt}$ and $\chi^{\B}_{fjt}$ and the multipliers $\kappa^{\M}_{fjt}$ and $\kappa^{\B}_{fjt}$.
+    \item Estimate or calibrate product-group demand elasticities using structural demand moments with cost shifters.
+    \item Construct $D^0_{ft}=q^0_{ft}(P^0_{ft})^{\sigma_{g(m)}}$ and $h_{ft}=\log D^0_{ft}$.
+    \item Estimate secondary-product demand shifters and recover $\widehat\xi^D_{fjt}$ for chosen products with reliable gross price and quantity data.
+    \item Estimate outsourcing-cost parameters using direct gross procurement costs when available and markup-implied costs as validation or fallback. Treat residuals as measurement error, not structural shocks.
+    \item Estimate in-house marginal-cost parameters using pure-make and mixed products, especially the equation linking gross in-house marginal cost to in-house quantity and material prices. Treat residuals as measurement error, not structural shocks.
+    \item Initialize the finite-support demand distribution $\{s_r,\varrho_r\}$ from residual quantiles, then refine it in the discrete-choice likelihood or joint estimator.
+    \item For every candidate product and each needed demand state, compute $\widetilde a^{\M}$, $\widetilde c^{\B}$, $q^{\B*}$, $G^{\B}$, $q^{\M u}$, $\bar Q^{\tau}$, $q^{I*}$, and $G^I$.
+    \item Estimate offering and make fixed-cost mean functions using the weighted product-level action likelihood in equation \eqref{eq:fixed_likelihood}. Use the closed-form probabilities in equations \eqref{eq:prob_buy_closed}--\eqref{eq:prob_mix_closed}.
+    \item Refine all parameters jointly using the combined objective in equation \eqref{eq:joint_objective}.
+    \item Evaluate model fit by comparing observed and predicted sales scope, production scope, pure-buy share, pure-make share, mixed share, outsourcing intensity, material-price gradients, and their gradients with respect to input similarity, output complementarity, and firm size.
+\end{enumerate}
+
+The last step is model validation. The model should reproduce the central empirical patterns: high prevalence of outsourcing, substantial mixed sourcing, the positive role of output complementarity in product choice and outsourcing, the role of input similarity in making in-house production more attractive, and the contribution of material prices and VAT credits to sourcing incentives.
+
+\end{document}
