@@ -1,0 +1,161 @@
+----------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  G:\Kuangyu_Temp\Outsource\productivity\productivity\huisuan_corrected.log
+  log type:  text
+ opened on:  28 May 2026, 17:09:37
+
+. 
+. ************************************************************
+. * 1. Load full_data and keep one row per 2017 firm
+. ************************************************************
+. use "G:\Kuangyu_Temp\Outsource\full_data.dta", clear
+
+. keep if year == 2017
+(49,411,715 observations deleted)
+
+. keep firm_id year
+
+. bysort firm_id: keep if _n == 1
+(35,165,643 observations deleted)
+
+. 
+. count
+  5,719,292
+
+. local n_full = r(N)
+
+. display "full_data 2017 unique firms: `n_full'"
+full_data 2017 unique firms: 5719292
+
+. 
+. ************************************************************
+. * 2. Convert firm_id to cid, then merge bridge table
+. ************************************************************
+. destring firm_id, gen(cid) force
+firm_id: all characters numeric; cid generated as long
+
+. count if missing(cid)
+  0
+
+. display "missing cid after destring firm_id: " r(N)
+missing cid after destring firm_id: 0
+
+. 
+. merge m:1 cid using "G:\Kuangyu_Temp\Outsource\productivity\cid_entid_unique.dta", ///
+>     keepusing(id) keep(master match)
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                       473,627
+        from master                   473,627  (_merge==1)
+        from using                          0  (_merge==2)
+
+    Matched                         5,245,665  (_merge==3)
+    -----------------------------------------
+
+. 
+. gen bridge_matched = (_merge == 3)
+
+. count if bridge_matched == 1
+  5,245,665
+
+. local n_bridge = r(N)
+
+. display "matched to cid_entid_unique.dta: `n_bridge'"
+matched to cid_entid_unique.dta: 5245665
+
+. display "bridge match rate among all full_data 2017 firms: " %9.4f (`n_bridge' / `n_fu
+> ll')
+bridge match rate among all full_data 2017 firms:    0.9172
+
+. 
+. drop _merge
+
+. 
+. ************************************************************
+. * 3. Prepare huisuan 2017 data: keep first row per id
+. ************************************************************
+. tempfile huisuan2017
+
+. preserve
+
+.     use "H:\汇算数据\2017.dta", clear
+
+.     gen year = 2017
+
+.     bysort id year: gen rep_no = _n
+
+.     keep if rep_no == 1
+(363,481 observations deleted)
+
+.     keep id 从业人数 资产总额
+
+.     save `huisuan2017', replace
+(file F:\StataTemp\ST_d864_000001.tmp not found)
+file F:\StataTemp\ST_d864_000001.tmp saved as .dta format
+
+. restore
+
+. 
+. ************************************************************
+. * 4. Merge huisuan data, keeping only full_data master firms
+. ************************************************************
+. merge m:1 id using `huisuan2017', ///
+>     keepusing(从业人数 资产总额) keep(master match)
+(variable id was long, now double to accommodate using data's values)
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                     4,125,053
+        from master                 4,125,053  (_merge==1)
+        from using                          0  (_merge==2)
+
+    Matched                         1,594,239  (_merge==3)
+    -----------------------------------------
+
+. 
+. gen huisuan_matched = (_merge == 3)
+
+. count if huisuan_matched == 1
+  1,594,239
+
+. local n_huisuan = r(N)
+
+. display "matched to huisuan 2017: `n_huisuan'"
+matched to huisuan 2017: 1594239
+
+. display "huisuan match rate among all full_data 2017 firms: " %9.4f (`n_huisuan' / `n_
+> full')
+huisuan match rate among all full_data 2017 firms:    0.2787
+
+. 
+. count if !missing(从业人数)
+  1,594,012
+
+. display "nonmissing employment among full_data 2017 firms: " r(N)
+nonmissing employment among full_data 2017 firms: 1594012
+
+. 
+. count if !missing(资产总额)
+  1,594,239
+
+. display "nonmissing assets among full_data 2017 firms: " r(N)
+nonmissing assets among full_data 2017 firms: 1594239
+
+. 
+. ************************************************************
+. * 5. Save check dataset
+. ************************************************************
+. save "G:\Kuangyu_Temp\Outsource\productivity\productivity\full_data_2017_huisuan_match
+> _check.dta", replace
+file
+    G:\Kuangyu_Temp\Outsource\productivity\productivity\full_data_2017_huisuan_match_c
+    > heck.dta saved
+
+. 
+. log close
+      name:  <unnamed>
+       log:  G:\Kuangyu_Temp\Outsource\productivity\productivity\huisuan_corrected.log
+  log type:  text
+ closed on:  28 May 2026, 17:11:56
+----------------------------------------------------------------------------------------
