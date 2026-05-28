@@ -8,7 +8,15 @@
       "Read(//c/Users/HKUBS/AppData/Local/Programs/**)",
       "Bash(ls \"C:/Users/HKUBS/anaconda3/\" 2>&1 | head -5; ls \"C:/Users/HKUBS/miniconda3/\" 2>&1 | head -5; ls \"C:/Users/HKUBS/AppData/Local/Programs/Python/\" 2>&1)",
       "Bash(C:/Users/HKUBS/anaconda3/python.exe -c ' *)",
-      "Bash(C:/Users/HKUBS/anaconda3/python.exe -X utf8 -c ' *)"
+      "Bash(C:/Users/HKUBS/anaconda3/python.exe -X utf8 -c ' *)",
+      "Bash(dir full_product_similarity.dta)",
+      "Bash(where py *)",
+      "Bash(py --version)",
+      "Bash(where python3.exe)",
+      "Bash(where stata *)",
+      "Bash(del \"C:\\\\Users\\\\HKUBS\\\\Documents\\\\aproject\\\\Outsourcing\\\\code\\\\productivity\\\\five_input_csv_summary.md\")",
+      "Bash(del \"C:\\\\Users\\\\HKUBS\\\\Documents\\\\aproject\\\\Outsourcing\\\\code\\\\productivity\\\\seller_market_condition_sql.md\")",
+      "Bash(del \"C:\\\\Users\\\\HKUBS\\\\Documents\\\\aproject\\\\Outsourcing\\\\code\\\\productivity\\\\GX17_aggregation_queries.md\")"
     ]
   }
 }
