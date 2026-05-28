@@ -67,44 +67,22 @@ display "after firm_chars merge: " r(N)
 
 * --- 合并投入/产出相似度（S_mj, C_mj）---
 *
-* 正确来源：full_product_similarity.dta（任意两产品之间，2778×2777/2 对）
-*   - full_data 里的 input_similarity/output_similarity 只是企业主产品 vs 副产品，覆盖有限
-*   - full_product_similarity 是全量产品对相似度，覆盖所有 2778 个产品
-*
-* 三步合并：
-*   Step 1: 从 full_data 提取企业主产品 main_product（核心产品 = production_value 最大）
-*   Step 2: 把 full_product_similarity 做成双向表（原表只有上三角，需追加反向）
-*   Step 3: 按 (main_product_f, product_id_j) 做 merge → 得到 S_mj, C_mj
+* 来源：full_data.dta（firm × product 层面，已预计算 sim(main_product_f, product_j)）
+*   - 外包产品必然出现在企业销售侧，因此在 full_data 中有对应记录
+*   - 直接按 (firm_id, product_id, year) 合并，覆盖率预期 > 90%
+*   - full_data 的 main_product 按生产产值定义，与 VAT 净生产额定义一致
 
-* Step 1: 提取企业主产品
 preserve
     use "G:\Kuangyu_Temp\Outsource\full_data.dta", clear
-    keep firm_id year main_product
-    duplicates drop firm_id year, force
-    save "firm_main_temp.dta", replace
-restore
-merge m:1 firm_id year using "firm_main_temp.dta", ///
-    keepusing(main_product) keep(master match) nogen
-count if missing(main_product)
-display "missing main_product (未匹配到 full_data): " r(N)
-
-* Step 2: 构造双向相似度对（原表上三角，追加反向使 merge 方向无关）
-preserve
-    use "G:\Kuangyu_Temp\Outsource\full_product_similarity.dta", clear
-    rename product_1 main_product
-    rename product_2 product_id
-    save "sim_pairs_temp.dta", replace
-    rename main_product temp_swap
-    rename product_id main_product
-    rename temp_swap product_id
-    append using "sim_pairs_temp.dta"
-    duplicates drop main_product product_id, force
-    keep main_product product_id input_similarity output_similarity
-    save "sim_pairs_temp.dta", replace
+    keep firm_id year product_id input_similarity output_similarity
+    duplicates drop firm_id year product_id, force
+    save "sim_temp.dta", replace
 restore
 
-* Step 3: merge 相似度
-merge m:1 main_product product_id using "sim_pairs_temp.dta", keep(master match) nogen
+merge m:1 firm_id product_id year using "sim_temp.dta", ///
+    keepusing(input_similarity output_similarity) keep(master match) nogen
+erase "sim_temp.dta"
+
 count if missing(input_similarity)
 display "missing input_similarity: " r(N)
 count if missing(output_similarity)
@@ -160,8 +138,6 @@ summarize ln_p_net ln_firm_output ln_Capital n_products ///
 
 compress
 save "reg_panel.dta", replace
-erase "firm_main_temp.dta"
-erase "sim_pairs_temp.dta"
 erase "huisuan_2017_clean.dta"
 
 
