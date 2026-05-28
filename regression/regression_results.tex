@@ -1,0 +1,359 @@
+\documentclass[12pt]{article}
+\usepackage[UTF8]{ctex}      % Chinese support — compile with XeLaTeX
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{caption}
+\usepackage{threeparttable}
+\usepackage{float}
+\usepackage{setspace}
+\usepackage{pdflscape}
+\usepackage{multirow}
+
+\geometry{left=1.1in, right=1.1in, top=1in, bottom=1in}
+\setstretch{1.25}
+\captionsetup{labelfont=bf, font=small}
+
+\newcommand{\sym}[1]{\ensuremath{^{\text{#1}}}}
+\newcommand{\se}[1]{{\small(#1)}}
+\newcommand{\abs}{—}   % absorbed by FE
+\newcommand{\mis}{}    % variable not in regression (blank)
+
+\begin{document}
+
+% ============================================================
+%  Title
+% ============================================================
+\begin{center}
+  {\large\bfseries 外包采购价格的决定因素：回归结果汇总}\\[4pt]
+  {\normalsize 2026-05-28}
+\end{center}
+
+\vspace{4pt}
+\noindent\textbf{样本说明：} 2017年增值税发票数据，限定为\textbf{外包产品}——同一企业在同一年内对同一产品既有采购记录（\texttt{firm\_buy}）又有销售记录（\texttt{firm\_sell}）。\textbf{中介企业（外包比例 $>90\%$ 的纯转卖商）已全部剔除}，所有表格使用同一样本。因变量为外包采购单价对数 $\ln p_{fjct}$，对应结构模型 Step 2 的外包成本方程（样本限定 $Q^B_{fjt}>0$）。标准误聚类到企业层面，括号内为标准误。$^{*}p<0.10$，$^{**}p<0.05$，$^{***}p<0.01$。
+
+\bigskip
+
+% ============================================================
+%  TABLE 1: Baseline progressive FE
+% ============================================================
+\section*{表一：基准回归（逐步加入固定效应）}
+
+\noindent\textbf{回归方程：}
+
+\vspace{-4pt}
+\begin{equation}
+  \ln p_{fjct}
+    = \underbrace{\gamma_1\ln\mathrm{Output}_{ft}
+                + \gamma_2\ln K_{ft}
+                + \gamma_3 n\mathrm{Prod}_{ft}}_{\text{企业特征 }x_{ft}}
+    + \underbrace{\lambda_1\ln n^B_{jct}
+                + \lambda_2\ln n^S_{jct}
+                + \lambda_3\ln q^m_{jct}
+                + \lambda_4\ln\bar{p}^m_{jct}}_{\text{市场条件 }z_{jct}}
+    + \delta_f^{[k]} + \delta_j^{[k]} + \delta_c^{[k]}
+    + \varepsilon_{fjct}
+  \label{eq:baseline}
+\end{equation}
+
+企业特征变量（$x_{ft}$）在加入企业固定效应 $\delta_f$ 后被完全吸收，仅在 OLS 规格（列1--2）中可识别。市场条件变量（$z_{jct}$）在所有规格中均可识别。固定效应跨列逐步加入。
+
+\vspace{6pt}
+
+\begin{table}[H]
+\centering
+\small
+\begin{threeparttable}
+\caption{基准回归：逐步加入固定效应}
+\begin{tabular}{l *{5}{c}}
+\toprule
+ & (1) & (2) & (3) & (4) & (5) \\
+ & OLS-bare & OLS-full & +Firm FE & +Firm+Prod & +Firm+Prod+City \\
+\midrule
+$\ln\mathrm{Output}_{ft}$
+  & $0.146\sym{***}$ & $0.109\sym{***}$ & \abs & \abs & \abs \\
+  & \se{0.031} & \se{0.020} & & & \\[3pt]
+$\ln K_{ft}$
+  & $0.001$ & $-0.003$ & \abs & \abs & \abs \\
+  & \se{0.025} & \se{0.017} & & & \\[3pt]
+$n\mathrm{Prod}_{ft}$
+  & $-0.001\sym{***}$ & $-0.001\sym{***}$ & \abs & \abs & \abs \\
+  & \se{0.000} & \se{0.000} & & & \\[3pt]
+$\ln n^B_{jct}$
+  & \mis & $0.250\sym{***}$ & $0.046$ & $-0.019$ & $-0.019$ \\
+  & & \se{0.060} & \se{0.037} & \se{0.045} & \se{0.045} \\[3pt]
+$\ln n^S_{jct}$
+  & \mis & $-0.021$ & $0.028$ & $-0.081\sym{*}$ & $-0.081\sym{*}$ \\
+  & & \se{0.074} & \se{0.046} & \se{0.045} & \se{0.045} \\[3pt]
+$\ln q^m_{jct}$
+  & \mis & $-0.027$ & $0.017$ & $0.000$ & $0.000$ \\
+  & & \se{0.022} & \se{0.017} & \se{0.022} & \se{0.022} \\[3pt]
+$\ln\bar{p}^m_{jct}$
+  & \mis & $0.742\sym{***}$ & $0.650\sym{***}$ & $0.169\sym{***}$ & $0.169\sym{***}$ \\
+  & & \se{0.025} & \se{0.023} & \se{0.037} & \se{0.037} \\[3pt]
+Constant
+  & $1.834\sym{***}$ & $-0.986\sym{*}$ & $1.616\sym{***}$ & $4.469\sym{***}$ & $4.469\sym{***}$ \\
+  & \se{0.656} & \se{0.573} & \se{0.252} & \se{0.403} & \se{0.405} \\
+\midrule
+Firm FE    & No & No & Yes & Yes & Yes \\
+Product FE & No & No & No  & Yes & Yes \\
+City FE    & No & No & No  & No  & Yes \\
+$N$        & 24,435 & 24,394 & 24,217 & 23,869 & 23,869 \\
+Adj.\ $R^2$ & 0.025 & 0.347 & 0.492 & 0.643 & 0.640 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item \textit{注：}「—」表示该变量被固定效应吸收（系数不可识别）。列(1)-(2)的样本因含 $\ln K_{ft}$（汇算数据覆盖率约48\%）而低于列(3)-(5)。列(4)与列(5)结果完全一致，原因是企业-城市一一对应（City FE被Firm FE吸收）。
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+
+% ============================================================
+%  TABLE 2: Demand vs Supply decomposition
+% ============================================================
+\section*{表二：需求侧 vs 供给侧分解}
+
+\noindent\textbf{回归方程：}
+
+\vspace{-4pt}
+\begin{equation}
+  \ln p_{fjct}
+    = \underbrace{\lambda_1\ln n^B_{jct}
+                + \lambda_3\ln q^m_{jct}}_{\text{需求侧（Demand）}}
+    + \underbrace{\lambda_2\ln n^S_{jct}}_{\text{供给侧（Supply）}}
+    + \underbrace{\lambda_4\ln\bar{p}^m_{jct}}_{\text{市场均价}}
+    + \delta_f + \delta_j + \delta_c
+    + \varepsilon_{fjct}
+  \label{eq:demand_supply}
+\end{equation}
+
+各列逐步加入需求侧、供给侧和市场均价变量，全程保留 Firm + Product + City FE。需求侧：买方数 $n^B$ 与市场总量 $q^m$；供给侧：卖方数 $n^S$；市场均价 $\bar{p}^m$ 作为价格水平锚点。
+
+\vspace{6pt}
+
+\begin{table}[H]
+\centering
+\small
+\begin{threeparttable}
+\caption{需求侧 vs 供给侧分解}
+\begin{tabular}{l *{4}{c}}
+\toprule
+ & (1) & (2) & (3) & (4) \\
+ & Demand & Supply & Both & Both+$\bar{p}$ \\
+\midrule
+$\ln n^B_{jct}$
+  & $0.083\sym{***}$ & \mis & $0.069\sym{**}$ & $-0.016$ \\
+  & \se{0.027} & & \se{0.030} & \se{0.031} \\[3pt]
+$\ln q^m_{jct}$
+  & $-0.088\sym{***}$ & \mis & $-0.090\sym{***}$ & $0.006$ \\
+  & \se{0.011} & & \se{0.011} & \se{0.013} \\[3pt]
+$\ln n^S_{jct}$
+  & \mis & $-0.030$ & $0.030$ & $-0.008$ \\
+  & & \se{0.027} & \se{0.029} & \se{0.029} \\[3pt]
+$\ln\bar{p}^m_{jct}$
+  & \mis & \mis & \mis & $0.147\sym{***}$ \\
+  & & & & \se{0.020} \\[3pt]
+Constant
+  & $5.240\sym{***}$ & $4.539\sym{***}$ & $5.209\sym{***}$ & $3.965\sym{***}$ \\
+  & \se{0.204} & \se{0.140} & \se{0.213} & \se{0.235} \\
+\midrule
+Firm FE    & Yes & Yes & Yes & Yes \\
+Product FE & Yes & Yes & Yes & Yes \\
+City FE    & Yes & Yes & Yes & Yes \\
+$N$        & 58,575 & 58,499 & 58,499 & 58,499 \\
+Adj.\ $R^2$ & 0.636 & 0.635 & 0.636 & 0.638 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item \textit{注：}列(1)与列(2)样本差异（58,575 vs 58,499）源于 $n^S$ 有约27\%缺失值。加入 $\ln\bar{p}^m_{jct}$（列4）后，需求和供给侧变量全部失显，表明市场均价包含了竞争度的主要信息。
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+
+% ============================================================
+%  TABLE 3: Similarity
+% ============================================================
+\section*{表三：产品相似度（结构模型 $S_{mj}$, $C_{mj}$）}
+
+\noindent\textbf{回归方程：}
+
+\vspace{-4pt}
+\begin{equation}
+  \ln p_{fjct}
+    = \boldsymbol{\lambda}'\mathbf{z}_{jct}
+    + \beta_1 S_{mj}
+    + \beta_2 C_{mj}
+    + \delta_f + \delta_j + \delta_c
+    + \varepsilon_{fjct}
+  \label{eq:similarity}
+\end{equation}
+
+其中 $\mathbf{z}_{jct} = (\ln n^B_{jct},\ \ln n^S_{jct},\ \ln q^m_{jct},\ \ln\bar{p}^m_{jct})'$；$S_{mj}$（\texttt{input\_similarity}）为企业核心产品 $m$ 与外包产品 $j$ 的投入结构相似度；$C_{mj}$（\texttt{output\_similarity}）为产出结构相似度。两者来自 \texttt{full\_data.dta}，按各企业主产品（生产产值最大）预先计算。列(1)为基准（无相似度），列(2)-(4)逐步加入。
+
+\vspace{6pt}
+
+\begin{table}[H]
+\centering
+\small
+\begin{threeparttable}
+\caption{产品相似度：$S_{mj}$（投入）与 $C_{mj}$（产出）}
+\begin{tabular}{l *{4}{c}}
+\toprule
+ & (1) & (2) & (3) & (4) \\
+ & Baseline & $+S_{mj}$ & $+C_{mj}$ & Both \\
+\midrule
+$\ln n^B_{jct}$
+  & $-0.016$ & $-0.016$ & $-0.016$ & $-0.016$ \\
+  & \se{0.031} & \se{0.031} & \se{0.031} & \se{0.031} \\[3pt]
+$\ln n^S_{jct}$
+  & $-0.008$ & $-0.008$ & $-0.008$ & $-0.008$ \\
+  & \se{0.029} & \se{0.029} & \se{0.029} & \se{0.029} \\[3pt]
+$\ln q^m_{jct}$
+  & $0.006$ & $0.006$ & $0.005$ & $0.005$ \\
+  & \se{0.013} & \se{0.013} & \se{0.013} & \se{0.013} \\[3pt]
+$\ln\bar{p}^m_{jct}$
+  & $0.147\sym{***}$ & $0.147\sym{***}$ & $0.147\sym{***}$ & $0.147\sym{***}$ \\
+  & \se{0.020} & \se{0.020} & \se{0.020} & \se{0.020} \\[3pt]
+$S_{mj}$
+  & \mis & $0.029$ & \mis & $-0.031$ \\
+  & & \se{0.068} & & \se{0.083} \\[3pt]
+$C_{mj}$
+  & \mis & \mis & $0.073$ & $0.100$ \\
+  & & & \se{0.083} & \se{0.102} \\[3pt]
+Constant
+  & $3.965\sym{***}$ & $3.970\sym{***}$ & $3.977\sym{***}$ & $3.979\sym{***}$ \\
+  & \se{0.235} & \se{0.235} & \se{0.235} & \se{0.235} \\
+\midrule
+Firm FE    & Yes & Yes & Yes & Yes \\
+Product FE & Yes & Yes & Yes & Yes \\
+City FE    & Yes & Yes & Yes & Yes \\
+$N$        & 58,499 & 58,478 & 58,478 & 58,478 \\
+Adj.\ $R^2$ & 0.638 & 0.638 & 0.638 & 0.638 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item \textit{注：}列(2)-(4)样本仅减少21个观测值（覆盖率99.96\%），说明外包产品在 \texttt{full\_data} 销售侧的覆盖几乎完整。$S_{mj}$ 和 $C_{mj}$ 系数均不显著，表明在控制市场均价后，产品相似度与外包采购价格无显著关联。
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+
+% ============================================================
+%  TABLE 4: Firm-size interactions (landscape)
+% ============================================================
+
+\begin{landscape}
+
+\section*{表四：企业规模 $\times$ 市场条件交互}
+
+\noindent\textbf{回归方程：}
+
+\begin{equation}
+  \ln p_{fjct}
+    = \boldsymbol{\lambda}'\mathbf{z}_{jct}
+    + \mu_1\bigl(\ln\mathrm{Output}_{ft}\cdot\ln n^B_{jct}\bigr)
+    + \mu_2\bigl(\ln\mathrm{Output}_{ft}\cdot\ln n^S_{jct}\bigr)
+    + \mu_3\bigl(\ln\mathrm{Output}_{ft}\cdot\ln\bar{p}^m_{jct}\bigr)
+    + \mu_4\bigl(\ln\mathrm{Output}_{ft}\cdot\ln q^m_{jct}\bigr)
+    + \delta_f + \delta_j + \delta_c
+    + \varepsilon_{fjct}
+  \label{eq:interactions}
+\end{equation}
+
+$\ln\mathrm{Output}_{ft}$ 本身被 Firm FE 吸收（系数不可识别），但交互项 $\ln\mathrm{Output}_{ft}\times z^k_{jct}$ 在 firm$\times$product 层面变化，FE 规格下可识别。各列逐步加入单个交互项，列(5)全部加入。
+
+\vspace{6pt}
+
+\begin{table}[H]
+\centering
+\small
+\begin{threeparttable}
+\caption{企业规模 $\times$ 市场条件交互}
+\begin{tabular}{l *{5}{c}}
+\toprule
+ & (1) & (2) & (3) & (4) & (5) \\
+ & Baseline & $+\text{Size}\times n^B$ & $+\text{Size}\times n^S$ & $+\text{Size}\times\bar{p}^m$ & All \\
+\midrule
+$\ln\mathrm{Output}_{ft}$
+  & \abs & \abs & \abs & \abs & \abs \\
+$n\mathrm{Prod}_{ft}$
+  & \abs & \abs & \abs & \abs & \abs \\[3pt]
+$\ln n^B_{jct}$
+  & $-0.016$ & $0.306\sym{***}$ & $-0.015$ & $-0.013$ & $-0.027$ \\
+  & \se{0.031} & \se{0.089} & \se{0.031} & \se{0.031} & \se{0.138} \\[3pt]
+$\ln n^S_{jct}$
+  & $-0.008$ & $-0.012$ & $0.361\sym{***}$ & $-0.009$ & $0.047$ \\
+  & \se{0.029} & \se{0.029} & \se{0.098} & \se{0.029} & \se{0.148} \\[3pt]
+$\ln q^m_{jct}$
+  & $0.006$ & $0.005$ & $0.004$ & $0.004$ & $0.189\sym{***}$ \\
+  & \se{0.013} & \se{0.013} & \se{0.013} & \se{0.013} & \se{0.066} \\[3pt]
+$\ln\bar{p}^m_{jct}$
+  & $0.147\sym{***}$ & $0.146\sym{***}$ & $0.145\sym{***}$ & $-0.077$ & $0.096$ \\
+  & \se{0.020} & \se{0.020} & \se{0.020} & \se{0.071} & \se{0.071} \\[3pt]
+$\ln\mathrm{Output}\times\ln n^B$
+  & \mis & $-0.016\sym{***}$ & \mis & \mis & $0.001$ \\
+  & & \se{0.004} & & & \se{0.006} \\[3pt]
+$\ln\mathrm{Output}\times\ln n^S$
+  & \mis & \mis & $-0.018\sym{***}$ & \mis & $-0.003$ \\
+  & & & \se{0.005} & & \se{0.007} \\[3pt]
+$\ln\mathrm{Output}\times\ln\bar{p}^m$
+  & \mis & \mis & \mis & $0.011\sym{***}$ & $0.002$ \\
+  & & & & \se{0.004} & \se{0.004} \\[3pt]
+$\ln\mathrm{Output}\times\ln q^m$
+  & \mis & \mis & \mis & \mis & $-0.009\sym{***}$ \\
+  & & & & & \se{0.003} \\[3pt]
+Constant
+  & $3.965\sym{***}$ & $3.954\sym{***}$ & $3.976\sym{***}$ & $3.998\sym{***}$ & $3.989\sym{***}$ \\
+  & \se{0.235} & \se{0.235} & \se{0.234} & \se{0.235} & \se{0.235} \\
+\midrule
+Firm FE    & Yes & Yes & Yes & Yes & Yes \\
+Product FE & Yes & Yes & Yes & Yes & Yes \\
+City FE    & Yes & Yes & Yes & Yes & Yes \\
+$N$        & 58,499 & 58,499 & 58,499 & 58,499 & 58,499 \\
+Adj.\ $R^2$ & 0.638 & 0.638 & 0.638 & 0.638 & 0.638 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item \textit{注：}「—」表示被 Firm FE 吸收。各单项交互（列2-4）均显著，但全部加入（列5）后多数因交互项间多重共线性而失显；仅 $\ln\mathrm{Output}\times\ln q^m$（$-0.009^{***}$）稳健，表明大企业在厚市场中具有更强的议价优势。
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+\end{landscape}
+
+
+
+
+% ============================================================
+%  Variable glossary
+% ============================================================
+\vspace{8pt}
+\noindent\textbf{变量说明}
+
+\vspace{4pt}
+\begin{tabular}{ll}
+\toprule
+符号 & 含义 \\
+\midrule
+$p_{fjct}$ & 企业$f$在城市$c$购买产品$j$的年度平均单价（外包采购价格，元/单位）\\
+$\ln\mathrm{Output}_{ft}$ & 企业年总产出对数（\texttt{firm\_total\_output}，来自 \texttt{full\_data}）\\
+$\ln K_{ft}$ & 企业资产总额对数（来自汇算清缴数据，覆盖率约48\%）\\
+$n\mathrm{Prod}_{ft}$ & 企业生产产品种数 \\
+$\ln n^B_{jct}$ & 城市$c$购买产品$j$的企业数对数（全量口径）\\
+$\ln n^S_{jct}$ & 城市$c$销售产品$j$的企业数对数（全量口径）\\
+$\ln q^m_{jct}$ & 城市$c$产品$j$的市场总购买量对数 \\
+$\ln\bar{p}^m_{jct}$ & 城市$c$产品$j$的市场均价对数 \\
+$S_{mj}$ & 企业核心产品$m$与外包产品$j$的投入结构相似度（\texttt{input\_similarity}）\\
+$C_{mj}$ & 企业核心产品$m$与外包产品$j$的产出结构相似度（\texttt{output\_similarity}）\\
+$m$ & 企业核心产品（净生产额 = 销售额$-$采购额 最大的产品）\\
+\bottomrule
+\end{tabular}
+
+\end{document}

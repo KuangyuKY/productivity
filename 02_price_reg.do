@@ -20,12 +20,15 @@
 *   G:\Kuangyu_Temp\Outsource\productivity\cid_entid_unique.dta → cid → id
 *   H:\汇算数据\2017.dta        → 资产总额 (Capital)
 *
+* 样本：去掉中介企业（is_intermediary == 1，外包比例 > 90%）
+*   中介企业以转卖为主，不属于本文研究的生产外包范畴
+*   过滤在 PART 1 构建 reg_panel.dta 时一次性完成，所有表格均使用同一样本
+*
 * 输出（regression\ 子目录）:
 *   T1_baseline.txt       逐步加 FE，展示企业特征 vs 市场条件
 *   T2_demand_supply.txt  需求 vs 供给侧分解（Stage 3）
-*   T3_similarity.txt     投入/产出相似度（结构模型 S_mj, C_mj）★ 新增
+*   T3_similarity.txt     投入/产出相似度（结构模型 S_mj, C_mj）
 *   T4_interactions.txt   企业规模 × 市场条件 交互
-*   T5_robustness.txt     去掉中介企业
 *
 * SE: 聚类到 firm 层
 * ==============================================================================
@@ -64,6 +67,11 @@ display "after market_conds merge: " r(N)
 merge m:1 firm_id year using "firm_chars.dta", keep(master match) nogen
 count
 display "after firm_chars merge: " r(N)
+
+* --- 去掉中介企业（is_intermediary == 1：外包比例 > 90%，纯转卖商）---
+drop if is_intermediary == 1
+count
+display "after dropping intermediaries: " r(N)
 
 * --- 合并投入/产出相似度（S_mj, C_mj）---
 *
@@ -453,81 +461,14 @@ global REGOUT     "regression"
 global esttab_opts "b(3) se(3) star(* 0.10 ** 0.05 *** 0.01) nogaps compress"
 
 
-* ==============================================================================
-* TABLE 5: 稳健性 —— 去掉中介企业
-*
-* is_intermediary = 1：外包比例 > 90%（纯转卖商，非生产型采购）
-* 去掉这类企业后，外包价格的决定因素是否仍然稳健？
-*
-* col (3) 额外检验相似度变量在非中介样本中的稳健性
-* ==============================================================================
-
-display ""
-display "===== TABLE 5: Robustness - No Intermediaries ====="
-
-use "reg_panel.dta", clear
-
-* (1) 全样本基准
-reghdfe ln_p_net ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
-    absorb(firm_n prod_n city_n) vce(cluster firm_n)
-estadd local sample  "All",  replace
-estadd local firm_fe "Yes",  replace
-estadd local prod_fe "Yes",  replace
-estadd local city_fe "Yes",  replace
-est store r1
-
-* (2) 去掉中介企业，市场条件基准
-preserve
-drop if is_intermediary == 1
-count
-display "obs after dropping intermediaries: " r(N)
-
-reghdfe ln_p_net ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
-    absorb(firm_n prod_n city_n) vce(cluster firm_n)
-estadd local sample  "No-Inter", replace
-estadd local firm_fe "Yes",      replace
-estadd local prod_fe "Yes",      replace
-estadd local city_fe "Yes",      replace
-est store r2
-restore
-
-* (3) 去掉中介企业，+ 相似度变量
-preserve
-drop if is_intermediary == 1
-
-reghdfe ln_p_net ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt ///
-    input_similarity output_similarity, ///
-    absorb(firm_n prod_n city_n) vce(cluster firm_n)
-estadd local sample  "No-Inter", replace
-estadd local firm_fe "Yes",      replace
-estadd local prod_fe "Yes",      replace
-estadd local city_fe "Yes",      replace
-est store r3
-restore
-
-esttab r1 r2 r3 ///
-    using "$REGOUT/T5_robustness.txt", replace ///
-    $esttab_opts ///
-    order(ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt ///
-          input_similarity output_similarity) ///
-    stats(sample firm_fe prod_fe city_fe N r2_a, ///
-          labels("Sample" "Firm FE" "Product FE" "City FE" ///
-                 "Observations" "Adj. R-sq") ///
-          fmt(%s %s %s %s %12.0fc 3)) ///
-    title("DV: ln(purchase price). Robustness: dropping intermediaries.") ///
-    mtitles("All firms" "No-Inter" "No-Inter+Sim")
-display "T5 saved."
-est clear
-
-
 display ""
 display "====================================================="
-display "All five tables saved to: $REGOUT"
+display "All four tables saved to: $REGOUT"
 display "  T1_baseline.txt      (逐步加 FE，展示 firm chars 被吸收)"
 display "  T2_demand_supply.txt (需求 vs 供给侧分解)"
 display "  T3_similarity.txt    (投入/产出相似度 S_mj, C_mj)"
 display "  T4_interactions.txt  (企业规模 × 市场条件 交互)"
-display "  T5_robustness.txt    (去掉中介企业)"
+display "  样本：均已去掉中介企业（is_intermediary == 1）"
 display "====================================================="
 
 log close
