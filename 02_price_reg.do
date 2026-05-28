@@ -59,11 +59,23 @@ count
 display "after merging firm_chars: " r(N)
 
 * --- 桥接汇算数据：firm_id (str) → cid (long) → id → Labor / Capital ---
+* 先按 merge汇算_2.do 的旧做法处理汇算数据：同一个 id-year 只保留第一条。
+* 这样避免直接 merge m:1 id using "H:\汇算数据\2017.dta" 时，using 端 id 不唯一而报错。
+preserve
+    use "H:\汇算数据\2017.dta", clear
+    gen year = 2017
+    bysort id year: gen rep_no = _n
+    drop if rep_no > 1
+    drop rep_no
+    keep id 从业人数 资产总额
+    save "huisuan_2017_keepfirst_by_id.dta", replace
+restore
+
 destring firm_id, gen(cid) force
 merge m:1 cid using ///
     "G:\Kuangyu_Temp\Outsource\productivity\cid_entid_unique.dta", ///
     keepusing(id) keep(master match) nogen
-merge m:1 id using "H:\汇算数据\2017.dta", ///
+merge m:1 id using "huisuan_2017_keepfirst_by_id.dta", ///
     keepusing(从业人数 资产总额) keep(master match) nogen
 rename (从业人数 资产总额) (Labor Capital)
 gen ln_Labor   = ln(Labor)   if Labor   > 0 & !missing(Labor)
