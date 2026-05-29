@@ -2,125 +2,139 @@
 
 ## 1. 文件基本信息
 
-- 数据文件：`H:\BaiduNetdiskDownload\汇算file\final_joinby_matched_data_2017_With_cid.dta`
-- 文件大小：约 5.613 GB
-- Stata `.dta` 版本：release 118
-- 观测数：15,334,226 行
-- 变量数：42 个
-- 文件修改时间：2025-06-08 12:02:22
-- 文件内部时间戳：10 Feb 2025 13:09
+本说明基于 Stata 的 [`describe`](productivity/baidu_huisuan_describe.log:12) 输出，而不是手动解析 `.dta` 文件头。
 
-这个文件不是一个单纯的 `cid -> id` 桥接表。它本身已经包含了一批汇算财务变量和企业识别变量，因此可以直接从这里提取资本、收入、利润、员工数等变量。
+- 数据文件：`H:\BaiduNetdiskDownload\汇算file\final_joinby_matched_data_2017_With_cid.dta`
+- Stata 日志：[`productivity/baidu_huisuan_describe.log`](productivity/baidu_huisuan_describe.log)
+- 观测数：15,334,226 行，见 [`Observations`](productivity/baidu_huisuan_describe.log:16)
+- 变量数：42 个，见 [`Variables`](productivity/baidu_huisuan_describe.log:17)
+- 文件内部时间戳：10 Feb 2025 13:09，见 [`describe`](productivity/baidu_huisuan_describe.log:16)
+
+前一版说明里很多财务变量被写成 `byte`，这是因为我用 PowerShell 直接解析 Stata 118 格式文件头时，变量存储类型解析不可靠。现在已经改为以 Stata 官方 [`describe`](productivity/baidu_huisuan_describe.log:12) 结果为准。根据 Stata 输出，核心财务变量大多是 `double`，不是 `byte`。
 
 ## 2. 核心结论
 
-此前在 `02_price_reg.do` 中的处理逻辑是：
+这个文件不是单纯的 `cid -> id` 桥接表。它本身已经包含企业识别变量、注册信息、行业地区变量和一批汇算财务变量。
 
-1. 用 BaiduNetdisk 文件拿到 `cid -> id`；
-2. 再用 `id` 去 `H:\汇算数据\2017.dta` 里找 `资产总额`；
-3. 把 `资产总额` 改名为 `Capital`，再生成 `ln_Capital`。
+尤其重要的是：文件中已经有 `total_assets`，其变量标签是 `Total Assets`，见 [`total_assets`](productivity/baidu_huisuan_describe.log:71)。因此，如果我们只是为了构造回归里的资本变量 `Capital` / `ln_Capital`，可以直接从这个 BaiduNetdisk 文件里取 `total_assets`，不一定需要再去 `H:\汇算数据\2017.dta` 里二次匹配中文变量 `资产总额`。
 
-检查后发现，BaiduNetdisk 文件本身已经有 `total_assets`，变量标签是 `Total Assets`。这个变量对应中文口径里的资产总额。因此，如果只是为了构造资本变量，理论上不必再去 `H:\汇算数据\2017.dta` 做第二次匹配。
-
-更合理的新逻辑应该是：
-
-1. 从 BaiduNetdisk 文件中保留 `cid` 和 `total_assets`；
-2. 对 `cid` 去重，保证每个发票企业只对应一条记录；
-3. 直接把 `total_assets` 合并到回归面板；
-4. 把 `total_assets` 改名为 `Capital`；
-5. 生成 `ln_Capital = ln(Capital)`。
-
-这样可以避免当前 `id -> H:\汇算数据\2017.dta` 这一步造成额外样本损失。
-
-## 3. 关键识别变量
-
-| 变量名 | 类型 | 标签 | 说明 |
-|---|---:|---|---|
-| `eid` | str32 | 无 | 企业识别码。学长部分代码中用 `eid` 与汇算数据匹配。 |
-| `id` | str9 | ID | 汇算侧企业 ID。此前我用它继续连接 `H:\汇算数据\2017.dta`。 |
-| `cid` | str9 | 无 | 发票侧企业 ID。我们的 `firm_id` 转成数值后逻辑上对应这个变量。 |
-| `obs_id` | long | 无 | 文件内部观测编号。 |
-
-## 4. 汇算财务和企业变量
-
-| 变量名 | 类型 | 标签 | 中文含义 / 用途 |
-|---|---:|---|---|
-| `employees` | byte | Number of Employees | 从业人数。 |
-| `operating_revenue` | byte | Operating Revenue | 营业收入。 |
-| `operating_cost` | byte | Operating Cost | 营业成本。 |
-| `operating_tax` | byte | Operating Tax and Surcharge | 营业税金及附加。 |
-| `sales_expense` | byte | Sales Expense | 销售费用。 |
-| `admin_expense` | byte | Administrative Expense | 管理费用。 |
-| `financial_expense` | int | Financial Expense | 财务费用。 |
-| `asset_impairment` | byte | Asset Impairment Loss | 资产减值损失。 |
-| `fair_value_change` | byte | Fair Value Change Gain/Loss | 公允价值变动收益/损失。 |
-| `investment_income` | byte | Investment Income | 投资收益。 |
-| `operating_profit` | byte | Operating Profit | 营业利润。 |
-| `non_operating_income` | byte | Non-Operating Income | 营业外收入。 |
-| `non_operating_expense` | int | Non-Operating Expense | 营业外支出。 |
-| `total_profit_loss` | byte | Total Profit (Loss) | 利润总额。 |
-| `tax_payable` | int | Tax Payable | 应纳税额。 |
-| `actual_tax_payable` | int | Actual Tax Payable | 实际应纳税额。 |
-| `net_profit` | byte | Net Profit | 净利润。 |
-| `b_class_revenue` | byte | B Class Revenue | B 类收入。 |
-| `b_class_cost` | int | B Class Cost | B 类成本。 |
-| `b_class_expense` | int | B Class Expense | B 类费用。 |
-| `total_assets` | byte | Total Assets | 总资产。应当对应我们需要的 `Capital`。 |
-| `total_reg_capital` | byte | Total Registered Capital | 注册资本。 |
-
-重要：这个文件中没有中文变量名 `资产总额`，但有英文变量 `total_assets`，标签是 `Total Assets`。因此如果使用这个文件本身的数据，资本变量应该从 `total_assets` 提取，而不是继续寻找中文变量 `资产总额`。
-
-## 5. 注册、地区和行业变量
-
-| 变量名 | 类型 | 标签 | 说明 |
-|---|---:|---|---|
-| `reg_number` | str72 | 无 | 注册号。 |
-| `usc_code` | str39 | 无 | 统一社会信用代码。 |
-| `org_number` | str19 | 无 | 组织机构代码。 |
-| `province` | str9 | 无 | 省份。 |
-| `province_code` | int | 无 | 省份代码。 |
-| `region` | long | Region | 地区。 |
-| `reg_type` | str3 | Registration Type | 登记注册类型。 |
-| `econ_type_code` | float | Economic Type Code | 经济类型代码。 |
-| `industry_code` | str4 | Industry Code | 行业代码。 |
-| `industry_category` | str1 | Industry Category | 行业大类。 |
-| `industry_major` | str2 | Industry Major Category | 行业门类/大类。 |
-| `industry_medium` | str3 | Industry Medium Category | 行业中类。 |
-| `corp_tax_rate` | int | Corporate Tax Rate | 企业所得税税率。 |
-| `levy_type` | str1 | Levy Type | 征收方式。 |
-
-## 6. 税期变量
-
-| 变量名 | 类型 | 标签 | 说明 |
-|---|---:|---|---|
-| `tax_period_start` | str10 | Tax Period Start Date | 纳税期开始日期。 |
-| `tax_period_end` | str10 | Tax Period End Date | 纳税期结束日期。 |
-
-## 7. 与学长代码的关系
-
-学长代码里确实大量使用了这个 BaiduNetdisk 文件作为预匹配文件。例如：
-
-- `datamerge/merge汇算_3_13categ.do` 先读取该文件，处理 `cid`，再保存唯一 `cid` 的匹配文件。
-- `datamerge/merge汇算_6_13categ_yearmonth_2017.do` 也是先读取该文件，生成带 `cid` 和 `year` 的匹配数据。
-- 但是学长后续很多代码又会重新合并 `H:\汇算数据\2017.dta`，并把中文变量 `资产总额` 重命名为 `Expend_Capital`。
-
-这说明学长当时可能把 BaiduNetdisk 文件主要当作匹配结果使用。但从本次元数据检查看，这个文件本身已经保留了标准化后的汇算财务变量，所以我们当前项目可以直接用 `total_assets` 来构造资本变量。
-
-## 8. 对 `02_price_reg.do` 的建议
-
-建议把资本匹配逻辑从当前的两步：
+当前更合理的资本匹配链条应当是：
 
 ```stata
-firm_id -> cid -> id -> H:\汇算数据\2017.dta -> 资产总额 -> Capital
+firm_id -> cid -> total_assets -> Capital -> ln_Capital
 ```
 
-改成一步：
+而不是：
 
 ```stata
-firm_id -> cid -> BaiduNetdisk 文件中的 total_assets -> Capital
+firm_id -> cid -> id -> H:\汇算数据\2017.dta -> 资产总额 -> Capital -> ln_Capital
 ```
 
-对应 Stata 逻辑大致如下：
+## 3. Stata describe 原始结果摘录
+
+Stata 运行的命令是：
+
+```stata
+describe using "H:\BaiduNetdiskDownload\汇算file\final_joinby_matched_data_2017_With_cid.dta"
+```
+
+对应日志见 [`productivity/baidu_huisuan_describe.log`](productivity/baidu_huisuan_describe.log)。
+
+核心输出：
+
+```text
+Contains data
+ Observations:    15,334,226                  10 Feb 2025 13:09
+    Variables:            42
+```
+
+完整变量列表根据 [`describe`](productivity/baidu_huisuan_describe.log:19) 整理如下。
+
+## 4. 企业识别变量
+
+| 变量名 | Storage type | Display format | Variable label | 说明 |
+|---|---:|---:|---|---|
+| `eid` | str32 | %32s |  | 企业识别码。学长部分代码中也使用 `eid` 进行汇算匹配。 |
+| `reg_number` | str72 | %72s |  | 注册号。 |
+| `usc_code` | str39 | %39s |  | 统一社会信用代码。 |
+| `org_number` | str19 | %19s |  | 组织机构代码。 |
+| `obs_id` | long | %12.0g |  | 文件内部观测编号。 |
+| `id` | str9 | %9s | ID | 汇算侧 ID。 |
+| `cid` | str9 | %9s |  | 发票侧企业 ID。我们的回归面板 `firm_id` 应与该变量对接。 |
+
+对应 Stata 输出位置：[`eid`](productivity/baidu_huisuan_describe.log:22)、[`id`](productivity/baidu_huisuan_describe.log:75)、[`cid`](productivity/baidu_huisuan_describe.log:76)。
+
+## 5. 地区、注册和行业变量
+
+| 变量名 | Storage type | Display format | Variable label | 中文说明 |
+|---|---:|---:|---|---|
+| `province` | str9 | %9s |  | 省份。 |
+| `province_code` | float | %9.0g |  | 省份代码。 |
+| `tax_period_start` | str10 | %10s | Tax Period Start Date | 纳税期开始日期。 |
+| `tax_period_end` | str10 | %10s | Tax Period End Date | 纳税期结束日期。 |
+| `region` | long | %12.0g | Region | 地区。 |
+| `reg_type` | str3 | %9s | Registration Type | 登记注册类型。 |
+| `econ_type_code` | int | %8.0g | Economic Type Code | 经济类型代码。 |
+| `industry_code` | str4 | %9s | Industry Code | 行业代码。 |
+| `industry_category` | str1 | %9s | Industry Category | 行业类别。 |
+| `industry_major` | str2 | %9s | Industry Major Category | 行业大类。 |
+| `industry_medium` | str3 | %9s | Industry Medium Category | 行业中类。 |
+| `corp_tax_rate` | float | %9.0g | Corporate Tax Rate | 企业所得税税率。 |
+| `levy_type` | str1 | %9s | Levy Type | 征收方式。 |
+
+对应 Stata 输出位置：[`province`](productivity/baidu_huisuan_describe.log:26) 到 [`levy_type`](productivity/baidu_huisuan_describe.log:41)。
+
+## 6. 汇算财务变量
+
+| 变量名 | Storage type | Display format | Variable label | 中文说明 / 用途 |
+|---|---:|---:|---|---|
+| `employees` | double | %10.0g | Number of Employees | 从业人数。 |
+| `operating_revenue` | double | %10.0g | Operating Revenue | 营业收入。 |
+| `operating_cost` | double | %10.0g | Operating Cost | 营业成本。 |
+| `operating_tax` | double | %10.0g | Operating Tax and Surcharge | 营业税金及附加。 |
+| `sales_expense` | double | %10.0g | Sales Expense | 销售费用。 |
+| `admin_expense` | double | %10.0g | Administrative Expense | 管理费用。 |
+| `financial_expense` | float | %9.0g | Financial Expense | 财务费用。 |
+| `asset_impairment` | double | %10.0g | Asset Impairment Loss | 资产减值损失。 |
+| `fair_value_change` | double | %10.0g | Fair Value Change Gain/Loss | 公允价值变动收益/损失。 |
+| `investment_income` | double | %10.0g | Investment Income | 投资收益。 |
+| `operating_profit` | double | %10.0g | Operating Profit | 营业利润。 |
+| `non_operating_income` | double | %10.0g | Non-Operating Income | 营业外收入。 |
+| `non_operating_expense` | float | %9.0g | Non-Operating Expense | 营业外支出。 |
+| `total_profit_loss` | double | %10.0g | Total Profit (Loss) | 利润总额。 |
+| `tax_payable` | float | %9.0g | Tax Payable | 应纳税额。 |
+| `actual_tax_payable` | float | %9.0g | Actual Tax Payable | 实际应纳税额。 |
+| `net_profit` | double | %10.0g | Net Profit | 净利润。 |
+| `b_class_revenue` | double | %10.0g | B Class Revenue | B 类收入。 |
+| `b_class_cost` | float | %9.0g | B Class Cost | B 类成本。 |
+| `b_class_expense` | float | %9.0g | B Class Expense | B 类费用。 |
+| `total_assets` | double | %10.0g | Total Assets | 总资产。建议作为 `Capital` 来源。 |
+| `total_reg_capital` | double | %10.0g | Total Registered Capital | 注册资本。 |
+
+对应 Stata 输出位置：[`employees`](productivity/baidu_huisuan_describe.log:39) 到 [`total_reg_capital`](productivity/baidu_huisuan_describe.log:73)。
+
+## 7. 对资本变量的判断
+
+[`total_assets`](productivity/baidu_huisuan_describe.log:71) 是 `double` 类型，变量标签是 `Total Assets`。这比之前通过 `id` 再去 `H:\汇算数据\2017.dta` 匹配中文变量 `资产总额` 更直接。
+
+因此，在 [`02_price_reg.do`](productivity/02_price_reg.do) 中构造 `ln_Capital` 时，可以考虑直接使用：
+
+```stata
+rename total_assets Capital
+gen ln_Capital = ln(Capital) if Capital > 0 & !missing(Capital)
+```
+
+这会避免当前第二步 `id -> H:\汇算数据\2017.dta` 匹配造成的样本损失。
+
+## 8. 建议的 Stata 匹配逻辑
+
+建议把当前 [`02_price_reg.do`](productivity/02_price_reg.do) 中的两步资本匹配：
+
+```stata
+firm_id -> cid -> id -> H:\汇算数据\2017.dta -> 资产总额
+```
+
+改成直接使用 BaiduNetdisk 文件中的 `total_assets`：
 
 ```stata
 preserve
@@ -142,35 +156,14 @@ merge m:1 cid using "baidu_huisuan_2017_clean.dta", ///
 gen ln_Capital = ln(Capital) if Capital > 0 & !missing(Capital)
 ```
 
-这样做的优点是：
+## 9. 需要进一步核查的问题
 
-1. 不再经过 `id -> H:\汇算数据\2017.dta` 的第二次匹配；
-2. 能直接利用 BaiduNetdisk 文件中已经整理好的汇算变量；
-3. 理论上应该显著减少 `ln_Capital` 缺失；
-4. 逻辑上也更接近用户现在希望采用的 BaiduNetdisk 口径。
+虽然 [`describe`](productivity/baidu_huisuan_describe.log:12) 已经确认 `total_assets` 是 `double`，但正式替换回归代码前，仍建议检查以下内容：
 
-## 9. 需要注意的问题
+1. `total_assets` 的非缺失数量；
+2. `total_assets > 0` 的数量；
+3. `cid` 的唯一数量；
+4. 一个 `cid` 对应多条记录时，`total_assets` 是否一致；
+5. 合并到当前回归面板后，`ln_Capital` 缺失数是否显著下降。
 
-1. `total_assets` 的存储类型显示为 `byte`，这说明该文件里的财务变量可能不是原始金额，也可能经过压缩、编码或单位处理。后续正式用于回归前，应当检查 `total_assets` 的分布、取值范围和单位。
-2. `cid` 在文件中是字符串，需要转成数值后再与回归面板中的 `firm_id` 对接。
-3. 文件有 15,334,226 行，非常大。每次直接读取会比较慢，最好在第一次清洗后保存一个小的中间文件，例如 `baidu_huisuan_2017_clean.dta`。
-4. 如果一个 `cid` 对应多条记录，目前建议先保留第一条，以复现学长代码中的常见做法；但更严谨的做法是检查重复 `cid` 的来源和变量差异。
-
-## 10. 本次检查依据
-
-本次检查读取了该 `.dta` 文件头部元数据，确认了：
-
-- 观测数；
-- 变量数；
-- 全部变量名；
-- Stata 存储类型；
-- 变量显示格式；
-- 变量标签。
-
-本次没有完整加载 5.6GB 数据进入内存，因此没有计算每个变量的描述统计。下一步如果要正式替换 `02_price_reg.do`，建议先运行一次小范围检查，重点看：
-
-- `cid` 非缺失数量；
-- `cid` 唯一数量；
-- `total_assets` 非缺失数量；
-- `total_assets > 0` 的数量；
-- 合并到当前回归面板后的 `ln_Capital` 缺失数。
+这些检查需要实际读取数据内容，而不仅是 [`describe`](productivity/baidu_huisuan_describe.log:12) 元数据。由于文件约 5.6GB，建议用 Stata 单独生成一个小的清洗后中间文件，再用于回归。

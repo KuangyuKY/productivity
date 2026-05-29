@@ -1,0 +1,87 @@
+-------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  g:\Kuangyu_Temp\Outsource\productivity\productivity/baidu_huisuan_
+> describe.log
+  log type:  text
+ opened on:  29 May 2026, 17:17:20
+
+. 
+. display "===== describe using BaiduNetdisk 2017 matched data ====="
+===== describe using BaiduNetdisk 2017 matched data =====
+
+. describe using "H:\BaiduNetdiskDownload\汇算file\final_joinby_matched_data_20
+> 17_With_cid.dta"
+
+Contains data                                 
+ Observations:    15,334,226                  10 Feb 2025 13:09
+    Variables:            42                  
+-------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+-------------------------------------------------------------------------------
+eid             str32   %32s                  
+reg_number      str72   %72s                  
+usc_code        str39   %39s                  
+org_number      str19   %19s                  
+province        str9    %9s                   
+province_code   float   %9.0g                 
+tax_period_start
+                str10   %10s                  Tax Period Start Date
+tax_period_end  str10   %10s                  Tax Period End Date
+region          long    %12.0g                Region
+reg_type        str3    %9s                   Registration Type
+econ_type_code  int     %8.0g                 Economic Type Code
+industry_code   str4    %9s                   Industry Code
+industry_category
+                str1    %9s                   Industry Category
+industry_major  str2    %9s                   Industry Major Category
+industry_medium str3    %9s                   Industry Medium Category
+employees       double  %10.0g                Number of Employees
+corp_tax_rate   float   %9.0g                 Corporate Tax Rate
+levy_type       str1    %9s                   Levy Type
+operating_revenue
+                double  %10.0g                Operating Revenue
+operating_cost  double  %10.0g                Operating Cost
+operating_tax   double  %10.0g                Operating Tax and Surcharge
+sales_expense   double  %10.0g                Sales Expense
+admin_expense   double  %10.0g                Administrative Expense
+financial_expense
+                float   %9.0g                 Financial Expense
+asset_impairment
+                double  %10.0g                Asset Impairment Loss
+fair_value_change
+                double  %10.0g                Fair Value Change Gain/Loss
+investment_income
+                double  %10.0g                Investment Income
+operating_profit
+                double  %10.0g                Operating Profit
+non_operating_income
+                double  %10.0g                Non-Operating Income
+non_operating_expense
+                float   %9.0g                 Non-Operating Expense
+total_profit_loss
+                double  %10.0g                Total Profit (Loss)
+tax_payable     float   %9.0g                 Tax Payable
+actual_tax_payable
+                float   %9.0g                 Actual Tax Payable
+net_profit      double  %10.0g                Net Profit
+b_class_revenue double  %10.0g                B Class Revenue
+b_class_cost    float   %9.0g                 B Class Cost
+b_class_expense float   %9.0g                 B Class Expense
+total_assets    double  %10.0g                Total Assets
+total_reg_capital
+                double  %10.0g                Total Registered Capital
+obs_id          long    %12.0g                
+id              str9    %9s                   ID
+cid             str9    %9s                   
+-------------------------------------------------------------------------------
+Sorted by: 
+
+. 
+. log close
+      name:  <unnamed>
+       log:  g:\Kuangyu_Temp\Outsource\productivity\productivity/baidu_huisuan_
+> describe.log
+  log type:  text
+ closed on:  29 May 2026, 17:17:21
+-------------------------------------------------------------------------------
