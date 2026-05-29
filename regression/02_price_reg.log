@@ -1,8 +1,8 @@
-----------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
       name:  <unnamed>
        log:  G:\Kuangyu_Temp\Outsource\productivity\regression\02_price_reg.log
   log type:  text
- opened on:  29 May 2026, 16:10:11
+ opened on:  29 May 2026, 22:32:49
 
 . 
 . global REGOUT     "regression"
@@ -131,107 +131,10 @@ missing input_similarity: 12
 missing output_similarity: 12
 
 . 
-. * --- 桥接汇算数据：firm_id (cid) → BaiduNetdisk matched id → Capital（资产总额）---
-. *
-. * 新口径：不用当前项目里的 cid_entid_unique.dta，而使用学长的预匹配桥：
-. *   H:\BaiduNetdiskDownload\汇算file\final_joinby_matched_data_2017_With_cid.dta
-. * 该文件已经把汇算企业和发票企业 cid 做过更完整的匹配。
-. 
-. preserve
-
-.     use "H:\BaiduNetdiskDownload\汇算file\final_joinby_matched_data_2017_With_cid.dta"
-> , clear
-
-.     destring cid, replace force
-cid: all characters numeric; replaced as long
-(7081275 missing values generated)
-
-.     destring id, replace force
-id: all characters numeric; replaced as long
-
-.     drop if missing(cid)
-(7,081,275 observations deleted)
-
-.     drop if missing(id)
-(0 observations deleted)
-
-.     bysort cid: gen rep_no = _n
-
-.     keep if rep_no == 1
-(0 observations deleted)
-
-.     drop rep_no
-
-.     keep cid id
-
-.     save "baidu_cid_id_2017_clean.dta", replace
-(file baidu_cid_id_2017_clean.dta not found)
-file baidu_cid_id_2017_clean.dta saved
-
-. restore
-
-. 
-. preserve
-
-.     use "H:\汇算数据\2017.dta", clear
-
-.     gen year = 2017
-
-.     bysort id year: gen rep_no = _n
-
-.     keep if rep_no == 1
-(363,481 observations deleted)
-
-.     drop rep_no
-
-.     keep id 资产总额
-
-.     save "huisuan_2017_clean.dta", replace
-(file huisuan_2017_clean.dta not found)
-file huisuan_2017_clean.dta saved
-
-. restore
-
-. 
-. destring firm_id, gen(cid) force
-firm_id: all characters numeric; cid generated as long
-
-. merge m:1 cid using "baidu_cid_id_2017_clean.dta", ///
->     keepusing(id) keep(master match) nogen
-
-    Result                      Number of obs
-    -----------------------------------------
-    Not matched                        15,765
-        from master                    15,765  
-        from using                          0  
-
-    Matched                            31,180  
-    -----------------------------------------
-
-. merge m:1 id using "huisuan_2017_clean.dta", ///
->     keepusing(资产总额) keep(master match) nogen
-(variable id was long, now double to accommodate using data's values)
-
-    Result                      Number of obs
-    -----------------------------------------
-    Not matched                        30,878
-        from master                    30,878  
-        from using                          0  
-
-    Matched                            16,067  
-    -----------------------------------------
-
-. rename 资产总额 Capital
-
-. gen ln_Capital = ln(Capital) if Capital > 0 & !missing(Capital)
-(32,489 missing values generated)
-
-. count if missing(ln_Capital)
-  32,489
-
-. display "missing ln_Capital (BaiduNetdisk 汇算桥覆盖不足): " r(N)
-missing ln_Capital (BaiduNetdisk 汇算桥覆盖不足): 32489
-
+. * --- Capital 已由 01_clean.ipynb 桥接并写入 firm_chars.dta ---
+. * 桥接路径：firm_id (cid) → final_joinby_matched_data_2017_With_cid.dta (total_assets) → Capital
+. * total_assets 是 double 类型，直接改名为 Capital；无需再读 H:\汇算数据\2017.dta
+. * ln_Capital 已在 firm_chars.dta 中，随 firm_chars 合并一并进入面板，无需在此处理
 . 
 . * --- 缺失诊断 ---
 . display ""
@@ -250,8 +153,8 @@ missing ln_Capital (BaiduNetdisk 汇算桥覆盖不足): 32489
   missing ln_p_net: 0
   0
   missing ln_firm_output: 0
-  32,489
-  missing ln_Capital: 32489
+  17,698
+  missing ln_Capital: 17698
   0
   missing n_products: 0
   18
@@ -318,7 +221,7 @@ missing ln_Capital (BaiduNetdisk 汇算桥覆盖不足): 32489
 -------------+---------------------------------------------------------
     ln_p_net |     46,945    4.145096    2.638845  -6.032287    21.5826
 ln_firm_ou~t |     46,945    19.56418    3.033457   7.080026   26.75532
-  ln_Capital |     14,456    12.60775    3.437735    4.60517    25.5908
+  ln_Capital |     29,247    19.57009    2.995748    4.60517   31.19376
   n_products |     46,945      322.13    299.8016          1       1403
  ln_n_buyers |     46,927     6.76338    1.884858          0   11.90383
 -------------+---------------------------------------------------------
@@ -338,15 +241,10 @@ output_sim~y |     46,933    .1312926    .2008791    .000093          1
   variable prod_n was float now int
   variable city_n was float now int
   variable n_sellers was double now long
-  variable id was double now long
-  (1,079,735 bytes saved)
+  (891,955 bytes saved)
 
 . save "reg_panel.dta", replace
 file reg_panel.dta saved
-
-. erase "baidu_cid_id_2017_clean.dta"
-
-. erase "huisuan_2017_clean.dta"
 
 . 
 . 
@@ -372,21 +270,21 @@ file reg_panel.dta saved
 . * (1) OLS-bare: 仅企业特征，无市场条件，无 FE
 . reg ln_p_net ln_firm_output ln_Capital n_products, vce(cluster firm_n)
 
-Linear regression                               Number of obs     =     14,456
-                                                F(3, 522)         =       3.11
-                                                Prob > F          =     0.0261
-                                                R-squared         =     0.0163
-                                                Root MSE          =     2.5763
+Linear regression                               Number of obs     =     29,247
+                                                F(3, 1266)        =       9.73
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0180
+                                                Root MSE          =     2.5829
 
-                                 (Std. err. adjusted for 523 clusters in firm_n)
+                               (Std. err. adjusted for 1,267 clusters in firm_n)
 --------------------------------------------------------------------------------
                |               Robust
       ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
 ---------------+----------------------------------------------------------------
-ln_firm_output |   .0731254   .0301843     2.42   0.016     .0138278     .132423
-    ln_Capital |  -.0364607   .0266381    -1.37   0.172    -.0887917    .0158703
-    n_products |  -.0008128   .0004228    -1.92   0.055    -.0016435    .0000179
-         _cons |   3.344519   .7163763     4.67   0.000     1.937184    4.751854
+ln_firm_output |    .177669    .038474     4.62   0.000     .1021891    .2531489
+    ln_Capital |  -.1276758   .0339686    -3.76   0.000    -.1943167   -.0610349
+    n_products |  -.0008718   .0004473    -1.95   0.052    -.0017493    5.71e-06
+         _cons |   3.273128   .4688338     6.98   0.000     2.353352    4.192905
 --------------------------------------------------------------------------------
 
 . estadd local firm_fe "No",  replace
@@ -412,25 +310,25 @@ added macro:
 >     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
 >     vce(cluster firm_n)
 
-Linear regression                               Number of obs     =     14,425
-                                                F(7, 522)         =     105.60
+Linear regression                               Number of obs     =     29,196
+                                                F(7, 1266)        =     245.03
                                                 Prob > F          =     0.0000
-                                                R-squared         =     0.3171
-                                                Root MSE          =     2.1469
+                                                R-squared         =     0.3087
+                                                Root MSE          =     2.1663
 
-                                 (Std. err. adjusted for 523 clusters in firm_n)
+                               (Std. err. adjusted for 1,267 clusters in firm_n)
 --------------------------------------------------------------------------------
                |               Robust
       ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
 ---------------+----------------------------------------------------------------
-ln_firm_output |   .0697821    .021592     3.23   0.001     .0273641    .1122001
-    ln_Capital |  -.0322887   .0181336    -1.78   0.076    -.0679125    .0033351
-    n_products |  -.0008298   .0002349    -3.53   0.000    -.0012912   -.0003683
-   ln_n_buyers |   .1657025   .0691755     2.40   0.017     .0298059    .3015991
-  ln_n_sellers |   -.011825   .0852746    -0.14   0.890    -.1793484    .1556985
-    ln_mkt_qty |   .0224857   .0247064     0.91   0.363    -.0260504    .0710219
-      ln_p_mkt |   .7446822   .0388889    19.15   0.000     .6682842    .8210802
-         _cons |  -.3643825   .6424953    -0.57   0.571    -1.626577    .8978117
+ln_firm_output |   .1354624   .0316824     4.28   0.000     .0733067    .1976181
+    ln_Capital |  -.0849723   .0264569    -3.21   0.001    -.1368766   -.0330681
+    n_products |  -.0008616   .0002979    -2.89   0.004    -.0014461   -.0002771
+   ln_n_buyers |   .1079962   .0673039     1.60   0.109    -.0240433    .2400357
+  ln_n_sellers |   .0885772    .078617     1.13   0.260    -.0656566    .2428111
+    ln_mkt_qty |   .0127343   .0185376     0.69   0.492    -.0236336    .0491021
+      ln_p_mkt |   .7317045    .022182    32.99   0.000     .6881869    .7752222
+         _cons |  -.3328096   .4510667    -0.74   0.461     -1.21773    .5521108
 --------------------------------------------------------------------------------
 
 . estadd local firm_fe "No",  replace
@@ -455,24 +353,21 @@ added macro:
 . reghdfe ln_p_net ln_firm_output ln_Capital n_products ///
 >     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
 >     absorb(firm_n) vce(cluster firm_n)
-(dropped 120 singleton observations)
+(dropped 332 singleton observations)
 (MWFE estimator converged in 1 iterations)
-note: ln_firm_output is probably collinear with the fixed effects (all partialled-out va
-> lues are close to zero; tol = 1.0e-09)
-note: ln_Capital is probably collinear with the fixed effects (all partialled-out values
->  are close to zero; tol = 1.0e-09)
-note: n_products is probably collinear with the fixed effects (all partialled-out values
->  are close to zero; tol = 1.0e-09)
+note: ln_firm_output is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: ln_Capital is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: n_products is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
 
-HDFE Linear regression                            Number of obs   =     14,305
-Absorbing 1 HDFE group                            F(   4,    402) =     161.90
+HDFE Linear regression                            Number of obs   =     28,864
+Absorbing 1 HDFE group                            F(   4,    934) =     455.76
 Statistics robust to heteroskedasticity           Prob > F        =     0.0000
-                                                  R-squared       =     0.4544
-                                                  Adj R-squared   =     0.4384
-                                                  Within R-sq.    =     0.2623
-Number of clusters (firm_n)  =        403         Root MSE        =     1.9358
+                                                  R-squared       =     0.4682
+                                                  Adj R-squared   =     0.4503
+                                                  Within R-sq.    =     0.2539
+Number of clusters (firm_n)  =        935         Root MSE        =     1.9202
 
-                                 (Std. err. adjusted for 403 clusters in firm_n)
+                                 (Std. err. adjusted for 935 clusters in firm_n)
 --------------------------------------------------------------------------------
                |               Robust
       ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
@@ -480,18 +375,18 @@ Number of clusters (firm_n)  =        403         Root MSE        =     1.9358
 ln_firm_output |          0  (omitted)
     ln_Capital |          0  (omitted)
     n_products |          0  (omitted)
-   ln_n_buyers |   .1046386   .0463905     2.26   0.025     .0134402    .1958369
-  ln_n_sellers |  -.0395088   .0699575    -0.56   0.573    -.1770371    .0980195
-    ln_mkt_qty |   .0091073   .0203829     0.45   0.655    -.0309631    .0491778
-      ln_p_mkt |   .6389127   .0345763    18.48   0.000     .5709397    .7068857
-         _cons |   1.404888   .3545006     3.96   0.000     .7079811    2.101794
+   ln_n_buyers |   .0976166   .0348466     2.80   0.005       .02923    .1660032
+  ln_n_sellers |   .0086558   .0474893     0.18   0.855    -.0845422    .1018539
+    ln_mkt_qty |   .0017704   .0166709     0.11   0.915    -.0309463    .0344871
+      ln_p_mkt |   .6227133   .0175815    35.42   0.000     .5882094    .6572171
+         _cons |   1.353448    .238552     5.67   0.000     .8852876    1.821608
 --------------------------------------------------------------------------------
 
 Absorbed degrees of freedom:
 -----------------------------------------------------+
  Absorbed FE | Categories  - Redundant  = Num. Coefs |
 -------------+---------------------------------------|
-      firm_n |       403         403           0    *|
+      firm_n |       935         935           0    *|
 -----------------------------------------------------+
 * = FE nested within cluster; treated as redundant for DoF computation
 
@@ -517,24 +412,21 @@ added macro:
 . reghdfe ln_p_net ln_firm_output ln_Capital n_products ///
 >     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
 >     absorb(firm_n prod_n) vce(cluster firm_n)
-(dropped 497 singleton observations)
-(MWFE estimator converged in 15 iterations)
-note: ln_firm_output is probably collinear with the fixed effects (all partialled-out va
-> lues are close to zero; tol = 1.0e-09)
-note: ln_Capital is probably collinear with the fixed effects (all partialled-out values
->  are close to zero; tol = 1.0e-09)
-note: n_products is probably collinear with the fixed effects (all partialled-out values
->  are close to zero; tol = 1.0e-09)
+(dropped 684 singleton observations)
+(MWFE estimator converged in 14 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: ln_Capital is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: n_products is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
 
-HDFE Linear regression                            Number of obs   =     13,928
-Absorbing 2 HDFE groups                           F(   4,    398) =       5.41
-Statistics robust to heteroskedasticity           Prob > F        =     0.0003
-                                                  R-squared       =     0.6404
-                                                  Adj R-squared   =     0.5866
-                                                  Within R-sq.    =     0.0124
-Number of clusters (firm_n)  =        399         Root MSE        =     1.6376
+HDFE Linear regression                            Number of obs   =     28,512
+Absorbing 2 HDFE groups                           F(   4,    926) =      10.13
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.6305
+                                                  Adj R-squared   =     0.5933
+                                                  Within R-sq.    =     0.0100
+Number of clusters (firm_n)  =        927         Root MSE        =     1.6406
 
-                                 (Std. err. adjusted for 399 clusters in firm_n)
+                                 (Std. err. adjusted for 927 clusters in firm_n)
 --------------------------------------------------------------------------------
                |               Robust
       ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
@@ -542,19 +434,19 @@ Number of clusters (firm_n)  =        399         Root MSE        =     1.6376
 ln_firm_output |          0  (omitted)
     ln_Capital |          0  (omitted)
     n_products |          0  (omitted)
-   ln_n_buyers |   .0533315   .0748577     0.71   0.477    -.0938345    .2004975
-  ln_n_sellers |  -.0969327    .059434    -1.63   0.104    -.2137766    .0199111
-    ln_mkt_qty |  -.0005455   .0344142    -0.02   0.987    -.0682018    .0671108
-      ln_p_mkt |   .1791437   .0590285     3.03   0.003      .063097    .2951904
-         _cons |   3.588161   .7181684     5.00   0.000     2.176284    5.000039
+   ln_n_buyers |   .0043949    .049327     0.09   0.929    -.0924108    .1012005
+  ln_n_sellers |   -.048385   .0393716    -1.23   0.219    -.1256529    .0288828
+    ln_mkt_qty |   .0133285   .0193446     0.69   0.491    -.0246358    .0512927
+      ln_p_mkt |   .1806436   .0334971     5.39   0.000     .1149046    .2463826
+         _cons |   3.392808   .3776314     8.98   0.000     2.651696    4.133921
 --------------------------------------------------------------------------------
 
 Absorbed degrees of freedom:
 -----------------------------------------------------+
  Absorbed FE | Categories  - Redundant  = Num. Coefs |
 -------------+---------------------------------------|
-      firm_n |       399         399           0    *|
-      prod_n |      1413           1        1412     |
+      firm_n |       927         927           0    *|
+      prod_n |      1679           1        1678     |
 -----------------------------------------------------+
 * = FE nested within cluster; treated as redundant for DoF computation
 
@@ -580,24 +472,21 @@ added macro:
 . reghdfe ln_p_net ln_firm_output ln_Capital n_products ///
 >     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
 >     absorb(firm_n prod_n city_n) vce(cluster firm_n)
-(dropped 497 singleton observations)
-(MWFE estimator converged in 12 iterations)
-note: ln_firm_output is probably collinear with the fixed effects (all partialled-out va
-> lues are close to zero; tol = 1.0e-09)
-note: ln_Capital is probably collinear with the fixed effects (all partialled-out values
->  are close to zero; tol = 1.0e-09)
-note: n_products is probably collinear with the fixed effects (all partialled-out values
->  are close to zero; tol = 1.0e-09)
+(dropped 684 singleton observations)
+(MWFE estimator converged in 13 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: ln_Capital is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: n_products is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
 
-HDFE Linear regression                            Number of obs   =     13,928
-Absorbing 3 HDFE groups                           F(   4,    398) =       5.35
-Statistics robust to heteroskedasticity           Prob > F        =     0.0003
-                                                  R-squared       =     0.6404
-                                                  Adj R-squared   =     0.5819
-                                                  Within R-sq.    =     0.0124
-Number of clusters (firm_n)  =        399         Root MSE        =     1.6468
+HDFE Linear regression                            Number of obs   =     28,512
+Absorbing 3 HDFE groups                           F(   4,    926) =      10.06
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.6305
+                                                  Adj R-squared   =     0.5903
+                                                  Within R-sq.    =     0.0100
+Number of clusters (firm_n)  =        927         Root MSE        =     1.6466
 
-                                 (Std. err. adjusted for 399 clusters in firm_n)
+                                 (Std. err. adjusted for 927 clusters in firm_n)
 --------------------------------------------------------------------------------
                |               Robust
       ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
@@ -605,20 +494,20 @@ Number of clusters (firm_n)  =        399         Root MSE        =     1.6468
 ln_firm_output |          0  (omitted)
     ln_Capital |          0  (omitted)
     n_products |          0  (omitted)
-   ln_n_buyers |   .0533315   .0752619     0.71   0.479     -.094629     .201292
-  ln_n_sellers |  -.0969327   .0597549    -1.62   0.106    -.2144074    .0205419
-    ln_mkt_qty |  -.0005455      .0346    -0.02   0.987     -.068567     .067476
-      ln_p_mkt |   .1791437   .0593472     3.02   0.003     .0624705    .2958169
-         _cons |   3.588161   .7220456     4.97   0.000     2.168661    5.007661
+   ln_n_buyers |   .0043949   .0494998     0.09   0.929    -.0927499    .1015396
+  ln_n_sellers |   -.048385   .0395095    -1.22   0.221    -.1259236    .0291535
+    ln_mkt_qty |   .0133285   .0194123     0.69   0.493    -.0247688    .0514257
+      ln_p_mkt |   .1806436   .0336144     5.37   0.000     .1146743    .2466129
+         _cons |   3.392808   .3789544     8.95   0.000     2.649099    4.136517
 --------------------------------------------------------------------------------
 
 Absorbed degrees of freedom:
 -----------------------------------------------------+
  Absorbed FE | Categories  - Redundant  = Num. Coefs |
 -------------+---------------------------------------|
-      firm_n |       399         399           0    *|
-      prod_n |      1413           1        1412     |
-      city_n |       135           1         134     |
+      firm_n |       927         927           0    *|
+      prod_n |      1679           1        1678     |
+      city_n |       188           1         187     |
 -----------------------------------------------------+
 * = FE nested within cluster; treated as redundant for DoF computation
 
@@ -1210,8 +1099,7 @@ added macro:
 >     stats(firm_fe prod_fe city_fe N r2_a, ///
 >           labels("Firm FE" "Product FE" "City FE" "Observations" "Adj. R-sq") ///
 >           fmt(%s %s %s %12.0fc 3)) ///
->     title("DV: ln(purchase price). Input/output similarity (structural S_mj and C_mj).
-> ") ///
+>     title("DV: ln(purchase price). Input/output similarity (structural S_mj and C_mj).") ///
 >     mtitles("Baseline" "+InputSim" "+OutputSim" "Both")
 (output written to regression/T3_similarity.txt)
 
@@ -1271,10 +1159,8 @@ T3 saved.
 >     absorb(firm_n prod_n city_n) vce(cluster firm_n)
 (dropped 763 singleton observations)
 (MWFE estimator converged in 13 iterations)
-note: ln_firm_output is probably collinear with the fixed effects (all partialled-out va
-> lues are close to zero; tol = 1.0e-09)
-note: n_products is probably collinear with the fixed effects (all partialled-out values
->  are close to zero; tol = 1.0e-09)
+note: ln_firm_output is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: n_products is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
 
 HDFE Linear regression                            Number of obs   =     46,106
 Absorbing 3 HDFE groups                           F(   4,   1379) =      19.19
@@ -1333,10 +1219,8 @@ added macro:
 >     absorb(firm_n prod_n city_n) vce(cluster firm_n)
 (dropped 763 singleton observations)
 (MWFE estimator converged in 13 iterations)
-note: ln_firm_output is probably collinear with the fixed effects (all partialled-out va
-> lues are close to zero; tol = 1.0e-09)
-note: n_products is probably collinear with the fixed effects (all partialled-out values
->  are close to zero; tol = 1.0e-09)
+note: ln_firm_output is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: n_products is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
 
 HDFE Linear regression                            Number of obs   =     46,106
 Absorbing 3 HDFE groups                           F(   5,   1379) =      16.55
@@ -1396,10 +1280,8 @@ added macro:
 >     absorb(firm_n prod_n city_n) vce(cluster firm_n)
 (dropped 763 singleton observations)
 (MWFE estimator converged in 13 iterations)
-note: ln_firm_output is probably collinear with the fixed effects (all partialled-out va
-> lues are close to zero; tol = 1.0e-09)
-note: n_products is probably collinear with the fixed effects (all partialled-out values
->  are close to zero; tol = 1.0e-09)
+note: ln_firm_output is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: n_products is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
 
 HDFE Linear regression                            Number of obs   =     46,106
 Absorbing 3 HDFE groups                           F(   5,   1379) =      16.36
@@ -1459,10 +1341,8 @@ added macro:
 >     absorb(firm_n prod_n city_n) vce(cluster firm_n)
 (dropped 763 singleton observations)
 (MWFE estimator converged in 13 iterations)
-note: ln_firm_output is probably collinear with the fixed effects (all partialled-out va
-> lues are close to zero; tol = 1.0e-09)
-note: n_products is probably collinear with the fixed effects (all partialled-out values
->  are close to zero; tol = 1.0e-09)
+note: ln_firm_output is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: n_products is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
 
 HDFE Linear regression                            Number of obs   =     46,106
 Absorbing 3 HDFE groups                           F(   5,   1379) =      16.67
@@ -1522,10 +1402,8 @@ added macro:
 >     absorb(firm_n prod_n city_n) vce(cluster firm_n)
 (dropped 763 singleton observations)
 (MWFE estimator converged in 13 iterations)
-note: ln_firm_output is probably collinear with the fixed effects (all partialled-out va
-> lues are close to zero; tol = 1.0e-09)
-note: n_products is probably collinear with the fixed effects (all partialled-out values
->  are close to zero; tol = 1.0e-09)
+note: ln_firm_output is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: n_products is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
 
 HDFE Linear regression                            Number of obs   =     46,106
 Absorbing 3 HDFE groups                           F(   8,   1379) =      11.08
@@ -1644,5 +1522,5 @@ All four tables saved to: regression
       name:  <unnamed>
        log:  G:\Kuangyu_Temp\Outsource\productivity\regression\02_price_reg.log
   log type:  text
- closed on:  29 May 2026, 16:18:50
-----------------------------------------------------------------------------------------
+ closed on:  29 May 2026, 22:39:58
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

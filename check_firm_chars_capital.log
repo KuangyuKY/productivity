@@ -1,0 +1,93 @@
+-------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  g:\Kuangyu_Temp\Outsource\productivity\productivity/check_firm_cha
+> rs_capital.log
+  log type:  text
+ opened on:  29 May 2026, 22:41:09
+
+. 
+. display "===== describe firm_chars.dta ====="
+===== describe firm_chars.dta =====
+
+. describe using "firm_chars.dta"
+
+Contains data                                 
+ Observations:    12,339,537                  29 May 2026 22:30
+    Variables:            10                  
+-------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+-------------------------------------------------------------------------------
+firm_id         str9    %9s                   
+year            long    %12.0g                
+firm_total_output
+                double  %10.0g                
+firm_total_outsource
+                double  %10.0g                
+n_products      long    %12.0g                
+is_intermediary long    %12.0g                
+ln_firm_output  double  %10.0g                
+ln_firm_outsource
+                double  %10.0g                
+Capital         double  %10.0g                
+ln_Capital      double  %10.0g                
+-------------------------------------------------------------------------------
+Sorted by: 
+
+. 
+. use "firm_chars.dta", clear
+
+. count
+  12,339,537
+
+. display "firm_chars rows: " r(N)
+firm_chars rows: 12339537
+
+. 
+. capture confirm variable Capital
+
+. if _rc == 0 {
+.     count if missing(Capital)
+  4,091,563
+.     display "missing Capital: " r(N)
+missing Capital: 4091563
+.     count if !missing(Capital)
+  8,247,974
+.     display "nonmissing Capital: " r(N)
+nonmissing Capital: 8247974
+.     count if Capital > 0 & !missing(Capital)
+  7,974,680
+.     display "positive Capital: " r(N)
+positive Capital: 7974680
+. }
+
+. else {
+.     display "Capital variable NOT FOUND"
+. }
+
+. 
+. capture confirm variable ln_Capital
+
+. if _rc == 0 {
+.     count if missing(ln_Capital)
+  4,364,857
+.     display "missing ln_Capital: " r(N)
+missing ln_Capital: 4364857
+.     count if !missing(ln_Capital)
+  7,974,680
+.     display "nonmissing ln_Capital: " r(N)
+nonmissing ln_Capital: 7974680
+. }
+
+. else {
+.     display "ln_Capital variable NOT FOUND"
+. }
+
+. 
+. log close
+      name:  <unnamed>
+       log:  g:\Kuangyu_Temp\Outsource\productivity\productivity/check_firm_cha
+> rs_capital.log
+  log type:  text
+ closed on:  29 May 2026, 22:41:10
+-------------------------------------------------------------------------------
