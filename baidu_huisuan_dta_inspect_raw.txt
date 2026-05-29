@@ -1,0 +1,74 @@
+﻿FILE
+FullName: H:\BaiduNetdiskDownload\汇算file\final_joinby_matched_data_2017_With_cid.dta
+SizeBytes: 6026378835
+SizeGB: 5.613
+LastWriteTime: 06/08/2025 12:02:22
+
+DTA_HEADER
+release: 118
+byteorder: LSF
+K_variables: 42
+N_observations: 15334226
+label: 
+timestamp: 10 Feb 2025 13:09
+
+VARIABLES
+index`tname`ttype`tformat`tlabel
+1	eid	str32	%32s	
+2	reg_number	str72	%72s	
+3	usc_code	str39	%39s	
+4	org_number	str19	%19s	
+5	province	str9	%9s	
+6	province_code	int	%9.0g	
+7	tax_period_start	str10	%10s	Tax Period Start Date
+8	tax_period_end	str10	%10s	Tax Period End Date
+9	region	long	%12.0g	Region
+10	reg_type	str3	%9s	Registration Type
+11	econ_type_code	float	%8.0g	Economic Type Code
+12	industry_code	str4	%9s	Industry Code
+13	industry_category	str1	%9s	Industry Category
+14	industry_major	str2	%9s	Industry Major Category
+15	industry_medium	str3	%9s	Industry Medium Category
+16	employees	byte	%10.0g	Number of Employees
+17	corp_tax_rate	int	%9.0g	Corporate Tax Rate
+18	levy_type	str1	%9s	Levy Type
+19	operating_revenue	byte	%10.0g	Operating Revenue
+20	operating_cost	byte	%10.0g	Operating Cost
+21	operating_tax	byte	%10.0g	Operating Tax and Surcharge
+22	sales_expense	byte	%10.0g	Sales Expense
+23	admin_expense	byte	%10.0g	Administrative Expense
+24	financial_expense	int	%9.0g	Financial Expense
+25	asset_impairment	byte	%10.0g	Asset Impairment Loss
+26	fair_value_change	byte	%10.0g	Fair Value Change Gain/Loss
+27	investment_income	byte	%10.0g	Investment Income
+28	operating_profit	byte	%10.0g	Operating Profit
+29	non_operating_income	byte	%10.0g	Non-Operating Income
+30	non_operating_expense	int	%9.0g	Non-Operating Expense
+31	total_profit_loss	byte	%10.0g	Total Profit (Loss)
+32	tax_payable	int	%9.0g	Tax Payable
+33	actual_tax_payable	int	%9.0g	Actual Tax Payable
+34	net_profit	byte	%10.0g	Net Profit
+35	b_class_revenue	byte	%10.0g	B Class Revenue
+36	b_class_cost	int	%9.0g	B Class Cost
+37	b_class_expense	int	%9.0g	B Class Expense
+38	total_assets	byte	%10.0g	Total Assets
+39	total_reg_capital	byte	%10.0g	Total Registered Capital
+40	obs_id	long	%12.0g	
+41	id	str9	%9s	ID
+42	cid	str9	%9s	
+
+IMPORTANT_NAME_OR_LABEL_MATCHES
+cid: 42:cid[]
+id: 1:eid[]; 40:obs_id[]; 41:id[ID]; 42:cid[]
+eid: 1:eid[]
+资产总额: 
+从业人数: 
+b收入总额: 
+净利润: 
+所在区域: 
+行业代码: 
+company_name: 
+match_step: 
+operating_revenue_max: 
+one: 
+a: 7:tax_period_start[Tax Period Start Date]; 8:tax_period_end[Tax Period End Date]; 10:reg_type[Registration Type]; 13:industry_category[Industry Category]; 14:industry_major[Industry Major Category]; 15:industry_medium[Industry Medium Category]; 17:corp_tax_rate[Corporate Tax Rate]; 19:operating_revenue[Operating Revenue]; 20:operating_cost[Operating Cost]; 21:operating_tax[Operating Tax and Surcharge]; 22:sales_expense[Sales Expense]; 23:admin_expense[Administrative Expense]; 24:financial_expense[Financial Expense]; 25:asset_impairment[Asset Impairment Loss]; 26:fair_value_change[Fair Value Change Gain/Loss]; 28:operating_profit[Operating Profit]; 29:non_operating_income[Non-Operating Income]; 30:non_operating_expense[Non-Operating Expense]; 31:total_profit_loss[Total Profit (Loss)]; 32:tax_payable[Tax Payable]; 33:actual_tax_payable[Actual Tax Payable]; 35:b_class_revenue[B Class Revenue]; 36:b_class_cost[B Class Cost]; 37:b_class_expense[B Class Expense]; 38:total_assets[Total Assets]; 39:total_reg_capital[Total Registered Capital]
