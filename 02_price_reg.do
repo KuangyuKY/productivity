@@ -17,8 +17,7 @@
 *   market_conds.dta            product × city 市场条件
 *   firm_chars.dta              firm × year 企业特征
 *   G:\Kuangyu_Temp\Outsource\full_data.dta     → input/output_similarity
-*   H:\BaiduNetdiskDownload\汇算file\final_joinby_matched_data_2017_With_cid.dta → cid → id
-*   H:\汇算数据\2017.dta        → 资产总额 (Capital)
+*   firm_chars.dta 已含 Capital / ln_Capital（由 01_clean.ipynb 桥接写入）
 *
 * 样本：去掉中介企业（is_intermediary == 1，外包比例 > 90%）
 *   中介企业以转卖为主，不属于本文研究的生产外包范畴
@@ -96,44 +95,10 @@ display "missing input_similarity: " r(N)
 count if missing(output_similarity)
 display "missing output_similarity: " r(N)
 
-* --- 桥接汇算数据：firm_id (cid) → BaiduNetdisk matched id → Capital（资产总额）---
-*
-* 新口径：不用当前项目里的 cid_entid_unique.dta，而使用学长的预匹配桥：
-*   H:\BaiduNetdiskDownload\汇算file\final_joinby_matched_data_2017_With_cid.dta
-* 该文件已经把汇算企业和发票企业 cid 做过更完整的匹配。
-
-preserve
-    use "H:\BaiduNetdiskDownload\汇算file\final_joinby_matched_data_2017_With_cid.dta", clear
-    destring cid, replace force
-    destring id, replace force
-    drop if missing(cid)
-    drop if missing(id)
-    bysort cid: gen rep_no = _n
-    keep if rep_no == 1
-    drop rep_no
-    keep cid id
-    save "baidu_cid_id_2017_clean.dta", replace
-restore
-
-preserve
-    use "H:\汇算数据\2017.dta", clear
-    gen year = 2017
-    bysort id year: gen rep_no = _n
-    keep if rep_no == 1
-    drop rep_no
-    keep id 资产总额
-    save "huisuan_2017_clean.dta", replace
-restore
-
-destring firm_id, gen(cid) force
-merge m:1 cid using "baidu_cid_id_2017_clean.dta", ///
-    keepusing(id) keep(master match) nogen
-merge m:1 id using "huisuan_2017_clean.dta", ///
-    keepusing(资产总额) keep(master match) nogen
-rename 资产总额 Capital
-gen ln_Capital = ln(Capital) if Capital > 0 & !missing(Capital)
-count if missing(ln_Capital)
-display "missing ln_Capital (BaiduNetdisk 汇算桥覆盖不足): " r(N)
+* --- Capital 已由 01_clean.ipynb 桥接并写入 firm_chars.dta ---
+* 桥接路径：firm_id (cid) → final_joinby_matched_data_2017_With_cid.dta (total_assets) → Capital
+* total_assets 是 double 类型，直接改名为 Capital；无需再读 H:\汇算数据\2017.dta
+* ln_Capital 已在 firm_chars.dta 中，随 firm_chars 合并一并进入面板，无需在此处理
 
 * --- 缺失诊断 ---
 display ""
@@ -164,8 +129,6 @@ summarize ln_p_net ln_firm_output ln_Capital n_products ///
 
 compress
 save "reg_panel.dta", replace
-erase "baidu_cid_id_2017_clean.dta"
-erase "huisuan_2017_clean.dta"
 
 
 * ==============================================================================

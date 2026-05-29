@@ -16,7 +16,15 @@
       "Bash(where stata *)",
       "Bash(del \"C:\\\\Users\\\\HKUBS\\\\Documents\\\\aproject\\\\Outsourcing\\\\code\\\\productivity\\\\five_input_csv_summary.md\")",
       "Bash(del \"C:\\\\Users\\\\HKUBS\\\\Documents\\\\aproject\\\\Outsourcing\\\\code\\\\productivity\\\\seller_market_condition_sql.md\")",
-      "Bash(del \"C:\\\\Users\\\\HKUBS\\\\Documents\\\\aproject\\\\Outsourcing\\\\code\\\\productivity\\\\GX17_aggregation_queries.md\")"
+      "Bash(del \"C:\\\\Users\\\\HKUBS\\\\Documents\\\\aproject\\\\Outsourcing\\\\code\\\\productivity\\\\GX17_aggregation_queries.md\")",
+      "Bash(Get-ChildItem -Recurse -Filter \"merge汇算_2.do\" \"C:\\\\Users\\\\HKUBS\\\\Documents\\\\aproject\\\\Outsourcing\\\\code\")",
+      "Bash(Select-Object FullName)",
+      "Bash(where python3 *)",
+      "Read(//usr/**)",
+      "Bash(python3 -c ' *)",
+      "Bash(python -c \"import sys; sys.stdout.buffer.write\\(sys.stdin.buffer.read\\(\\)\\)\")",
+      "Bash(C:/Users/HKUBS/anaconda3/python.exe -W ignore -c ' *)",
+      "Bash(C:/Users/HKUBS/anaconda3/python.exe -X utf8 check_stats.py)"
     ]
   }
 }
