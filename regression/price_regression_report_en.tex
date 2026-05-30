@@ -1,0 +1,748 @@
+% !TEX program = pdflatex
+\documentclass[12pt]{article}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{caption}
+\usepackage{threeparttable}
+\usepackage{float}
+\usepackage{setspace}
+\usepackage{pdflscape}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\geometry{left=1.1in, right=1.1in, top=1in, bottom=1in}
+\setstretch{1.2}
+\captionsetup{labelfont=bf, font=small}
+
+\newcommand{\sym}[1]{\ensuremath{^{\text{#1}}}}
+\newcommand{\se}[1]{{\small(#1)}}
+\newcommand{\abs}{\textemdash}
+\newcommand{\mis}{}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\title{\textbf{Determinants of Outsourcing Purchase Prices:\\
+Regression Results and Data Notes}}
+\author{}
+\date{May 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\clearpage
+
+%=============================================================
+\section{Regression Results}
+\label{sec:regression}
+%=============================================================
+
+\subsection*{Overview}
+
+The dependent variable in all regressions is
+\(\ln p_{fjct}\), the log outsourcing purchase unit price (CNY per unit)
+paid by firm \(f\) for product \(j\) (9-digit code) in city \(c\) in year \(t\) (2017).
+Three groups of explanatory variables are considered.
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Firm-level variables (\(x\)):}
+    \(\ln\text{Output}_{ft}\) (log total VAT sales, size proxy);
+    \(\ln K_{ft}\) (log total assets, sourced from the tax-filing bridge,
+    approximately 62.3\% coverage; see Section~\ref{sec:bridge});
+    \(n^{\text{prod}}_{ft}\) (number of product codes with positive net output).
+
+  \item \textbf{Market-level variables (\(z\)):}
+    \(\ln n^{B}_{jct}\) (log number of buyers of product \(j\) in city \(c\),
+    universe coverage);
+    \(\ln n^{S}_{jct}\) (log number of sellers, universe);
+    \(\ln q^{m}_{jct}\) (log total market purchase quantity, universe);
+    \(\ln \bar{p}^{m}_{jct}\) (log value-weighted market average price).
+
+  \item \textbf{Product-similarity variables (\(s\)):}
+    \(S_{mj}\) (\texttt{input\_similarity}, cosine similarity of the input
+    structure between the firm's core product \(m\) and the outsourced product
+    \(j\)); \(C_{mj}\) (\texttt{output\_similarity}, output-structure
+    similarity). Both vary at the firm\(\times\)product level.
+\end{itemize}
+
+\paragraph{Sample.}
+The sample consists of 3,410 firms randomly drawn from the VAT database
+(a time-saving compromise; will be expanded to the full sample in later work).
+The sample passes through the following filtering steps:
+\begin{itemize}[leftmargin=1.5em,nosep]
+  \item \textbf{Buy-side filter}: 3,376 of the 3,410 firms have at least one
+    valid 9-digit product code in the purchase records (after bianma filter).
+  \item \textbf{Outsourcing definition}: an outsourcing product requires the
+    \emph{same} firm to appear on \emph{both} the buy and sell side for the
+    \emph{same} product code. Only 2,108 firms satisfy this condition;
+    these constitute \texttt{invoice\_panel.dta}.
+  \item \textbf{Intermediary removal}: 233 firms with outsourcing ratio
+    \(>90\%\) (\texttt{is\_intermediary == 1}) are dropped, leaving
+    \textbf{1,875 firms} in the final regression panel
+    (\texttt{reg\_panel.dta}).
+\end{itemize}
+Tables~T1, T2, T4, and T5 require \(\ln K_{ft}\) and therefore have
+\(N \approx 29{,}200\) (62.3\% coverage); Tables~T3 and T6 do not require
+capital data and have \(N \approx 46{,}100\).
+
+\paragraph{Product portfolio.}
+Among the 3,376 buy-side firms, each purchases on average approximately 125
+distinct product types (9-digit codes; 425,713 purchase records
+\(\div\) 3,376 \(\approx\) 126).
+Of these 3,376 firms, 2,108 (62.5\%) have at least one product that appears
+on both their buy and sell sides (the outsourcing condition).
+These 2,108 outsourcing firms have on average 28.2 outsourcing product types
+(mean 28.2, median 3; the distribution is highly right-skewed with a maximum
+of 925 products).
+In the final regression panel (\texttt{reg\_panel.dta}, 1,875 firms after
+dropping intermediaries), the mean is 25.0 outsourcing products per firm
+(median 3).
+
+\paragraph{Fixed effects and identification.}
+All FE specifications include firm (\(\delta_f\)), product (\(\delta_j\), 9-digit
+code), and/or city (\(\delta_c\), prefecture) fixed effects; standard errors are
+clustered at the firm level.
+Because the data cover a single cross-section (2017), firm-level variables
+(\(\ln\text{Output}\), \(\ln K\), \(n^{\text{prod}}\)) are perfectly
+collinear with the firm FE and are identified only in OLS specifications.
+Similarity variables (\(S_{mj}\), \(C_{mj}\)) vary at the firm\(\times\)product
+level and remain identified under firm FE.
+Market variables vary at the product\(\times\)city level and remain identified
+under firm FE.
+
+\bigskip
+
+%-------------------------------------------------------------
+\subsection{T1: Firm-Level Variables}
+\label{sec:t1}
+%-------------------------------------------------------------
+
+The baseline equation is
+\begin{equation}
+  \ln p_{fjct}
+  = \gamma_1 \ln \text{Output}_{ft}
+  + \gamma_2 \ln K_{ft}
+  + \gamma_3 n^{\text{prod}}_{ft}
+  + \delta_f + \delta_j + \delta_c
+  + \varepsilon_{fjct}.
+  \label{eq:t1}
+\end{equation}
+
+\begin{table}[H]
+  \centering
+  \caption{Variable Definitions --- Table~T1}
+  \label{tab:vardef_t1}
+  \begin{tabular}{L{3.5cm} L{10.5cm}}
+    \toprule
+    Variable & Definition \\
+    \midrule
+    \(p_{fjct}\) &
+      Dependent variable. Log outsourcing purchase unit price (CNY/unit),
+      firm \(f\), product \(j\), city \(c\), year \(t\). \\[4pt]
+    \(\ln \text{Output}_{ft}\) &
+      Log annual VAT sales; proxy for firm size. \\[4pt]
+    \(\ln K_{ft}\) &
+      Log total assets from the tax-filing bridge (\(\approx\)62.3\%
+      coverage). See Section~\ref{sec:bridge}. \\[4pt]
+    \(n^{\text{prod}}_{ft}\) &
+      Number of product codes with positive net output. \\[4pt]
+    \(\delta_f,\,\delta_j,\,\delta_c\) &
+      Firm, product (9-digit code), and city (prefecture) fixed effects. \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{T1: Firm-Level Variables Only}
+  \label{tab:t1}
+  \begin{threeparttable}
+    \begin{tabular}{lcc}
+      \toprule
+      & (1) OLS & (2) +Firm FE \\
+      \midrule
+      \(\ln \text{Output}\) & \(0.178\sym{***}\) & \abs \\
+                             & \se{0.038}         & \\[4pt]
+      \(\ln K\)              & \(-0.128\sym{***}\) & \abs \\
+                             & \se{0.034}          & \\[4pt]
+      \(n^{\text{prod}}\)    & \(-0.001\sym{*}\)  & \abs \\
+                             & \se{0.000}         & \\[4pt]
+      Constant               & \(3.273\sym{***}\) & \(3.941\sym{***}\) \\
+                             & \se{0.469}         & \se{0.000} \\
+      \midrule
+      Firm FE     & No  & Yes \\
+      Product FE  & No  & No  \\
+      City FE     & No  & No  \\
+      \(N\)       & 29,247 & 28,915 \\
+      Adj.\ \(R^2\) & 0.018 & 0.263 \\
+      \bottomrule
+    \end{tabular}
+    \begin{tablenotes}[flushleft]
+      \footnotesize
+      \item \sym{*} \(p<0.10\), \sym{**} \(p<0.05\), \sym{***} \(p<0.01\).
+        \abs\ = absorbed by fixed effects.
+      \item Firm-level variables are fully absorbed by Firm FE in
+        single-year cross-section data. \(\ln K\) is significantly negative
+        in OLS, consistent with larger firms having stronger bargaining power.
+    \end{tablenotes}
+  \end{threeparttable}
+\end{table}
+
+%-------------------------------------------------------------
+\subsection{T2: Firm-Level Variables and Product Similarity}
+\label{sec:t2}
+%-------------------------------------------------------------
+
+The equation adds product-similarity terms:
+\begin{equation}
+  \ln p_{fjct}
+  = \gamma_1 \ln \text{Output}_{ft}
+  + \gamma_2 \ln K_{ft}
+  + \gamma_3 n^{\text{prod}}_{ft}
+  + \beta_1 S_{mj}
+  + \beta_2 C_{mj}
+  + \delta_f + \delta_j + \delta_c
+  + \varepsilon_{fjct}.
+  \label{eq:t2}
+\end{equation}
+
+\begin{table}[H]
+  \centering
+  \caption{Variable Definitions --- Table~T2 (additional variables)}
+  \label{tab:vardef_t2}
+  \begin{tabular}{L{3.5cm} L{10.5cm}}
+    \toprule
+    Variable & Definition \\
+    \midrule
+    \(S_{mj}\) &
+      Input-structure similarity between the firm's core product \(m\) and
+      outsourced product \(j\) (cosine similarity, \(\in[0,1]\)).
+      Varies at the firm\(\times\)product level; identified under Firm FE. \\[4pt]
+    \(C_{mj}\) &
+      Output-structure similarity (overlap in downstream customers/
+      distribution channels). Same variation level as \(S_{mj}\). \\[4pt]
+    \(m\) &
+      Core product: the product code with the highest net production value
+      (\(=\) sales \(-\) same-product purchases) for firm \(f\). \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{T2: Firm-Level Variables and Product Similarity}
+  \label{tab:t2}
+  \begin{threeparttable}
+    \begin{tabular}{lcccc}
+      \toprule
+      & (1) OLS & (2) +Firm FE & (3) +Firm+Prod & (4) +Firm+Prod+City \\
+      \midrule
+      \(\ln \text{Output}\) & \(0.168\sym{***}\) & \abs & \abs & \abs \\
+                             & \se{0.036} & & & \\[4pt]
+      \(\ln K\) & \(-0.105\sym{***}\) & \abs & \abs & \abs \\
+                & \se{0.032} & & & \\[4pt]
+      \(n^{\text{prod}}\) & \(-0.001\) & \abs & \abs & \abs \\
+                          & \se{0.000} & & & \\[4pt]
+      \(S_{mj}\) & \(1.136\sym{***}\) & \(0.341\sym{*}\) & \(0.080\) & \(0.080\) \\
+                 & \se{0.253} & \se{0.206} & \se{0.117} & \se{0.117} \\[4pt]
+      \(C_{mj}\) & \(0.105\) & \(0.155\) & \(-0.093\) & \(-0.093\) \\
+                 & \se{0.304} & \se{0.219} & \se{0.136} & \se{0.137} \\[4pt]
+      Constant & \(2.684\sym{***}\) & \(3.853\sym{***}\) & \(3.917\sym{***}\) & \(3.917\sym{***}\) \\
+               & \se{0.500} & \se{0.032} & \se{0.019} & \se{0.020} \\
+      \midrule
+      Firm FE    & No  & Yes & Yes & Yes \\
+      Product FE & No  & No  & Yes & Yes \\
+      City FE    & No  & No  & No  & Yes \\
+      \(N\)      & 29,237 & 28,905 & 28,552 & 28,552 \\
+      Adj.\ \(R^2\) & 0.028 & 0.264 & 0.589 & 0.586 \\
+      \bottomrule
+    \end{tabular}
+    \begin{tablenotes}[flushleft]
+      \footnotesize
+      \item \sym{*} \(p<0.10\), \sym{**} \(p<0.05\), \sym{***} \(p<0.01\).
+        \abs\ = absorbed by fixed effects.
+      \item \(S_{mj}\) is significantly positive in OLS (\(1.136^{***}\)) and
+        with Firm FE only (\(0.341^{*}\)), but becomes insignificant once
+        Product FE is included (\(0.080\)), indicating that the similarity
+        effect is absorbed by product-level fixed heterogeneity.
+    \end{tablenotes}
+  \end{threeparttable}
+\end{table}
+
+%-------------------------------------------------------------
+\subsection{T3: Market-Level Variables Only}
+\label{sec:t3}
+%-------------------------------------------------------------
+
+The market-level specification is
+\begin{equation}
+  \ln p_{fjct}
+  = \lambda_1 \ln n^{B}_{jct}
+  + \lambda_2 \ln n^{S}_{jct}
+  + \lambda_3 \ln q^{m}_{jct}
+  + \lambda_4 \ln \bar{p}^{m}_{jct}
+  + \delta_f + \delta_j + \delta_c
+  + \varepsilon_{fjct}.
+  \label{eq:t3}
+\end{equation}
+
+\begin{table}[H]
+  \centering
+  \caption{Variable Definitions --- Table~T3}
+  \label{tab:vardef_t3}
+  \begin{tabular}{L{3.5cm} L{10.5cm}}
+    \toprule
+    Variable & Definition \\
+    \midrule
+    \(\ln n^{B}_{jct}\) &
+      Log number of buyers of product \(j\) in city \(c\) (universe
+      coverage). Measures demand-side market thickness. \\[4pt]
+    \(\ln n^{S}_{jct}\) &
+      Log number of sellers of product \(j\) in city \(c\) (universe).
+      Measures supply-side competition. \\[4pt]
+    \(\ln q^{m}_{jct}\) &
+      Log total market purchase quantity of product \(j\) in city \(c\)
+      (universe). \\[4pt]
+    \(\ln \bar{p}^{m}_{jct}\) &
+      Log value-weighted market average price of product \(j\) in city \(c\).
+      Serves as an external price anchor. \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{T3: Market-Level Variables Only}
+  \label{tab:t3}
+  \begin{threeparttable}
+    \begin{tabular}{lcccc}
+      \toprule
+      & (1) OLS & (2) +Firm FE & (3) +Firm+Prod & (4) +Firm+Prod+City \\
+      \midrule
+      \(\ln n^{B}\) & \(0.154\sym{***}\) & \(0.065\sym{**}\) & \(0.022\) & \(0.022\) \\
+                    & \se{0.048} & \se{0.029} & \se{0.036} & \se{0.036} \\[4pt]
+      \(\ln n^{S}\) & \(0.051\) & \(0.038\) & \(-0.051\) & \(-0.051\) \\
+                    & \se{0.059} & \se{0.036} & \se{0.034} & \se{0.034} \\[4pt]
+      \(\ln q^{m}\) & \(0.024\) & \(0.005\) & \(-0.003\) & \(-0.003\) \\
+                    & \se{0.015} & \se{0.013} & \se{0.015} & \se{0.015} \\[4pt]
+      \(\ln \bar{p}^{m}\) & \(0.757\sym{***}\) & \(0.624\sym{***}\) & \(0.158\sym{***}\) & \(0.158\sym{***}\) \\
+                          & \se{0.019} & \se{0.015} & \se{0.024} & \se{0.024} \\[4pt]
+      Constant & \(0.100\) & \(1.485\sym{***}\) & \(3.792\sym{***}\) & \(3.792\sym{***}\) \\
+               & \se{0.239} & \se{0.187} & \se{0.267} & \se{0.268} \\
+      \midrule
+      Firm FE    & No  & Yes & Yes & Yes \\
+      Product FE & No  & No  & Yes & Yes \\
+      City FE    & No  & No  & No  & Yes \\
+      \(N\)      & 46,869 & 46,380 & 46,106 & 46,106 \\
+      Adj.\ \(R^2\) & 0.308 & 0.468 & 0.605 & 0.603 \\
+      \bottomrule
+    \end{tabular}
+    \begin{tablenotes}[flushleft]
+      \footnotesize
+      \item \sym{*} \(p<0.10\), \sym{**} \(p<0.05\), \sym{***} \(p<0.01\).
+      \item \(\ln \bar{p}^{m}\) is robustly significant across all
+        specifications (\(0.158^{***}\) to \(0.757^{***}\)). Buyer and seller
+        counts become insignificant after Product FE is included.
+    \end{tablenotes}
+  \end{threeparttable}
+\end{table}
+
+%-------------------------------------------------------------
+\subsection{T4: Firm-Level and Market-Level Variables}
+\label{sec:t4}
+%-------------------------------------------------------------
+
+The combined firm and market specification is
+\begin{equation}
+  \ln p_{fjct}
+  = \boldsymbol{\gamma}' \mathbf{x}_{ft}
+  + \boldsymbol{\lambda}' \mathbf{z}_{jct}
+  + \delta_f + \delta_j + \delta_c
+  + \varepsilon_{fjct}.
+  \label{eq:t4}
+\end{equation}
+
+\begin{landscape}
+\begin{table}[H]
+  \centering
+  \caption{T4: Firm-Level and Market-Level Variables}
+  \label{tab:t4}
+  \begin{threeparttable}
+    \begin{tabular}{lcccc}
+      \toprule
+      & (1) OLS & (2) +Firm FE & (3) +Firm+Prod & (4) +Firm+Prod+City \\
+      \midrule
+      \(\ln \text{Output}\) & \(0.135\sym{***}\) & \abs & \abs & \abs \\
+                             & \se{0.032} & & & \\[4pt]
+      \(\ln K\) & \(-0.085\sym{***}\) & \abs & \abs & \abs \\
+                & \se{0.026} & & & \\[4pt]
+      \(n^{\text{prod}}\) & \(-0.001\sym{***}\) & \abs & \abs & \abs \\
+                          & \se{0.000} & & & \\[4pt]
+      \(\ln n^{B}\) & \(0.108\) & \(0.098\sym{***}\) & \(0.004\) & \(0.004\) \\
+                    & \se{0.067} & \se{0.035} & \se{0.049} & \se{0.049} \\[4pt]
+      \(\ln n^{S}\) & \(0.089\) & \(0.009\) & \(-0.048\) & \(-0.048\) \\
+                    & \se{0.079} & \se{0.047} & \se{0.039} & \se{0.040} \\[4pt]
+      \(\ln q^{m}\) & \(0.013\) & \(0.002\) & \(0.013\) & \(0.013\) \\
+                    & \se{0.019} & \se{0.017} & \se{0.019} & \se{0.019} \\[4pt]
+      \(\ln \bar{p}^{m}\) & \(0.732\sym{***}\) & \(0.623\sym{***}\) & \(0.181\sym{***}\) & \(0.181\sym{***}\) \\
+                          & \se{0.022} & \se{0.018} & \se{0.033} & \se{0.034} \\[4pt]
+      Constant & \(-0.333\) & \(1.353\sym{***}\) & \(3.393\sym{***}\) & \(3.393\sym{***}\) \\
+               & \se{0.451} & \se{0.239} & \se{0.378} & \se{0.379} \\
+      \midrule
+      Firm FE    & No  & Yes & Yes & Yes \\
+      Product FE & No  & No  & Yes & Yes \\
+      City FE    & No  & No  & No  & Yes \\
+      \(N\)      & 29,196 & 28,864 & 28,512 & 28,512 \\
+      Adj.\ \(R^2\) & 0.309 & 0.450 & 0.593 & 0.590 \\
+      \bottomrule
+    \end{tabular}
+    \begin{tablenotes}[flushleft]
+      \footnotesize
+      \item \sym{*} \(p<0.10\), \sym{**} \(p<0.05\), \sym{***} \(p<0.01\).
+        \abs\ = absorbed by fixed effects.
+      \item OLS identifies both firm-level and market-level variables jointly.
+        Under FE, firm variables are absorbed by Firm FE; \(\ln\bar{p}^{m}\)
+        remains robust throughout.
+    \end{tablenotes}
+  \end{threeparttable}
+\end{table}
+\end{landscape}
+
+%-------------------------------------------------------------
+\subsection{T5: Full Specification}
+\label{sec:t5}
+%-------------------------------------------------------------
+
+The full specification combines all three variable groups:
+\begin{equation}
+  \ln p_{fjct}
+  = \boldsymbol{\gamma}' \mathbf{x}_{ft}
+  + \boldsymbol{\beta}' \mathbf{s}_{fj}
+  + \boldsymbol{\lambda}' \mathbf{z}_{jct}
+  + \delta_f + \delta_j + \delta_c
+  + \varepsilon_{fjct}.
+  \label{eq:t5}
+\end{equation}
+
+\begin{landscape}
+\begin{table}[H]
+  \centering
+  \caption{T5: Full Specification}
+  \label{tab:t5}
+  \begin{threeparttable}
+    \begin{tabular}{lcccc}
+      \toprule
+      & (1) OLS & (2) +Firm FE & (3) +Firm+Prod & (4) +Firm+Prod+City \\
+      \midrule
+      \(\ln \text{Output}\) & \(0.131\sym{***}\) & \abs & \abs & \abs \\
+                             & \se{0.031} & & & \\[4pt]
+      \(\ln K\) & \(-0.071\sym{***}\) & \abs & \abs & \abs \\
+                & \se{0.026} & & & \\[4pt]
+      \(n^{\text{prod}}\) & \(-0.001\sym{***}\) & \abs & \abs & \abs \\
+                          & \se{0.000} & & & \\[4pt]
+      \(S_{mj}\) & \(0.769\sym{***}\) & \(0.257\sym{*}\) & \(0.106\) & \(0.106\) \\
+                 & \se{0.192} & \se{0.133} & \se{0.115} & \se{0.116} \\[4pt]
+      \(C_{mj}\) & \(-0.016\) & \(0.023\) & \(-0.109\) & \(-0.109\) \\
+                 & \se{0.238} & \se{0.154} & \se{0.135} & \se{0.136} \\[4pt]
+      \(\ln n^{B}\) & \(0.129\sym{**}\) & \(0.098\sym{***}\) & \(0.004\) & \(0.004\) \\
+                    & \se{0.064} & \se{0.035} & \se{0.049} & \se{0.049} \\[4pt]
+      \(\ln n^{S}\) & \(0.075\) & \(0.012\) & \(-0.048\) & \(-0.048\) \\
+                    & \se{0.075} & \se{0.048} & \se{0.039} & \se{0.040} \\[4pt]
+      \(\ln q^{m}\) & \(0.002\) & \(-0.001\) & \(0.013\) & \(0.013\) \\
+                    & \se{0.019} & \se{0.016} & \se{0.019} & \se{0.020} \\[4pt]
+      \(\ln \bar{p}^{m}\) & \(0.717\sym{***}\) & \(0.620\sym{***}\) & \(0.181\sym{***}\) & \(0.181\sym{***}\) \\
+                          & \se{0.022} & \se{0.018} & \se{0.033} & \se{0.034} \\[4pt]
+      Constant & \(-0.548\) & \(1.322\sym{***}\) & \(3.391\sym{***}\) & \(3.391\sym{***}\) \\
+               & \se{0.446} & \se{0.234} & \se{0.376} & \se{0.378} \\
+      \midrule
+      Firm FE    & No  & Yes & Yes & Yes \\
+      Product FE & No  & No  & Yes & Yes \\
+      City FE    & No  & No  & No  & Yes \\
+      \(N\)      & 29,186 & 28,854 & 28,502 & 28,502 \\
+      Adj.\ \(R^2\) & 0.313 & 0.451 & 0.593 & 0.590 \\
+      \bottomrule
+    \end{tabular}
+    \begin{tablenotes}[flushleft]
+      \footnotesize
+      \item \sym{*} \(p<0.10\), \sym{**} \(p<0.05\), \sym{***} \(p<0.01\).
+        \abs\ = absorbed by fixed effects.
+      \item In full OLS, all three variable groups are jointly significant:
+        \(S_{mj} = 0.769^{***}\), \(\ln K = -0.071^{***}\),
+        \(\ln\bar{p}^{m} = 0.717^{***}\). Under the full FE specification,
+        only \(\ln\bar{p}^{m}\) remains significant (\(0.181^{***}\)):
+        firm variables are absorbed by Firm FE, and the similarity effect is
+        absorbed by Product FE.
+    \end{tablenotes}
+  \end{threeparttable}
+\end{table}
+\end{landscape}
+
+%-------------------------------------------------------------
+\subsection{T6: Interactions --- Firm Size \texorpdfstring{$\times$}{x} Market Conditions}
+\label{sec:t6}
+%-------------------------------------------------------------
+
+To explore heterogeneous price-setting, all specifications include firm, product,
+and city FE, and the main effect of \(\ln\text{Output}\) is absorbed by Firm FE.
+The equation is
+\begin{equation}
+  \ln p_{fjct}
+  = \boldsymbol{\lambda}' \mathbf{z}_{jct}
+  + \sum_{k} \mu_k \bigl(\ln \text{Output}_{ft} \times z^{k}_{jct}\bigr)
+  + \delta_f + \delta_j + \delta_c
+  + \varepsilon_{fjct}.
+  \label{eq:t6}
+\end{equation}
+The interaction terms vary at the firm\(\times\)product level and remain
+identified under all three FE.
+
+\begin{table}[H]
+  \centering
+  \caption{Variable Definitions --- Table~T6 (interaction terms)}
+  \label{tab:vardef_t6}
+  \begin{tabular}{L{3.5cm} L{10.5cm}}
+    \toprule
+    Variable & Definition \\
+    \midrule
+    \(\ln\text{Output} \times \ln n^{B}\) &
+      Size \(\times\) buyer-market thickness. Expected sign: negative
+      (larger firms benefit more from thick buyer markets). \\[4pt]
+    \(\ln\text{Output} \times \ln n^{S}\) &
+      Size \(\times\) seller competition. Expected sign: negative. \\[4pt]
+    \(\ln\text{Output} \times \ln\bar{p}^{m}\) &
+      Size \(\times\) market price level. \\[4pt]
+    \(\ln\text{Output} \times \ln q^{m}\) &
+      Size \(\times\) market volume. Expected sign: negative. \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{landscape}
+\begin{table}[H]
+  \centering
+  \caption{T6: Interactions --- Firm Size \(\times\) Market Conditions}
+  \label{tab:t6}
+  \begin{threeparttable}
+    \begin{tabular}{lccccc}
+      \toprule
+      & (1) Baseline & (2) +Size\(\times\)nB & (3) +Size\(\times\)nS
+        & (4) +Size\(\times\)\(\bar{p}^m\) & (5) All \\
+      \midrule
+      \(\ln n^{B}\) & \(0.022\) & \(0.413\sym{***}\) & \(0.026\) & \(0.029\) & \(0.018\) \\
+                    & \se{0.036} & \se{0.101} & \se{0.036} & \se{0.036} & \se{0.137} \\[4pt]
+      \(\ln n^{S}\) & \(-0.051\) & \(-0.057\sym{*}\) & \(0.415\sym{***}\) & \(-0.053\) & \(0.132\) \\
+                    & \se{0.034} & \se{0.034} & \se{0.115} & \se{0.033} & \se{0.145} \\[4pt]
+      \(\ln q^{m}\) & \(-0.003\) & \(-0.004\) & \(-0.005\) & \(-0.007\) & \(0.131\sym{*}\) \\
+                    & \se{0.015} & \se{0.015} & \se{0.015} & \se{0.015} & \se{0.070} \\[4pt]
+      \(\ln \bar{p}^{m}\) & \(0.158\sym{***}\) & \(0.157\sym{***}\) & \(0.156\sym{***}\) & \(-0.159\sym{**}\) & \(-0.015\) \\
+                          & \se{0.024} & \se{0.024} & \se{0.024} & \se{0.080} & \se{0.073} \\[4pt]
+      Size\(\times\)nB & \mis & \(-0.019\sym{***}\) & \mis & \mis & \(0.001\) \\
+                       &     & \se{0.005}          &     &     & \se{0.006} \\[4pt]
+      Size\(\times\)nS & \mis & \mis & \(-0.024\sym{***}\) & \mis & \(-0.009\) \\
+                       &     &     & \se{0.006}           &     & \se{0.007} \\[4pt]
+      Size\(\times\)\(\bar{p}^m\) & \mis & \mis & \mis & \(0.016\sym{***}\) & \(0.009\sym{**}\) \\
+                                  &     &     &     & \se{0.004}          & \se{0.004} \\[4pt]
+      Size\(\times\)qm & \mis & \mis & \mis & \mis & \(-0.007\sym{**}\) \\
+                       &     &     &     &     & \se{0.004} \\[4pt]
+      Constant & \(3.792\sym{***}\) & \(3.767\sym{***}\) & \(3.785\sym{***}\) & \(3.836\sym{***}\) & \(3.811\sym{***}\) \\
+               & \se{0.268} & \se{0.268} & \se{0.265} & \se{0.266} & \se{0.264} \\
+      \midrule
+      Firm FE    & Yes & Yes & Yes & Yes & Yes \\
+      Product FE & Yes & Yes & Yes & Yes & Yes \\
+      City FE    & Yes & Yes & Yes & Yes & Yes \\
+      \(N\)      & 46,106 & 46,106 & 46,106 & 46,106 & 46,106 \\
+      Adj.\ \(R^2\) & 0.603 & 0.603 & 0.603 & 0.604 & 0.604 \\
+      \bottomrule
+    \end{tabular}
+    \begin{tablenotes}[flushleft]
+      \footnotesize
+      \item \sym{*} \(p<0.10\), \sym{**} \(p<0.05\), \sym{***} \(p<0.01\).
+        The main effect of \(\ln\text{Output}\) is absorbed by Firm FE in all
+        columns.
+      \item Individual interaction terms are significant when entered separately:
+        larger firms pay lower prices in markets with more buyers
+        (\(\hat\mu_1 = -0.019^{***}\)) and more sellers
+        (\(\hat\mu_2 = -0.024^{***}\)). The size--market-price interaction is
+        positive (\(\hat\mu_3 = +0.016^{***}\)). In the full specification
+        (column 5), only \(\hat\mu_3\) and \(\hat\mu_4\) remain individually
+        significant, likely due to multicollinearity among the interaction
+        terms.
+    \end{tablenotes}
+  \end{threeparttable}
+\end{table}
+\end{landscape}
+
+%=============================================================
+\section{SQL Data Extraction Logic}
+\label{sec:sql}
+%=============================================================
+
+\subsection*{Background}
+
+Raw data originate from the national VAT invoice database for 2017, stored in
+a relational database. Five aggregated views were extracted and saved as flat
+files for downstream Python processing. Table~\ref{tab:sql_views} summarizes
+each view.
+
+\begin{table}[H]
+  \centering
+  \caption{Extracted Data Views from the VAT Database}
+  \label{tab:sql_views}
+  \begin{threeparttable}
+    \begin{tabular}{L{2.8cm} L{4.2cm} L{3.0cm} L{4.2cm}}
+      \toprule
+      View name & Unit of observation & Raw / Clean rows & Contents \\
+      \midrule
+      \texttt{firm\_buy} &
+        Buyer firm \(\times\) product code &
+        473,268 / 425,713 &
+        Purchase amount and quantity; 2,731 distinct products. \\[4pt]
+      \texttt{firm\_sell} &
+        Seller firm \(\times\) product code &
+        101,844 / 89,584 &
+        Sales amount and quantity; 2,542 distinct products. \\[4pt]
+      \texttt{firm\_city} &
+        Firm ID \(\times\) prefecture city &
+        3,410 / 3,410 &
+        City assignment for each sample firm. Used to merge city
+        into purchase/sale files which contain no city field. \\[4pt]
+      \texttt{city\_buy} &
+        Buyer prefecture \(\times\) product code &
+        2,104,901 / 1,393,329 &
+        Universe-level buyer count, amount, and quantity. Used to
+        construct \(n^{B}\), \(q^{m}\), \(\bar{p}^{m}\). \\[4pt]
+      \texttt{city\_sell} &
+        Seller prefecture \(\times\) product code &
+        1,540,065 / 954,222 &
+        Universe-level seller count. Used to construct \(n^{S}\). \\
+      \bottomrule
+    \end{tabular}
+    \begin{tablenotes}[flushleft]
+      \footnotesize
+      \item ``Universe'' means \emph{all} firms in the national VAT database,
+        not only the 3,410 sample firms.
+    \end{tablenotes}
+  \end{threeparttable}
+\end{table}
+
+\subsection*{Core Python Processing Steps}
+
+\begin{enumerate}[leftmargin=1.8em, label=\arabic*.]
+
+  \item \textbf{Product code standardization.}
+    Raw codes are right-padded to 19 digits; the first 9 digits are retained as
+    the standardized product code. Only the 2,778 valid codes from the national
+    product catalog are kept.
+
+  \item \textbf{Outsourcing identification.}
+    A firm-product pair is classified as an outsourcing transaction if and only
+    if the firm appears in \emph{both} \texttt{firm\_buy} and
+    \texttt{firm\_sell} for the same product code (i.e., the firm both purchases
+    and sells the same product), with
+    \(\min(\text{purchase quantity},\, \text{sales quantity}) > 0\).
+
+  \item \textbf{City merge.}
+    Because the purchase and sale files contain no geographic identifier,
+    \texttt{firm\_city} is joined to both files on firm ID to assign each
+    transaction to a prefecture.
+
+  \item \textbf{Market condition construction.}
+    Universe views \texttt{city\_buy} and \texttt{city\_sell} are aggregated at
+    the product\(\times\)city level to produce \(n^{B}_{jct}\),
+    \(n^{S}_{jct}\), \(q^{m}_{jct}\), and \(\bar{p}^{m}_{jct}\).
+    These aggregates are \emph{not} restricted to sample firms, ensuring that
+    the market-thickness measures capture the full competitive environment.
+
+  \item \textbf{Intermediary removal.}
+    Firms flagged as intermediaries (\texttt{is\_intermediary == 1};
+    outsourcing ratio \(>90\%\)) are dropped from the 2,108-firm outsourcing
+    panel. This removes 233 firms, leaving \textbf{1,875 firms} in the final
+    regression panel (\texttt{reg\_panel.dta}).
+
+\end{enumerate}
+
+\subsection*{Sample Summary}
+
+\begin{table}[H]
+  \centering
+  \caption{Sample Summary Statistics}
+  \label{tab:sample_summary}
+  \begin{tabular}{lc}
+    \toprule
+    Statistic & Value \\
+    \midrule
+    Original sample firms                                      & 3,410 \\
+    Firms with valid buy-side product codes (bianma)           & 3,376 \\
+    Outsourcing firms (\texttt{invoice\_panel.dta})            & 2,108 \\
+    \quad (outsourcing = same product bought \& sold)          & \\
+    Regression panel firms (\texttt{reg\_panel.dta})           & 1,875 \\
+    \quad (after dropping 233 intermediaries)                  & \\
+    Avg.\ outsourcing products per firm (mean / median)        & 25.0 / 3 \\
+    Outsourcing product types (across all firms)               & 2,143 \\
+    Regression observations (T3/T6)                            & $\approx$46,100 \\
+    Cities covered                                             & 262 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+%=============================================================
+\section{Bridge Data Source and Matching Rate}
+\label{sec:bridge}
+%=============================================================
+
+\subsection*{Purpose}
+
+The VAT invoice database contains transaction-level information but no firm
+financial data. To include \(\ln K_{ft}\) (log total assets) as a regressor in
+Tables~T1, T2, T4, and T5, firm identifiers are bridged to a separate tax-filing
+dataset that records balance-sheet information.
+
+\subsection*{Bridge Path}
+
+\[
+  \underbrace{\text{Firm ID (VAT, \texttt{cid})}}_{\text{VAT database}}
+  \;\longrightarrow\;
+  \underbrace{\text{Tax-filing matched file}}_{\text{bridge key}}
+  \;\longrightarrow\;
+  \underbrace{K_{ft}\;(\text{total assets, double precision})}_{\text{tax filing data}}
+\]
+
+\subsection*{Matching Rate}
+
+\begin{table}[H]
+  \centering
+  \caption{Bridge Matching Rate}
+  \label{tab:match_rate}
+  \begin{threeparttable}
+    \begin{tabular}{lc}
+      \toprule
+      Item & Value \\
+      \midrule
+      Regression panel firms (post intermediary removal) & 1,875 \\
+      Successfully matched firms (with \(\ln K\))        & $\approx$1,168 \\
+      Firm-level matching rate                           & 62.3\% \\
+      \midrule
+      Regression observations: T1/T2/T4/T5 (require \(\ln K\)) & $\approx$29,200 \\
+      Regression observations: T3/T6 (no \(\ln K\)) & $\approx$46,100 \\
+      Observation loss from capital requirement & $\approx$37\% \\
+      \bottomrule
+    \end{tabular}
+    \begin{tablenotes}[flushleft]
+      \footnotesize
+      \item The matching rate of 62.3\% is substantially improved from the
+        initial version ($\approx$48\%) following an update to the bridge key.
+      \item Unmatched firms are dropped automatically by Stata when
+        \(\ln K\) is included as a regressor; Tables~T3 and T6 are unaffected
+        because they do not include capital.
+      \item \(\ln K\) is absorbed by Firm FE in all FE specifications; its
+        economic content derives solely from cross-sectional variation in the
+        OLS columns.
+      \item Asset values are denominated in CNY (double precision); the log
+        transformation is applied directly without rescaling.
+    \end{tablenotes}
+  \end{threeparttable}
+\end{table}
+
+\end{document}

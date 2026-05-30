@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.3.22)  29 MAY 2026 23:16
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.3.22)  30 MAY 2026 16:08
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -762,8 +762,20 @@ Package hyperref Info: Link coloring OFF on input line 28.
 \@outlinefile=\write3
 \openout3 = `price_regression_report_cn.out'.
 
+LaTeX Font Info:    Trying to load font information for U+msa on input line 34.
 
-(./price_regression_report_cn.toc)
+
+(c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/tex/latex/amsfonts/umsa
+.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 34.
+
+
+(c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/tex/latex/amsfonts/umsb
+.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+) (./price_regression_report_cn.toc)
 \tf@toc=\write4
 \openout4 = `price_regression_report_cn.toc'.
 
@@ -772,64 +784,46 @@ Package hyperref Info: Link coloring OFF on input line 28.
 [1
 
 ]
-LaTeX Font Info:    Trying to load font information for U+msa on input line 53.
-
-
-(c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/tex/latex/amsfonts/umsa
-.fd
-File: umsa.fd 2013/01/14 v3.01 AMS symbols A
-)
-LaTeX Font Info:    Trying to load font information for U+msb on input line 53.
-
-
-(c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/tex/latex/amsfonts/umsb
-.fd
-File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)
 
 [2
 
 ]
 
-[3
-
-]
+[3]
 
 [4]
 
-[5
+[5]
+
+[6
 
 ]
-
-[6]
 
 [7
 
 ]
 
-[8]
-
-[9
+[8
 
 ]
+Overfull \vbox (71.02739pt too high) has occurred while \output is active []
+
+
+
+[9]
 
 [10
 
 ]
-Overfull \vbox (63.6768pt too high) has occurred while \output is active []
 
-
-
-[11]
-
-[12]
-
-[13
-
+[11
 
 ]
+Overfull \vbox (39.28764pt too high) has occurred while \output is active []
 
-[14]
+
+
+[12]
 
 Package fontspec Info: 
 (fontspec)             Could not resolve font "FangSong/BI" (it probably
@@ -858,24 +852,28 @@ Package fontspec Info:
 
 
 
-[15
+[13
 
-] (./price_regression_report_cn.aux)
+]
+
+[14]
+
+[15] (./price_regression_report_cn.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2022/07/14>
  ***********
 Package rerunfilecheck Info: File `price_regression_report_cn.out' has not chan
 ged.
-(rerunfilecheck)             Checksum: 58384D326F6BA07646898DE076F0247A;296.
+(rerunfilecheck)             Checksum: F168FAAEE69E20DC3C5026F8814DECAB;1717.
  ) 
 Here is how much of TeX's memory you used:
- 17457 strings out of 473832
- 385054 string characters out of 5720306
- 789389 words of memory out of 5000000
- 40261 multiletter control sequences out of 15000+600000
- 569290 words of font info for 109 fonts, out of 8000000 for 9000
+ 17453 strings out of 473832
+ 382520 string characters out of 5720306
+ 784277 words of memory out of 5000000
+ 40235 multiletter control sequences out of 15000+600000
+ 573432 words of font info for 135 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 93i,16n,111p,386b,620s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 93i,15n,111p,386b,505s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 Output written on price_regression_report_cn.pdf (15 pages).

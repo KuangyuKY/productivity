@@ -1,0 +1,12 @@
+\contentsline {section}{\numberline {1}Regression Results}{2}{section.1}%
+\contentsline {paragraph}{Sample.}{2}{section*.3}%
+\contentsline {paragraph}{Product portfolio.}{2}{section*.4}%
+\contentsline {paragraph}{Fixed effects and identification.}{3}{section*.5}%
+\contentsline {subsection}{\numberline {1.1}T1: Firm-Level Variables}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}T2: Firm-Level Variables and Product Similarity}{4}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}T3: Market-Level Variables Only}{6}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}T4: Firm-Level and Market-Level Variables}{7}{subsection.1.4}%
+\contentsline {subsection}{\numberline {1.5}T5: Full Specification}{9}{subsection.1.5}%
+\contentsline {subsection}{\numberline {1.6}T6: Interactions --- Firm Size $\times $ Market Conditions}{12}{subsection.1.6}%
+\contentsline {section}{\numberline {2}SQL Data Extraction Logic}{15}{section.2}%
+\contentsline {section}{\numberline {3}Bridge Data Source and Matching Rate}{16}{section.3}%

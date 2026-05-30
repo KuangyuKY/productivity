@@ -24,7 +24,10 @@
       "Bash(python3 -c ' *)",
       "Bash(python -c \"import sys; sys.stdout.buffer.write\\(sys.stdin.buffer.read\\(\\)\\)\")",
       "Bash(C:/Users/HKUBS/anaconda3/python.exe -W ignore -c ' *)",
-      "Bash(C:/Users/HKUBS/anaconda3/python.exe -X utf8 check_stats.py)"
+      "Bash(C:/Users/HKUBS/anaconda3/python.exe -X utf8 check_stats.py)",
+      "Bash(dir \"C:\\\\Users\\\\HKUBS\\\\Documents\\\\aproject\\\\Outsourcing\\\\code\\\\productivity\" /s /b *.dta)",
+      "Bash(find \"C:/Users/HKUBS/Documents/aproject/Outsourcing/code/productivity\" -newer /dev/null -printf \"%TY-%Tm-%Td %TH:%TM  %p\\\\n\" 2>/dev/null | sort -r | head -30)",
+      "Bash(sort -k6,7 -r)"
     ]
   }
 }

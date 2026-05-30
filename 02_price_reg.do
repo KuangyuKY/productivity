@@ -4,7 +4,9 @@
 * 变量分三类：
 *   企业层面   (x)  : ln_firm_output, ln_Capital, n_products
 *                     单年截面下被 Firm FE 完全吸收，仅 OLS 规格可识别
-*   市场层面   (z)  : ln_n_buyers, ln_n_sellers, ln_mkt_qty, ln_p_mkt
+*   市场层面   (z)  : ln_n_buyers, ln_n_sellers, ln_mkt_qty, ln_p_mkt_loo
+*                     ln_p_mkt_loo = leave-one-out 市场均价（城市总量已剔除本企业自身采购，
+*                     来自 invoice_panel.dta；唯一买家时为缺失，相应观测被剔除）
 *                     在 product×city 层面变化，FE 规格下可识别
 *   产品相似性 (s)  : input_similarity (S_mj), output_similarity (C_mj)
 *                     在 firm×product 层面变化，FE 规格下可识别
@@ -37,9 +39,10 @@ set matsize 11000
 
 cd "G:\Kuangyu_Temp\Outsource\productivity"
 capture mkdir "regression"
-log using "regression\02_price_reg.log", replace text
+capture mkdir "regression\leave_one_out"
+log using "regression\leave_one_out\02_price_reg.log", replace text
 
-global REGOUT      "regression"
+global REGOUT      "regression\leave_one_out"
 global esttab_opts "b(3) se(3) star(* 0.10 ** 0.05 *** 0.01) nogaps compress"
 
 
@@ -88,7 +91,7 @@ display ""
 display "==== 关键变量缺失统计 ===="
 foreach v in ln_p_net ln_firm_output ln_Capital n_products ///
              input_similarity output_similarity ///
-             ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt {
+             ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo {
     count if missing(`v')
     display "  missing `v': " r(N)
 }
@@ -228,7 +231,7 @@ display "===== TABLE 3: Market-level only ====="
 use "reg_panel.dta", clear
 
 * (1) OLS
-reg ln_p_net ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
+reg ln_p_net ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo, ///
     vce(cluster firm_n)
 estadd local firm_fe "No",  replace
 estadd local prod_fe "No",  replace
@@ -236,7 +239,7 @@ estadd local city_fe "No",  replace
 est store t3_m1
 
 * (2) + Firm FE
-reghdfe ln_p_net ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
+reghdfe ln_p_net ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo, ///
     absorb(firm_n) vce(cluster firm_n)
 estadd local firm_fe "Yes", replace
 estadd local prod_fe "No",  replace
@@ -244,7 +247,7 @@ estadd local city_fe "No",  replace
 est store t3_m2
 
 * (3) + Firm + Product FE
-reghdfe ln_p_net ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
+reghdfe ln_p_net ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo, ///
     absorb(firm_n prod_n) vce(cluster firm_n)
 estadd local firm_fe "Yes", replace
 estadd local prod_fe "Yes", replace
@@ -252,7 +255,7 @@ estadd local city_fe "No",  replace
 est store t3_m3
 
 * (4) + Firm + Product + City FE（首选规格）
-reghdfe ln_p_net ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
+reghdfe ln_p_net ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo, ///
     absorb(firm_n prod_n city_n) vce(cluster firm_n)
 estadd local firm_fe "Yes", replace
 estadd local prod_fe "Yes", replace
@@ -262,7 +265,7 @@ est store t3_m4
 esttab t3_m1 t3_m2 t3_m3 t3_m4 ///
     using "$REGOUT/T3_market_only.txt", replace ///
     $esttab_opts ///
-    order(ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt) ///
+    order(ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo) ///
     stats(firm_fe prod_fe city_fe N r2_a, ///
           labels("Firm FE" "Product FE" "City FE" "Observations" "Adj. R-sq") ///
           fmt(%s %s %s %12.0fc 3)) ///
@@ -291,7 +294,7 @@ use "reg_panel.dta", clear
 
 * (1) OLS
 reg ln_p_net ln_firm_output ln_Capital n_products ///
-    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
+    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo, ///
     vce(cluster firm_n)
 estadd local firm_fe "No",  replace
 estadd local prod_fe "No",  replace
@@ -300,7 +303,7 @@ est store t4_m1
 
 * (2) + Firm FE
 reghdfe ln_p_net ln_firm_output ln_Capital n_products ///
-    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
+    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo, ///
     absorb(firm_n) vce(cluster firm_n)
 estadd local firm_fe "Yes", replace
 estadd local prod_fe "No",  replace
@@ -309,7 +312,7 @@ est store t4_m2
 
 * (3) + Firm + Product FE
 reghdfe ln_p_net ln_firm_output ln_Capital n_products ///
-    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
+    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo, ///
     absorb(firm_n prod_n) vce(cluster firm_n)
 estadd local firm_fe "Yes", replace
 estadd local prod_fe "Yes", replace
@@ -318,7 +321,7 @@ est store t4_m3
 
 * (4) + Firm + Product + City FE（首选规格）
 reghdfe ln_p_net ln_firm_output ln_Capital n_products ///
-    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
+    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo, ///
     absorb(firm_n prod_n city_n) vce(cluster firm_n)
 estadd local firm_fe "Yes", replace
 estadd local prod_fe "Yes", replace
@@ -329,7 +332,7 @@ esttab t4_m1 t4_m2 t4_m3 t4_m4 ///
     using "$REGOUT/T4_firm_market.txt", replace ///
     $esttab_opts ///
     order(ln_firm_output ln_Capital n_products ///
-          ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt) ///
+          ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo) ///
     stats(firm_fe prod_fe city_fe N r2_a, ///
           labels("Firm FE" "Product FE" "City FE" "Observations" "Adj. R-sq") ///
           fmt(%s %s %s %12.0fc 3)) ///
@@ -359,7 +362,7 @@ use "reg_panel.dta", clear
 * (1) OLS
 reg ln_p_net ln_firm_output ln_Capital n_products ///
     input_similarity output_similarity ///
-    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
+    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo, ///
     vce(cluster firm_n)
 estadd local firm_fe "No",  replace
 estadd local prod_fe "No",  replace
@@ -369,7 +372,7 @@ est store t5_m1
 * (2) + Firm FE
 reghdfe ln_p_net ln_firm_output ln_Capital n_products ///
     input_similarity output_similarity ///
-    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
+    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo, ///
     absorb(firm_n) vce(cluster firm_n)
 estadd local firm_fe "Yes", replace
 estadd local prod_fe "No",  replace
@@ -379,7 +382,7 @@ est store t5_m2
 * (3) + Firm + Product FE
 reghdfe ln_p_net ln_firm_output ln_Capital n_products ///
     input_similarity output_similarity ///
-    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
+    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo, ///
     absorb(firm_n prod_n) vce(cluster firm_n)
 estadd local firm_fe "Yes", replace
 estadd local prod_fe "Yes", replace
@@ -389,7 +392,7 @@ est store t5_m3
 * (4) + Firm + Product + City FE（首选规格）
 reghdfe ln_p_net ln_firm_output ln_Capital n_products ///
     input_similarity output_similarity ///
-    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
+    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo, ///
     absorb(firm_n prod_n city_n) vce(cluster firm_n)
 estadd local firm_fe "Yes", replace
 estadd local prod_fe "Yes", replace
@@ -401,7 +404,7 @@ esttab t5_m1 t5_m2 t5_m3 t5_m4 ///
     $esttab_opts ///
     order(ln_firm_output ln_Capital n_products ///
           input_similarity output_similarity ///
-          ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt) ///
+          ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo) ///
     stats(firm_fe prod_fe city_fe N r2_a, ///
           labels("Firm FE" "Product FE" "City FE" "Observations" "Adj. R-sq") ///
           fmt(%s %s %s %12.0fc 3)) ///
@@ -431,12 +434,12 @@ use "reg_panel.dta", clear
 
 gen size_x_nbuy   = ln_firm_output * ln_n_buyers
 gen size_x_nsell  = ln_firm_output * ln_n_sellers
-gen size_x_pmkt   = ln_firm_output * ln_p_mkt
+gen size_x_pmkt   = ln_firm_output * ln_p_mkt_loo
 gen size_x_mktqty = ln_firm_output * ln_mkt_qty
 
 * (1) 基准（全 FE，无交互）
 reghdfe ln_p_net ln_firm_output n_products ///
-    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt, ///
+    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo, ///
     absorb(firm_n prod_n city_n) vce(cluster firm_n)
 estadd local firm_fe "Yes", replace
 estadd local prod_fe "Yes", replace
@@ -445,7 +448,7 @@ est store t6_m1
 
 * (2) + 规模 × 买方数
 reghdfe ln_p_net ln_firm_output n_products ///
-    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt ///
+    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ///
     size_x_nbuy, ///
     absorb(firm_n prod_n city_n) vce(cluster firm_n)
 estadd local firm_fe "Yes", replace
@@ -455,7 +458,7 @@ est store t6_m2
 
 * (3) + 规模 × 卖方数
 reghdfe ln_p_net ln_firm_output n_products ///
-    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt ///
+    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ///
     size_x_nsell, ///
     absorb(firm_n prod_n city_n) vce(cluster firm_n)
 estadd local firm_fe "Yes", replace
@@ -465,7 +468,7 @@ est store t6_m3
 
 * (4) + 规模 × 市场均价
 reghdfe ln_p_net ln_firm_output n_products ///
-    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt ///
+    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ///
     size_x_pmkt, ///
     absorb(firm_n prod_n city_n) vce(cluster firm_n)
 estadd local firm_fe "Yes", replace
@@ -475,7 +478,7 @@ est store t6_m4
 
 * (5) 全部交互
 reghdfe ln_p_net ln_firm_output n_products ///
-    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt ///
+    ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ///
     size_x_nbuy size_x_nsell size_x_pmkt size_x_mktqty, ///
     absorb(firm_n prod_n city_n) vce(cluster firm_n)
 estadd local firm_fe "Yes", replace
@@ -487,7 +490,7 @@ esttab t6_m1 t6_m2 t6_m3 t6_m4 t6_m5 ///
     using "$REGOUT/T6_interactions.txt", replace ///
     $esttab_opts ///
     order(ln_firm_output n_products ///
-          ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt ///
+          ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ///
           size_x_nbuy size_x_nsell size_x_pmkt size_x_mktqty) ///
     stats(firm_fe prod_fe city_fe N r2_a, ///
           labels("Firm FE" "Product FE" "City FE" "Observations" "Adj. R-sq") ///
