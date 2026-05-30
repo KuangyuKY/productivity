@@ -149,7 +149,7 @@ est clear
 clear all
 set output proc
 set max_memory ., permanently
-global REGOUT      "regression"
+global REGOUT      "regression\leave_one_out"
 global esttab_opts "b(3) se(3) star(* 0.10 ** 0.05 *** 0.01) nogaps compress"
 
 
@@ -214,7 +214,7 @@ est clear
 clear all
 set output proc
 set max_memory ., permanently
-global REGOUT      "regression"
+global REGOUT      "regression\leave_one_out"
 global esttab_opts "b(3) se(3) star(* 0.10 ** 0.05 *** 0.01) nogaps compress"
 
 
@@ -276,7 +276,7 @@ est clear
 clear all
 set output proc
 set max_memory ., permanently
-global REGOUT      "regression"
+global REGOUT      "regression\leave_one_out"
 global esttab_opts "b(3) se(3) star(* 0.10 ** 0.05 *** 0.01) nogaps compress"
 
 
@@ -343,7 +343,7 @@ est clear
 clear all
 set output proc
 set max_memory ., permanently
-global REGOUT      "regression"
+global REGOUT      "regression\leave_one_out"
 global esttab_opts "b(3) se(3) star(* 0.10 ** 0.05 *** 0.01) nogaps compress"
 
 
@@ -415,7 +415,7 @@ est clear
 clear all
 set output proc
 set max_memory ., permanently
-global REGOUT      "regression"
+global REGOUT      "regression\leave_one_out"
 global esttab_opts "b(3) se(3) star(* 0.10 ** 0.05 *** 0.01) nogaps compress"
 
 
