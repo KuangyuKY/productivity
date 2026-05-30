@@ -27,7 +27,11 @@
       "Bash(C:/Users/HKUBS/anaconda3/python.exe -X utf8 check_stats.py)",
       "Bash(dir \"C:\\\\Users\\\\HKUBS\\\\Documents\\\\aproject\\\\Outsourcing\\\\code\\\\productivity\" /s /b *.dta)",
       "Bash(find \"C:/Users/HKUBS/Documents/aproject/Outsourcing/code/productivity\" -newer /dev/null -printf \"%TY-%Tm-%Td %TH:%TM  %p\\\\n\" 2>/dev/null | sort -r | head -30)",
-      "Bash(sort -k6,7 -r)"
+      "Bash(sort -k6,7 -r)",
+      "Bash(cd \"C:\\\\Users\\\\HKUBS\\\\Documents\\\\aproject\\\\Outsourcing\\\\code\\\\productivity\" && git show HEAD:01_clean.ipynb > \"%TEMP%\\\\01_head.ipynb\" 2>nul && git status --short 01_clean.ipynb)",
+      "Bash(cd \"C:\\\\Users\\\\HKUBS\\\\Documents\\\\aproject\\\\Outsourcing\\\\code\\\\productivity\" && git show HEAD:01_clean.ipynb > /tmp/01_head.ipynb && echo \"ok\" && grep -n \"total_assets\\\\|final_joinby\\\\|2017.dta\\\\|merge.*cid\\\\|read_stata\" /tmp/01_head.ipynb | head -40)",
+      "Bash(git show *)",
+      "Bash(python -)"
     ]
   }
 }
