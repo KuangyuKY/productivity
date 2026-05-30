@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.3.22)  30 MAY 2026 16:08
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.3.22)  30 MAY 2026 17:25
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -863,17 +863,24 @@ Package fontspec Info:
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2022/07/14>
  ***********
-Package rerunfilecheck Info: File `price_regression_report_cn.out' has not chan
-ged.
-(rerunfilecheck)             Checksum: F168FAAEE69E20DC3C5026F8814DECAB;1717.
+
+
+Package rerunfilecheck Warning: File `price_regression_report_cn.out' has chang
+ed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `price_regression_report_cn.out':
+(rerunfilecheck)             Before: F168FAAEE69E20DC3C5026F8814DECAB;1717
+(rerunfilecheck)             After:  7A5F1ABBBB968DC81EA0A8A64985A9E8;1609.
  ) 
 Here is how much of TeX's memory you used:
- 17453 strings out of 473832
- 382520 string characters out of 5720306
- 784277 words of memory out of 5000000
- 40235 multiletter control sequences out of 15000+600000
+ 17441 strings out of 473832
+ 381756 string characters out of 5720306
+ 787277 words of memory out of 5000000
+ 40223 multiletter control sequences out of 15000+600000
  573432 words of font info for 135 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 93i,15n,111p,386b,505s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 93i,15n,111p,386b,541s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 Output written on price_regression_report_cn.pdf (15 pages).

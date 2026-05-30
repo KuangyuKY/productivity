@@ -58,7 +58,10 @@ Three groups of explanatory variables are considered.
     universe coverage);
     \(\ln n^{S}_{jct}\) (log number of sellers, universe);
     \(\ln q^{m}_{jct}\) (log total market purchase quantity, universe);
-    \(\ln \bar{p}^{m}_{jct}\) (log value-weighted market average price).
+    \(\ln \bar{p}^{m}_{jct}\) (log leave-one-out market average price: the
+    ratio of total city--product purchase value to total quantity,
+    \emph{excluding the firm's own purchases}, which removes the mechanical
+    correlation between the dependent variable and this control).
 
   \item \textbf{Product-similarity variables (\(s\)):}
     \(S_{mj}\) (\texttt{input\_similarity}, cosine similarity of the input
@@ -84,8 +87,8 @@ The sample passes through the following filtering steps:
     (\texttt{reg\_panel.dta}).
 \end{itemize}
 Tables~T1, T2, T4, and T5 require \(\ln K_{ft}\) and therefore have
-\(N \approx 29{,}200\) (62.3\% coverage); Tables~T3 and T6 do not require
-capital data and have \(N \approx 46{,}100\).
+\(N \approx 29{,}000\) (62.3\% coverage); Tables~T3 and T6 do not require
+capital data and have \(N \approx 45{,}956\).
 
 \paragraph{Product portfolio.}
 Among the 3,376 buy-side firms, each purchases on average approximately 125
@@ -306,8 +309,10 @@ The market-level specification is
       Log total market purchase quantity of product \(j\) in city \(c\)
       (universe). \\[4pt]
     \(\ln \bar{p}^{m}_{jct}\) &
-      Log value-weighted market average price of product \(j\) in city \(c\).
-      Serves as an external price anchor. \\
+      Log leave-one-out market average price of product \(j\) in city \(c\)
+      (total purchase value \(\div\) total quantity, excluding the firm's own
+      purchases). Serves as an external price anchor free of mechanical
+      correlation with the dependent variable. \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -321,30 +326,36 @@ The market-level specification is
       \toprule
       & (1) OLS & (2) +Firm FE & (3) +Firm+Prod & (4) +Firm+Prod+City \\
       \midrule
-      \(\ln n^{B}\) & \(0.154\sym{***}\) & \(0.065\sym{**}\) & \(0.022\) & \(0.022\) \\
-                    & \se{0.048} & \se{0.029} & \se{0.036} & \se{0.036} \\[4pt]
-      \(\ln n^{S}\) & \(0.051\) & \(0.038\) & \(-0.051\) & \(-0.051\) \\
-                    & \se{0.059} & \se{0.036} & \se{0.034} & \se{0.034} \\[4pt]
-      \(\ln q^{m}\) & \(0.024\) & \(0.005\) & \(-0.003\) & \(-0.003\) \\
-                    & \se{0.015} & \se{0.013} & \se{0.015} & \se{0.015} \\[4pt]
-      \(\ln \bar{p}^{m}\) & \(0.757\sym{***}\) & \(0.624\sym{***}\) & \(0.158\sym{***}\) & \(0.158\sym{***}\) \\
-                          & \se{0.019} & \se{0.015} & \se{0.024} & \se{0.024} \\[4pt]
-      Constant & \(0.100\) & \(1.485\sym{***}\) & \(3.792\sym{***}\) & \(3.792\sym{***}\) \\
-               & \se{0.239} & \se{0.187} & \se{0.267} & \se{0.268} \\
+      \(\ln n^{B}\) & \(0.228\sym{***}\) & \(0.119\sym{***}\) & \(0.121\sym{***}\) & \(0.121\sym{***}\) \\
+                    & \se{0.053} & \se{0.029} & \se{0.040} & \se{0.040} \\[4pt]
+      \(\ln n^{S}\) & \(0.018\) & \(0.027\) & \(-0.016\) & \(-0.016\) \\
+                    & \se{0.063} & \se{0.036} & \se{0.035} & \se{0.035} \\[4pt]
+      \(\ln q^{m}\) & \(-0.008\) & \(-0.032\sym{**}\) & \(-0.104\sym{***}\) & \(-0.104\sym{***}\) \\
+                    & \se{0.016} & \se{0.015} & \se{0.017} & \se{0.017} \\[4pt]
+      \(\ln \bar{p}^{m}\) & \(0.704\sym{***}\) & \(0.568\sym{***}\) & \(-0.003\) & \(-0.003\) \\
+                          & \se{0.019} & \se{0.015} & \se{0.017} & \se{0.017} \\[4pt]
+      Constant & \(0.461\sym{*}\) & \(1.947\sym{***}\) & \(5.072\sym{***}\) & \(5.072\sym{***}\) \\
+               & \se{0.264} & \se{0.205} & \se{0.297} & \se{0.297} \\
       \midrule
       Firm FE    & No  & Yes & Yes & Yes \\
       Product FE & No  & No  & Yes & Yes \\
       City FE    & No  & No  & No  & Yes \\
-      \(N\)      & 46,869 & 46,380 & 46,106 & 46,106 \\
-      Adj.\ \(R^2\) & 0.308 & 0.468 & 0.605 & 0.603 \\
+      \(N\)      & 46,722 & 46,231 & 45,956 & 45,956 \\
+      Adj.\ \(R^2\) & 0.288 & 0.454 & 0.604 & 0.601 \\
       \bottomrule
     \end{tabular}
     \begin{tablenotes}[flushleft]
       \footnotesize
       \item \sym{*} \(p<0.10\), \sym{**} \(p<0.05\), \sym{***} \(p<0.01\).
-      \item \(\ln \bar{p}^{m}\) is robustly significant across all
-        specifications (\(0.158^{***}\) to \(0.757^{***}\)). Buyer and seller
-        counts become insignificant after Product FE is included.
+      \item With the leave-one-out market price, \(\ln \bar{p}^{m}\) remains
+        positive and significant in OLS and Firm-FE-only columns
+        (\(0.704^{***}\), \(0.568^{***}\)), but collapses to \(-0.003\)
+        (insignificant) once Product FE is added. This shows the earlier strong
+        positive correlation was driven by product composition and mechanical
+        correlation rather than genuine price pass-through. The buyer count
+        (\(\ln n^{B}\)) is robustly positive throughout (\(0.121^{***}\)), and
+        market volume (\(\ln q^{m}\)) turns significantly negative under
+        Product FE (\(-0.104^{***}\)).
     \end{tablenotes}
   \end{threeparttable}
 \end{table}
@@ -374,37 +385,40 @@ The combined firm and market specification is
       \toprule
       & (1) OLS & (2) +Firm FE & (3) +Firm+Prod & (4) +Firm+Prod+City \\
       \midrule
-      \(\ln \text{Output}\) & \(0.135\sym{***}\) & \abs & \abs & \abs \\
+      \(\ln \text{Output}\) & \(0.141\sym{***}\) & \abs & \abs & \abs \\
                              & \se{0.032} & & & \\[4pt]
-      \(\ln K\) & \(-0.085\sym{***}\) & \abs & \abs & \abs \\
-                & \se{0.026} & & & \\[4pt]
+      \(\ln K\) & \(-0.086\sym{***}\) & \abs & \abs & \abs \\
+                & \se{0.027} & & & \\[4pt]
       \(n^{\text{prod}}\) & \(-0.001\sym{***}\) & \abs & \abs & \abs \\
                           & \se{0.000} & & & \\[4pt]
-      \(\ln n^{B}\) & \(0.108\) & \(0.098\sym{***}\) & \(0.004\) & \(0.004\) \\
-                    & \se{0.067} & \se{0.035} & \se{0.049} & \se{0.049} \\[4pt]
-      \(\ln n^{S}\) & \(0.089\) & \(0.009\) & \(-0.048\) & \(-0.048\) \\
-                    & \se{0.079} & \se{0.047} & \se{0.039} & \se{0.040} \\[4pt]
-      \(\ln q^{m}\) & \(0.013\) & \(0.002\) & \(0.013\) & \(0.013\) \\
-                    & \se{0.019} & \se{0.017} & \se{0.019} & \se{0.019} \\[4pt]
-      \(\ln \bar{p}^{m}\) & \(0.732\sym{***}\) & \(0.623\sym{***}\) & \(0.181\sym{***}\) & \(0.181\sym{***}\) \\
-                          & \se{0.022} & \se{0.018} & \se{0.033} & \se{0.034} \\[4pt]
-      Constant & \(-0.333\) & \(1.353\sym{***}\) & \(3.393\sym{***}\) & \(3.393\sym{***}\) \\
-               & \se{0.451} & \se{0.239} & \se{0.378} & \se{0.379} \\
+      \(\ln n^{B}\) & \(0.167\sym{**}\) & \(0.134\sym{***}\) & \(0.077\) & \(0.077\) \\
+                    & \se{0.072} & \se{0.037} & \se{0.054} & \se{0.054} \\[4pt]
+      \(\ln n^{S}\) & \(0.075\) & \(0.018\) & \(0.006\) & \(0.006\) \\
+                    & \se{0.081} & \se{0.048} & \se{0.040} & \se{0.040} \\[4pt]
+      \(\ln q^{m}\) & \(-0.024\) & \(-0.039\sym{**}\) & \(-0.096\sym{***}\) & \(-0.096\sym{***}\) \\
+                    & \se{0.020} & \se{0.020} & \se{0.023} & \se{0.023} \\[4pt]
+      \(\ln \bar{p}^{m}\) & \(0.677\sym{***}\) & \(0.564\sym{***}\) & \(0.009\) & \(0.009\) \\
+                          & \se{0.022} & \se{0.017} & \se{0.022} & \se{0.022} \\[4pt]
+      Constant & \(0.037\) & \(1.889\sym{***}\) & \(4.924\sym{***}\) & \(4.924\sym{***}\) \\
+               & \se{0.472} & \se{0.272} & \se{0.375} & \se{0.376} \\
       \midrule
       Firm FE    & No  & Yes & Yes & Yes \\
       Product FE & No  & No  & Yes & Yes \\
       City FE    & No  & No  & No  & Yes \\
-      \(N\)      & 29,196 & 28,864 & 28,512 & 28,512 \\
-      Adj.\ \(R^2\) & 0.309 & 0.450 & 0.593 & 0.590 \\
+      \(N\)      & 29,074 & 28,741 & 28,390 & 28,390 \\
+      Adj.\ \(R^2\) & 0.289 & 0.436 & 0.592 & 0.589 \\
       \bottomrule
     \end{tabular}
     \begin{tablenotes}[flushleft]
       \footnotesize
       \item \sym{*} \(p<0.10\), \sym{**} \(p<0.05\), \sym{***} \(p<0.01\).
         \abs\ = absorbed by fixed effects.
-      \item OLS identifies both firm-level and market-level variables jointly.
-        Under FE, firm variables are absorbed by Firm FE; \(\ln\bar{p}^{m}\)
-        remains robust throughout.
+      \item Adding firm-level controls leaves the conclusion intact: the
+        leave-one-out market price (\(\ln\bar{p}^{m}\)) is significant in OLS
+        and Firm-FE-only columns (\(0.677^{***}\), \(0.564^{***}\)) but drops to
+        \(0.009\) (insignificant) under Product FE. The buyer count is positive
+        and market volume (\(\ln q^{m}\)) is negative under full FE
+        (\(-0.096^{***}\)), consistent with T3.
     \end{tablenotes}
   \end{threeparttable}
 \end{table}
@@ -436,44 +450,45 @@ The full specification combines all three variable groups:
       \toprule
       & (1) OLS & (2) +Firm FE & (3) +Firm+Prod & (4) +Firm+Prod+City \\
       \midrule
-      \(\ln \text{Output}\) & \(0.131\sym{***}\) & \abs & \abs & \abs \\
-                             & \se{0.031} & & & \\[4pt]
-      \(\ln K\) & \(-0.071\sym{***}\) & \abs & \abs & \abs \\
+      \(\ln \text{Output}\) & \(0.136\sym{***}\) & \abs & \abs & \abs \\
+                             & \se{0.032} & & & \\[4pt]
+      \(\ln K\) & \(-0.072\sym{***}\) & \abs & \abs & \abs \\
                 & \se{0.026} & & & \\[4pt]
       \(n^{\text{prod}}\) & \(-0.001\sym{***}\) & \abs & \abs & \abs \\
                           & \se{0.000} & & & \\[4pt]
-      \(S_{mj}\) & \(0.769\sym{***}\) & \(0.257\sym{*}\) & \(0.106\) & \(0.106\) \\
-                 & \se{0.192} & \se{0.133} & \se{0.115} & \se{0.116} \\[4pt]
-      \(C_{mj}\) & \(-0.016\) & \(0.023\) & \(-0.109\) & \(-0.109\) \\
-                 & \se{0.238} & \se{0.154} & \se{0.135} & \se{0.136} \\[4pt]
-      \(\ln n^{B}\) & \(0.129\sym{**}\) & \(0.098\sym{***}\) & \(0.004\) & \(0.004\) \\
-                    & \se{0.064} & \se{0.035} & \se{0.049} & \se{0.049} \\[4pt]
-      \(\ln n^{S}\) & \(0.075\) & \(0.012\) & \(-0.048\) & \(-0.048\) \\
-                    & \se{0.075} & \se{0.048} & \se{0.039} & \se{0.040} \\[4pt]
-      \(\ln q^{m}\) & \(0.002\) & \(-0.001\) & \(0.013\) & \(0.013\) \\
-                    & \se{0.019} & \se{0.016} & \se{0.019} & \se{0.020} \\[4pt]
-      \(\ln \bar{p}^{m}\) & \(0.717\sym{***}\) & \(0.620\sym{***}\) & \(0.181\sym{***}\) & \(0.181\sym{***}\) \\
-                          & \se{0.022} & \se{0.018} & \se{0.033} & \se{0.034} \\[4pt]
-      Constant & \(-0.548\) & \(1.322\sym{***}\) & \(3.391\sym{***}\) & \(3.391\sym{***}\) \\
-               & \se{0.446} & \se{0.234} & \se{0.376} & \se{0.378} \\
+      \(S_{mj}\) & \(0.757\sym{***}\) & \(0.215\) & \(0.090\) & \(0.090\) \\
+                 & \se{0.195} & \se{0.134} & \se{0.114} & \se{0.115} \\[4pt]
+      \(C_{mj}\) & \(0.050\) & \(0.116\) & \(-0.084\) & \(-0.084\) \\
+                 & \se{0.241} & \se{0.156} & \se{0.135} & \se{0.136} \\[4pt]
+      \(\ln n^{B}\) & \(0.188\sym{***}\) & \(0.135\sym{***}\) & \(0.076\) & \(0.076\) \\
+                    & \se{0.068} & \se{0.037} & \se{0.054} & \se{0.054} \\[4pt]
+      \(\ln n^{S}\) & \(0.062\) & \(0.022\) & \(0.006\) & \(0.006\) \\
+                    & \se{0.078} & \se{0.048} & \se{0.040} & \se{0.040} \\[4pt]
+      \(\ln q^{m}\) & \(-0.037\sym{*}\) & \(-0.042\sym{**}\) & \(-0.097\sym{***}\) & \(-0.097\sym{***}\) \\
+                    & \se{0.021} & \se{0.019} & \se{0.023} & \se{0.023} \\[4pt]
+      \(\ln \bar{p}^{m}\) & \(0.660\sym{***}\) & \(0.561\sym{***}\) & \(0.008\) & \(0.008\) \\
+                          & \se{0.022} & \se{0.016} & \se{0.022} & \se{0.022} \\[4pt]
+      Constant & \(-0.182\) & \(1.875\sym{***}\) & \(4.924\sym{***}\) & \(4.924\sym{***}\) \\
+               & \se{0.466} & \se{0.267} & \se{0.374} & \se{0.376} \\
       \midrule
       Firm FE    & No  & Yes & Yes & Yes \\
       Product FE & No  & No  & Yes & Yes \\
       City FE    & No  & No  & No  & Yes \\
-      \(N\)      & 29,186 & 28,854 & 28,502 & 28,502 \\
-      Adj.\ \(R^2\) & 0.313 & 0.451 & 0.593 & 0.590 \\
+      \(N\)      & 29,064 & 28,731 & 28,380 & 28,380 \\
+      Adj.\ \(R^2\) & 0.293 & 0.436 & 0.592 & 0.589 \\
       \bottomrule
     \end{tabular}
     \begin{tablenotes}[flushleft]
       \footnotesize
       \item \sym{*} \(p<0.10\), \sym{**} \(p<0.05\), \sym{***} \(p<0.01\).
         \abs\ = absorbed by fixed effects.
-      \item In full OLS, all three variable groups are jointly significant:
-        \(S_{mj} = 0.769^{***}\), \(\ln K = -0.071^{***}\),
-        \(\ln\bar{p}^{m} = 0.717^{***}\). Under the full FE specification,
-        only \(\ln\bar{p}^{m}\) remains significant (\(0.181^{***}\)):
-        firm variables are absorbed by Firm FE, and the similarity effect is
-        absorbed by Product FE.
+      \item In full OLS, firm variables, similarity, and the market price are
+        jointly significant: \(S_{mj} = 0.757^{***}\), \(\ln K = -0.072^{***}\),
+        \(\ln\bar{p}^{m} = 0.660^{***}\). Under the full FE specification, the
+        leave-one-out market price is no longer significant (\(0.008\)): firm
+        variables are absorbed by Firm FE and similarity by Product FE. Only the
+        buyer count (positive in OLS/Firm FE) and market volume (\(-0.097^{***}\)
+        under full FE) retain explanatory content.
     \end{tablenotes}
   \end{threeparttable}
 \end{table}
@@ -530,30 +545,30 @@ identified under all three FE.
       & (1) Baseline & (2) +Size\(\times\)nB & (3) +Size\(\times\)nS
         & (4) +Size\(\times\)\(\bar{p}^m\) & (5) All \\
       \midrule
-      \(\ln n^{B}\) & \(0.022\) & \(0.413\sym{***}\) & \(0.026\) & \(0.029\) & \(0.018\) \\
-                    & \se{0.036} & \se{0.101} & \se{0.036} & \se{0.036} & \se{0.137} \\[4pt]
-      \(\ln n^{S}\) & \(-0.051\) & \(-0.057\sym{*}\) & \(0.415\sym{***}\) & \(-0.053\) & \(0.132\) \\
-                    & \se{0.034} & \se{0.034} & \se{0.115} & \se{0.033} & \se{0.145} \\[4pt]
-      \(\ln q^{m}\) & \(-0.003\) & \(-0.004\) & \(-0.005\) & \(-0.007\) & \(0.131\sym{*}\) \\
-                    & \se{0.015} & \se{0.015} & \se{0.015} & \se{0.015} & \se{0.070} \\[4pt]
-      \(\ln \bar{p}^{m}\) & \(0.158\sym{***}\) & \(0.157\sym{***}\) & \(0.156\sym{***}\) & \(-0.159\sym{**}\) & \(-0.015\) \\
-                          & \se{0.024} & \se{0.024} & \se{0.024} & \se{0.080} & \se{0.073} \\[4pt]
-      Size\(\times\)nB & \mis & \(-0.019\sym{***}\) & \mis & \mis & \(0.001\) \\
-                       &     & \se{0.005}          &     &     & \se{0.006} \\[4pt]
+      \(\ln n^{B}\) & \(0.121\sym{***}\) & \(0.527\sym{***}\) & \(0.126\sym{***}\) & \(0.127\sym{***}\) & \(-0.012\) \\
+                    & \se{0.040} & \se{0.101} & \se{0.039} & \se{0.039} & \se{0.146} \\[4pt]
+      \(\ln n^{S}\) & \(-0.016\) & \(-0.024\) & \(0.460\sym{***}\) & \(-0.018\) & \(0.159\) \\
+                    & \se{0.035} & \se{0.036} & \se{0.117} & \se{0.035} & \se{0.153} \\[4pt]
+      \(\ln q^{m}\) & \(-0.104\sym{***}\) & \(-0.104\sym{***}\) & \(-0.106\sym{***}\) & \(-0.107\sym{***}\) & \(0.161\sym{**}\) \\
+                    & \se{0.017} & \se{0.017} & \se{0.017} & \se{0.017} & \se{0.075} \\[4pt]
+      \(\ln \bar{p}^{m}\) & \(-0.003\) & \(-0.004\) & \(-0.005\) & \(-0.235\sym{***}\) & \(0.014\) \\
+                          & \se{0.017} & \se{0.017} & \se{0.017} & \se{0.078} & \se{0.068} \\[4pt]
+      Size\(\times\)nB & \mis & \(-0.020\sym{***}\) & \mis & \mis & \(0.007\) \\
+                       &     & \se{0.005}          &     &     & \se{0.007} \\[4pt]
       Size\(\times\)nS & \mis & \mis & \(-0.024\sym{***}\) & \mis & \(-0.009\) \\
-                       &     &     & \se{0.006}           &     & \se{0.007} \\[4pt]
-      Size\(\times\)\(\bar{p}^m\) & \mis & \mis & \mis & \(0.016\sym{***}\) & \(0.009\sym{**}\) \\
-                                  &     &     &     & \se{0.004}          & \se{0.004} \\[4pt]
-      Size\(\times\)qm & \mis & \mis & \mis & \mis & \(-0.007\sym{**}\) \\
+                       &     &     & \se{0.006}           &     & \se{0.008} \\[4pt]
+      Size\(\times\)\(\bar{p}^m\) & \mis & \mis & \mis & \(0.012\sym{***}\) & \(-0.001\) \\
+                                  &     &     &     & \se{0.004}          & \se{0.003} \\[4pt]
+      Size\(\times\)qm & \mis & \mis & \mis & \mis & \(-0.014\sym{***}\) \\
                        &     &     &     &     & \se{0.004} \\[4pt]
-      Constant & \(3.792\sym{***}\) & \(3.767\sym{***}\) & \(3.785\sym{***}\) & \(3.836\sym{***}\) & \(3.811\sym{***}\) \\
-               & \se{0.268} & \se{0.268} & \se{0.265} & \se{0.266} & \se{0.264} \\
+      Constant & \(5.072\sym{***}\) & \(5.022\sym{***}\) & \(5.052\sym{***}\) & \(5.108\sym{***}\) & \(5.061\sym{***}\) \\
+               & \se{0.297} & \se{0.288} & \se{0.288} & \se{0.300} & \se{0.284} \\
       \midrule
       Firm FE    & Yes & Yes & Yes & Yes & Yes \\
       Product FE & Yes & Yes & Yes & Yes & Yes \\
       City FE    & Yes & Yes & Yes & Yes & Yes \\
-      \(N\)      & 46,106 & 46,106 & 46,106 & 46,106 & 46,106 \\
-      Adj.\ \(R^2\) & 0.603 & 0.603 & 0.603 & 0.604 & 0.604 \\
+      \(N\)      & 45,956 & 45,956 & 45,956 & 45,956 & 45,956 \\
+      Adj.\ \(R^2\) & 0.601 & 0.602 & 0.602 & 0.602 & 0.603 \\
       \bottomrule
     \end{tabular}
     \begin{tablenotes}[flushleft]
@@ -561,14 +576,15 @@ identified under all three FE.
       \item \sym{*} \(p<0.10\), \sym{**} \(p<0.05\), \sym{***} \(p<0.01\).
         The main effect of \(\ln\text{Output}\) is absorbed by Firm FE in all
         columns.
-      \item Individual interaction terms are significant when entered separately:
-        larger firms pay lower prices in markets with more buyers
-        (\(\hat\mu_1 = -0.019^{***}\)) and more sellers
-        (\(\hat\mu_2 = -0.024^{***}\)). The size--market-price interaction is
-        positive (\(\hat\mu_3 = +0.016^{***}\)). In the full specification
-        (column 5), only \(\hat\mu_3\) and \(\hat\mu_4\) remain individually
-        significant, likely due to multicollinearity among the interaction
-        terms.
+      \item Although the market price is insignificant in the baseline (full FE),
+        the single-interaction columns reveal size heterogeneity: larger firms
+        pay lower prices in markets with more buyers
+        (\(\hat\mu_1 = -0.020^{***}\)) and more sellers
+        (\(\hat\mu_2 = -0.024^{***}\)), and are more sensitive to the
+        leave-one-out market price (\(\hat\mu_3 = +0.012^{***}\)). In the full
+        specification (column 5), only the size--volume interaction
+        (\(-0.014^{***}\)) remains robustly significant, owing to
+        multicollinearity among the interaction terms.
     \end{tablenotes}
   \end{threeparttable}
 \end{table}
@@ -612,7 +628,8 @@ each view.
         Buyer prefecture \(\times\) product code &
         2,104,901 / 1,393,329 &
         Universe-level buyer count, amount, and quantity. Used to
-        construct \(n^{B}\), \(q^{m}\), \(\bar{p}^{m}\). \\[4pt]
+        construct \(n^{B}\), \(q^{m}\), and the leave-one-out
+        \(\bar{p}^{m}\). \\[4pt]
       \texttt{city\_sell} &
         Seller prefecture \(\times\) product code &
         1,540,065 / 954,222 &
@@ -652,6 +669,11 @@ each view.
     Universe views \texttt{city\_buy} and \texttt{city\_sell} are aggregated at
     the product\(\times\)city level to produce \(n^{B}_{jct}\),
     \(n^{S}_{jct}\), \(q^{m}_{jct}\), and \(\bar{p}^{m}_{jct}\).
+    The market average price \(\bar{p}^{m}_{jct}\) is constructed on a
+    leave-one-out basis: each firm's own purchase value and quantity are
+    subtracted from the city--product totals before taking the ratio, so the
+    control does not mechanically contain the firm's own price (firms that are
+    the sole buyer are set to missing).
     These aggregates are \emph{not} restricted to sample firms, ensuring that
     the market-thickness measures capture the full competitive environment.
 
@@ -681,7 +703,7 @@ each view.
     \quad (after dropping 233 intermediaries)                  & \\
     Avg.\ outsourcing products per firm (mean / median)        & 25.0 / 3 \\
     Outsourcing product types (across all firms)               & 2,143 \\
-    Regression observations (T3/T6)                            & $\approx$46,100 \\
+    Regression observations (T3/T6)                            & $\approx$45,956 \\
     Cities covered                                             & 262 \\
     \bottomrule
   \end{tabular}
@@ -724,8 +746,8 @@ dataset that records balance-sheet information.
       Successfully matched firms (with \(\ln K\))        & $\approx$1,168 \\
       Firm-level matching rate                           & 62.3\% \\
       \midrule
-      Regression observations: T1/T2/T4/T5 (require \(\ln K\)) & $\approx$29,200 \\
-      Regression observations: T3/T6 (no \(\ln K\)) & $\approx$46,100 \\
+      Regression observations: T1/T2/T4/T5 (require \(\ln K\)) & $\approx$29,000 \\
+      Regression observations: T3/T6 (no \(\ln K\)) & $\approx$45,956 \\
       Observation loss from capital requirement & $\approx$37\% \\
       \bottomrule
     \end{tabular}
