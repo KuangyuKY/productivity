@@ -1,0 +1,22 @@
+DV: ln(purchase price). Firm-level variables only.
+------------------------------------
+                 (1)          (2)   
+                 OLS     +Firm FE   
+------------------------------------
+ln_firm_~t     0.178***     0.000   
+             (0.038)          (.)   
+ln_Capital    -0.128***     0.000   
+             (0.034)          (.)   
+n_products    -0.001*       0.000   
+             (0.000)          (.)   
+_cons          3.273***     3.941***
+             (0.469)      (0.000)   
+------------------------------------
+Firm FE           No          Yes   
+Product FE        No           No   
+City FE           No           No   
+Observat~s    29,247       28,915   
+Adj. R-sq      0.018        0.263   
+------------------------------------
+Standard errors in parentheses
+* p<0.10, ** p<0.05, *** p<0.01
