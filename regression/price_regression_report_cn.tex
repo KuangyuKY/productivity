@@ -1,0 +1,647 @@
+% !TEX program = xelatex
+\documentclass[12pt]{article}
+\usepackage[UTF8]{ctex}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{caption}
+\usepackage{threeparttable}
+\usepackage{float}
+\usepackage{setspace}
+\usepackage{pdflscape}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\geometry{left=1.1in, right=1.1in, top=1in, bottom=1in}
+\setstretch{1.2}
+\captionsetup{labelfont=bf, font=small}
+
+\newcommand{\sym}[1]{\ensuremath{^{\text{#1}}}}
+\newcommand{\se}[1]{{\small(#1)}}
+\newcommand{\abs}{\textemdash}
+\newcommand{\mis}{}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\begin{document}
+
+% ============================================================
+%  封面
+% ============================================================
+\begin{center}
+  {\large\bfseries 外包采购价格决定因素：回归结果与数据说明}\\[8pt]
+  {\normalsize 2026年5月}
+\end{center}
+
+\tableofcontents
+
+\clearpage
+
+% ============================================================
+%  PART 1：回归结果
+% ============================================================
+\section{回归结果}
+
+\subsection*{研究问题与样本概览}
+
+本报告分析企业外包采购价格的决定因素，数据来自2017年全国增值税发票。
+
+\medskip
+\noindent\textbf{外包定义：}同一企业在2017年对同一9位商品编码既有采购记录又有销售记录，且
+外包额 $= \min(\text{采购额},\,\text{销售额}) > 0$。经济含义：企业采购该产品后以相同或
+近似形式再次销售，表明生产过程依赖外部供应商而非完全自产。
+
+\medskip
+\noindent\textbf{样本来源：}现阶段从增值税发票数据库中随机抽取3,410家企业作为研究样本。
+由于全量数据的提取与处理耗时较长，3,410家是兼顾计算效率与样本代表性的折中方案；
+后续研究计划扩展至更大样本乃至全样本。
+
+\medskip
+\noindent\textbf{样本规模：}
+\begin{itemize}[nosep, leftmargin=2em]
+  \item 表二至表四（不含资本变量）：$N \approx 46{,}100$ 个企业$\times$产品$\times$城市观测，
+    涉及3,376家企业（原始样本3,410家，剔除34家中介企业后余3,376家；
+    中介企业定义为外包比例 $>90\%$ 的纯转卖商）。
+  \item 表一（含资本变量 $\ln K_{ft}$）：受汇算清缴桥接覆盖率（62.3\%）限制，$N \approx 29{,}200$。
+\end{itemize}
+
+\medskip
+\noindent\textbf{因变量：}$\ln p_{fjct}$ = 企业 $f$ 在城市 $c$、年份 $t$ 外包采购产品 $j$ 的加权平均单价对数（元/单位量）。
+
+\medskip
+\noindent\textbf{固定效应与标准误：}FE 规格同时控制企业（$\delta_f$）、产品（$\delta_j$，9位商品码）、城市（$\delta_c$，地级市）三维固定效应；标准误聚类到企业层面。
+
+\clearpage
+
+% ============================================================
+%  表一
+% ============================================================
+\section*{表一：基准回归（逐步加入固定效应）}
+
+\subsection*{回归方程}
+
+\begin{align}
+  \ln p_{fjct}
+    &= \gamma_1\ln\mathrm{Output}_{ft}
+     + \gamma_2\ln K_{ft}
+     + \gamma_3\,n^{\mathrm{prod}}_{ft} \notag\\
+    &\quad + \lambda_1\ln n^{B}_{jct}
+           + \lambda_2\ln n^{S}_{jct}
+           + \lambda_3\ln q^{m}_{jct}
+           + \lambda_4\ln\bar{p}^{m}_{jct} \notag\\
+    &\quad + \delta_{f}^{[k]} + \delta_{j}^{[k]} + \delta_{c}^{[k]}
+           + \varepsilon_{fjct}
+  \label{eq:baseline}
+\end{align}
+
+上标 $[k]$ 表示各列逐步加入固定效应（见表底）。企业级变量（$\ln\mathrm{Output}$、
+$\ln K$、$n^{\mathrm{prod}}$）均在企业层面变化，加入 Firm FE 后被完全吸收，仅在
+OLS 规格（列1--2）可识别。
+
+\medskip
+\noindent\textbf{变量定义}
+
+\smallskip
+{\small
+\begin{tabular}{@{} L{3.6cm} L{10.4cm} @{}}
+\toprule
+符号 & 含义 \\
+\midrule
+$p_{fjct}$ &
+  \textbf{因变量}：企业 $f$ 外包采购产品 $j$（9位商品码）在城市 $c$（买方所在地级市）、
+  年份 $t$（2017）的加权平均单价，取对数。\\[4pt]
+$\ln\mathrm{Output}_{ft}$ &
+  企业年总增值税销售额对数，作为企业规模的代理变量。\\[4pt]
+$\ln K_{ft}$ &
+  企业资产总额对数。由汇算清缴数据桥接获得（覆盖约62.3\%的样本企业，
+  详见第三节），是本表样本小于其余表格的原因。\\[4pt]
+$n^{\mathrm{prod}}_{ft}$ &
+  企业年度生产产品种数（净生产额 $>0$ 的9位商品码数）。\\[4pt]
+$\ln n^{B}_{jct}$ &
+  城市 $c$ 中购买产品 $j$ 的企业数对数。基于全量口径（非仅样本企业），
+  衡量该城市-产品市场的买方厚度。\\[4pt]
+$\ln n^{S}_{jct}$ &
+  城市 $c$ 中销售产品 $j$ 的企业数对数。基于全量口径，
+  衡量供给侧竞争程度。\\[4pt]
+$\ln q^{m}_{jct}$ &
+  城市 $c$ 中产品 $j$ 的全市场总采购量对数（全量口径）。\\[4pt]
+$\ln\bar{p}^{m}_{jct}$ &
+  城市 $c$ 中产品 $j$ 的金额加权市场均价对数（全量口径），
+  作为外部价格基准。\\[4pt]
+$\delta_{f},\,\delta_{j},\,\delta_{c}$ &
+  企业、产品、城市固定效应，逐步加入。\\
+\bottomrule
+\end{tabular}
+}
+
+\vspace{8pt}
+
+\begin{table}[H]
+\centering\small
+\begin{threeparttable}
+\caption{基准回归：逐步加入固定效应}
+\begin{tabular}{l *{5}{c}}
+\toprule
+ & (1) & (2) & (3) & (4) & (5) \\
+ & OLS-bare & OLS-full & {$+$Firm FE} & {$+$Firm$+$Prod} & {$+$Firm$+$Prod$+$City} \\
+\midrule
+$\ln\mathrm{Output}_{ft}$
+  & $0.178\sym{***}$ & $0.135\sym{***}$ & \abs & \abs & \abs \\
+  & \se{0.038} & \se{0.032} & & & \\[3pt]
+$\ln K_{ft}$
+  & $-0.128\sym{***}$ & $-0.085\sym{***}$ & \abs & \abs & \abs \\
+  & \se{0.034} & \se{0.026} & & & \\[3pt]
+$n^{\mathrm{prod}}_{ft}$
+  & $-0.001\sym{*}$ & $-0.001\sym{***}$ & \abs & \abs & \abs \\
+  & \se{0.000} & \se{0.000} & & & \\[3pt]
+$\ln n^{B}_{jct}$
+  & \mis & $0.108$ & $0.098\sym{***}$ & $0.004$ & $0.004$ \\
+  & & \se{0.067} & \se{0.035} & \se{0.049} & \se{0.049} \\[3pt]
+$\ln n^{S}_{jct}$
+  & \mis & $0.089$ & $0.009$ & $-0.048$ & $-0.048$ \\
+  & & \se{0.079} & \se{0.047} & \se{0.039} & \se{0.040} \\[3pt]
+$\ln q^{m}_{jct}$
+  & \mis & $0.013$ & $0.002$ & $0.013$ & $0.013$ \\
+  & & \se{0.019} & \se{0.017} & \se{0.019} & \se{0.019} \\[3pt]
+$\ln\bar{p}^{m}_{jct}$
+  & \mis & $0.732\sym{***}$ & $0.623\sym{***}$ & $0.181\sym{***}$ & $0.181\sym{***}$ \\
+  & & \se{0.022} & \se{0.018} & \se{0.033} & \se{0.034} \\[3pt]
+常数项
+  & $3.273\sym{***}$ & $-0.333$ & $1.353\sym{***}$ & $3.393\sym{***}$ & $3.393\sym{***}$ \\
+  & \se{0.469} & \se{0.451} & \se{0.239} & \se{0.378} & \se{0.379} \\
+\midrule
+Firm FE    & No  & No  & Yes & Yes & Yes \\
+Product FE & No  & No  & No  & Yes & Yes \\
+City FE    & No  & No  & No  & No  & Yes \\
+$N$        & 29,247 & 29,196 & 28,864 & 28,512 & 28,512 \\
+Adj.\ $R^{2}$ & 0.018 & 0.309 & 0.450 & 0.593 & 0.590 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item ``\textemdash'' 表示企业特征变量在加入 Firm FE 后被完全吸收（单年截面数据）。
+  本表 $N \approx 29{,}200$ 低于后续表格（$\approx 46{,}100$），原因是 $\ln K_{ft}$
+  受汇算清缴桥接覆盖率（62.3\%）限制。$\ln K_{ft}$ 在 OLS 规格中显著为负，
+  表明资产规模更大的企业外包采购单价更低，与议价能力机制一致。
+  $\ln\bar{p}^{m}_{jct}$ 系数随固定效应的加入从0.732（OLS）收缩至0.181（全FE），
+  表明大部分市场均价效应由企业、产品、城市的固定异质性吸收。
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+\clearpage
+
+% ============================================================
+%  表二
+% ============================================================
+\section*{表二：需求侧 vs 供给侧分解}
+
+\subsection*{回归方程}
+
+\begin{align}
+  \ln p_{fjct}
+    &= \underbrace{\lambda_1\ln n^{B}_{jct}
+                 + \lambda_3\ln q^{m}_{jct}}_{\text{需求侧}}
+     + \underbrace{\lambda_2\ln n^{S}_{jct}}_{\text{供给侧}}
+     + \underbrace{\lambda_4\ln\bar{p}^{m}_{jct}}_{\text{市场均价}} \notag\\
+    &\quad + \delta_{f} + \delta_{j} + \delta_{c} + \varepsilon_{fjct}
+  \label{eq:demand_supply}
+\end{align}
+
+全程保留 Firm + Product + City FE，各列逐步加入需求侧、供给侧、市场均价变量，
+以分解三类因素的独立贡献。
+
+\medskip
+\noindent\textbf{变量定义}
+
+\smallskip
+{\small
+\begin{tabular}{@{} L{3.6cm} L{10.4cm} @{}}
+\toprule
+符号 & 含义 \\
+\midrule
+$\ln n^{B}_{jct}$，$\ln q^{m}_{jct}$ &
+  \textbf{需求侧变量：}买方数与市场总采购量。买方越多或市场规模越大，
+  卖方整体议价力更强，预期采购价格更高（正向效应）。\\[4pt]
+$\ln n^{S}_{jct}$ &
+  \textbf{供给侧变量：}卖方数。卖方越多，供给侧竞争越激烈，
+  买方议价力增强，预期采购价格更低（负向效应）。\\[4pt]
+$\ln\bar{p}^{m}_{jct}$ &
+  \textbf{市场均价：}综合反映该城市-产品市场的均衡价格水平。
+  加入后预期其余竞争度变量的独立系数收缩——因为买方数、卖方数
+  等对价格的影响很大程度上已通过市场均价体现。\\[4pt]
+其余符号 & 同表一。\\
+\bottomrule
+\end{tabular}
+}
+
+\vspace{8pt}
+
+\begin{table}[H]
+\centering\small
+\begin{threeparttable}
+\caption{需求侧 vs 供给侧分解}
+\begin{tabular}{l *{4}{c}}
+\toprule
+ & (1) & (2) & (3) & (4) \\
+ & Demand & Supply & Both & Both$+\bar{p}^{m}$ \\
+\midrule
+$\ln n^{B}_{jct}$
+  & $0.104\sym{***}$ & \mis & $0.107\sym{***}$ & $0.022$ \\
+  & \se{0.032} & & \se{0.034} & \se{0.036} \\[3pt]
+$\ln q^{m}_{jct}$
+  & $-0.106\sym{***}$ & \mis & $-0.106\sym{***}$ & $-0.003$ \\
+  & \se{0.013} & & \se{0.013} & \se{0.015} \\[3pt]
+$\ln n^{S}_{jct}$
+  & \mis & $-0.065\sym{**}$ & $-0.006$ & $-0.051$ \\
+  & & \se{0.031} & \se{0.033} & \se{0.034} \\[3pt]
+$\ln\bar{p}^{m}_{jct}$
+  & \mis & \mis & \mis & $0.158\sym{***}$ \\
+  & & & & \se{0.024} \\[3pt]
+常数项
+  & $5.141\sym{***}$ & $4.457\sym{***}$ & $5.151\sym{***}$ & $3.792\sym{***}$ \\
+  & \se{0.235} & \se{0.163} & \se{0.244} & \se{0.268} \\
+\midrule
+Firm FE    & Yes & Yes & Yes & Yes \\
+Product FE & Yes & Yes & Yes & Yes \\
+City FE    & Yes & Yes & Yes & Yes \\
+$N$        & 46,163 & 46,106 & 46,106 & 46,106 \\
+Adj.\ $R^{2}$ & 0.601 & 0.599 & 0.601 & 0.603 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item 列(1)与列(2)样本差异（46,163 vs 46,106）源于 $\ln n^{S}_{jct}$ 少量缺失（城市-产品组合中
+  无卖方记录）。不含市场均价时，需求侧（$\ln n^{B}=0.107^{***}$，$\ln q^{m}=-0.106^{***}$）
+  与供给侧（$\ln n^{S}=-0.065^{**}$）均显著且符合预期方向。注意 $\ln q^{m}$ 系数为负：
+  在买方数固定时，市场总量更大意味着每位买方购买量更大（规模买家），议价能力更强。
+  加入 $\ln\bar{p}^{m}_{jct}$（列4）后竞争度变量均失显，表明市场均价已包含竞争信息的主要成分。
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+\clearpage
+
+% ============================================================
+%  表三
+% ============================================================
+\section*{表三：产品相似度（$S_{mj}$，$C_{mj}$）}
+
+\subsection*{回归方程}
+
+\begin{align}
+  \ln p_{fjct}
+    &= \lambda_1\ln n^{B}_{jct}
+     + \lambda_2\ln n^{S}_{jct}
+     + \lambda_3\ln q^{m}_{jct}
+     + \lambda_4\ln\bar{p}^{m}_{jct} \notag\\
+    &\quad + \beta_1 S_{mj} + \beta_2 C_{mj} \notag\\
+    &\quad + \delta_{f} + \delta_{j} + \delta_{c} + \varepsilon_{fjct}
+  \label{eq:similarity}
+\end{align}
+
+列(1)为基准规格（无相似度变量），列(2)--(4)逐步加入 $S_{mj}$ 和 $C_{mj}$。
+
+\medskip
+\noindent\textbf{变量定义}
+
+\smallskip
+{\small
+\begin{tabular}{@{} L{3.6cm} L{10.4cm} @{}}
+\toprule
+符号 & 含义 \\
+\midrule
+$S_{mj}$ &
+  \textbf{投入结构相似度：}企业核心产品 $m$ 与外包产品 $j$ 在投入品结构上的余弦相似度。
+  $S_{mj}$ 较高表示企业熟悉该产品的供应链，理论上议价能力更强，预期系数为负（价格更低）。\\[4pt]
+$C_{mj}$ &
+  \textbf{产出结构相似度：}企业核心产品 $m$ 与外包产品 $j$ 在下游客户群/分销渠道上的重叠度。
+  $C_{mj}$ 较高表示外包产品与主业关联更紧密。\\[4pt]
+$m$ &
+  \textbf{企业核心产品：}净生产额（$=$ 同产品销售额 $-$ 采购额）最大的9位商品码。
+  $S_{mj}$、$C_{mj}$ 均以 $m$ 为基准预先计算，在 firm$\times$product 层面变化，
+  不被单维固定效应吸收，FE 规格下可识别。\\[4pt]
+其余符号 & 同表一。\\
+\bottomrule
+\end{tabular}
+}
+
+\vspace{8pt}
+
+\begin{table}[H]
+\centering\small
+\begin{threeparttable}
+\caption{产品相似度：$S_{mj}$（投入）与 $C_{mj}$（产出）}
+\begin{tabular}{l *{4}{c}}
+\toprule
+ & (1) & (2) & (3) & (4) \\
+ & Baseline & $+S_{mj}$ & $+C_{mj}$ & Both \\
+\midrule
+$\ln n^{B}_{jct}$
+  & $0.022$ & $0.022$ & $0.022$ & $0.022$ \\
+  & \se{0.036} & \se{0.036} & \se{0.036} & \se{0.036} \\[3pt]
+$\ln n^{S}_{jct}$
+  & $-0.051$ & $-0.051$ & $-0.051$ & $-0.051$ \\
+  & \se{0.034} & \se{0.034} & \se{0.034} & \se{0.034} \\[3pt]
+$\ln q^{m}_{jct}$
+  & $-0.003$ & $-0.003$ & $-0.003$ & $-0.003$ \\
+  & \se{0.015} & \se{0.015} & \se{0.015} & \se{0.015} \\[3pt]
+$\ln\bar{p}^{m}_{jct}$
+  & $0.158\sym{***}$ & $0.158\sym{***}$ & $0.158\sym{***}$ & $0.158\sym{***}$ \\
+  & \se{0.024} & \se{0.024} & \se{0.024} & \se{0.024} \\[3pt]
+$S_{mj}$
+  & \mis & $0.002$ & \mis & $-0.006$ \\
+  & & \se{0.075} & & \se{0.090} \\[3pt]
+$C_{mj}$
+  & \mis & \mis & $0.007$ & $0.013$ \\
+  & & & \se{0.090} & \se{0.108} \\[3pt]
+常数项
+  & $3.792\sym{***}$ & $3.793\sym{***}$ & $3.794\sym{***}$ & $3.794\sym{***}$ \\
+  & \se{0.268} & \se{0.268} & \se{0.267} & \se{0.268} \\
+\midrule
+Firm FE    & Yes & Yes & Yes & Yes \\
+Product FE & Yes & Yes & Yes & Yes \\
+City FE    & Yes & Yes & Yes & Yes \\
+$N$        & 46,106 & 46,094 & 46,094 & 46,094 \\
+Adj.\ $R^{2}$ & 0.603 & 0.603 & 0.603 & 0.603 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item 加入相似度后样本仅减少12个观测值（覆盖率 $>99.9\%$），
+  说明外包产品在预计算数据集中几乎完整覆盖。
+  $S_{mj}$ 和 $C_{mj}$ 系数均接近零且不显著，$R^{2}$ 无变化，
+  表明控制市场均价和三维固定效应后，产品相似度对外包采购价格无独立解释力。
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+\clearpage
+
+% ============================================================
+%  表四
+% ============================================================
+\section*{表四：企业规模 $\times$ 市场条件交互}
+
+\subsection*{回归方程}
+
+\begin{align}
+  \ln p_{fjct}
+    &= \lambda_1\ln n^{B}_{jct}
+     + \lambda_2\ln n^{S}_{jct}
+     + \lambda_3\ln q^{m}_{jct}
+     + \lambda_4\ln\bar{p}^{m}_{jct} \notag\\
+    &\quad
+     + \mu_1\bigl(\ln\mathrm{Output}_{ft}\times\ln n^{B}_{jct}\bigr)
+     + \mu_2\bigl(\ln\mathrm{Output}_{ft}\times\ln n^{S}_{jct}\bigr) \notag\\
+    &\quad
+     + \mu_3\bigl(\ln\mathrm{Output}_{ft}\times\ln\bar{p}^{m}_{jct}\bigr)
+     + \mu_4\bigl(\ln\mathrm{Output}_{ft}\times\ln q^{m}_{jct}\bigr) \notag\\
+    &\quad
+     + \delta_{f} + \delta_{j} + \delta_{c} + \varepsilon_{fjct}
+  \label{eq:interactions}
+\end{align}
+
+$\ln\mathrm{Output}_{ft}$ 主效应被 Firm FE 吸收，但交互项在 firm$\times$product 层面变化，
+FE 规格下可识别。各列逐步加入单个交互项，列(5)全部加入。
+
+\medskip
+\noindent\textbf{变量定义}
+
+\smallskip
+{\small
+\begin{tabular}{@{} L{4.2cm} L{9.8cm} @{}}
+\toprule
+符号 & 含义 \\
+\midrule
+$\ln\mathrm{Output}_{ft}$ &
+  企业规模代理（同表一），主效应被 Firm FE 吸收，仅交互项可识别。\\[4pt]
+$\ln\mathrm{Output}\times\ln n^{B}$ &
+  规模$\times$买方厚度：检验大企业在买方更多的市场中是否拥有更强的议价优势。预期系数为负。\\[4pt]
+$\ln\mathrm{Output}\times\ln n^{S}$ &
+  规模$\times$卖方竞争：检验大企业在供给竞争激烈时是否拥有更强的议价优势。预期系数为负。\\[4pt]
+$\ln\mathrm{Output}\times\ln\bar{p}^{m}$ &
+  规模$\times$市场均价：检验大企业在价格水平较高的市场中能否相对节约采购成本。\\[4pt]
+$\ln\mathrm{Output}\times\ln q^{m}$ &
+  规模$\times$市场规模：检验大企业是否更能利用总量优势压低价格。预期系数为负。\\[4pt]
+$\mu_1,\,\mu_2,\,\mu_3,\,\mu_4$ &
+  交互项系数，捕捉企业规模对市场条件定价效应的异质性调节作用。\\[4pt]
+其余符号 & 同表一。\\
+\bottomrule
+\end{tabular}
+}
+
+\begin{landscape}
+\vspace*{\fill}
+\begin{table}[H]
+\centering\small
+\begin{threeparttable}
+\caption{企业规模 $\times$ 市场条件交互}
+\begin{tabular}{l *{5}{c}}
+\toprule
+ & (1) & (2) & (3) & (4) & (5) \\
+ & Baseline
+ & {$+$Size$\times n^{B}$}
+ & {$+$Size$\times n^{S}$}
+ & {$+$Size$\times\bar{p}^{m}$}
+ & All \\
+\midrule
+$\ln n^{B}_{jct}$
+  & $0.022$ & $0.413\sym{***}$ & $0.026$ & $0.029$ & $0.018$ \\
+  & \se{0.036} & \se{0.101} & \se{0.036} & \se{0.036} & \se{0.137} \\[3pt]
+$\ln n^{S}_{jct}$
+  & $-0.051$ & $-0.057\sym{*}$ & $0.415\sym{***}$ & $-0.053$ & $0.132$ \\
+  & \se{0.034} & \se{0.034} & \se{0.115} & \se{0.033} & \se{0.145} \\[3pt]
+$\ln q^{m}_{jct}$
+  & $-0.003$ & $-0.004$ & $-0.005$ & $-0.007$ & $0.131\sym{*}$ \\
+  & \se{0.015} & \se{0.015} & \se{0.015} & \se{0.015} & \se{0.070} \\[3pt]
+$\ln\bar{p}^{m}_{jct}$
+  & $0.158\sym{***}$ & $0.157\sym{***}$ & $0.156\sym{***}$ & $-0.159\sym{**}$ & $-0.015$ \\
+  & \se{0.024} & \se{0.024} & \se{0.024} & \se{0.080} & \se{0.073} \\[3pt]
+$\ln\mathrm{Output}\times\ln n^{B}$
+  & \mis & $-0.019\sym{***}$ & \mis & \mis & $0.001$ \\
+  & & \se{0.005} & & & \se{0.006} \\[3pt]
+$\ln\mathrm{Output}\times\ln n^{S}$
+  & \mis & \mis & $-0.024\sym{***}$ & \mis & $-0.009$ \\
+  & & & \se{0.006} & & \se{0.007} \\[3pt]
+$\ln\mathrm{Output}\times\ln\bar{p}^{m}$
+  & \mis & \mis & \mis & $0.016\sym{***}$ & $0.009\sym{**}$ \\
+  & & & & \se{0.004} & \se{0.004} \\[3pt]
+$\ln\mathrm{Output}\times\ln q^{m}$
+  & \mis & \mis & \mis & \mis & $-0.007\sym{**}$ \\
+  & & & & & \se{0.004} \\[3pt]
+常数项
+  & $3.792\sym{***}$ & $3.767\sym{***}$ & $3.785\sym{***}$ & $3.836\sym{***}$ & $3.811\sym{***}$ \\
+  & \se{0.268} & \se{0.268} & \se{0.265} & \se{0.266} & \se{0.264} \\
+\midrule
+Firm FE    & Yes & Yes & Yes & Yes & Yes \\
+Product FE & Yes & Yes & Yes & Yes & Yes \\
+City FE    & Yes & Yes & Yes & Yes & Yes \\
+$N$        & 46,106 & 46,106 & 46,106 & 46,106 & 46,106 \\
+Adj.\ $R^{2}$ & 0.603 & 0.603 & 0.603 & 0.604 & 0.604 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item ``\textemdash'' 表示被 Firm FE 吸收。单项交互（列2--4）均显著：大企业在买方更多的市场中
+  采购价格更低（$\mu_1 = -0.019^{***}$），在卖方更多的市场中亦然（$\mu_2 = -0.024^{***}$），
+  与大企业议价优势更能通过市场厚度放大的机制一致。$\mu_3 = +0.016^{***}$ 表明在高价格市场中
+  大企业反而支付更高价格，可能反映大企业购买的是质量更高的产品版本。
+  全部加入（列5）后 $\mu_3$（$0.009^{**}$）和 $\mu_4$（$-0.007^{**}$）同时显著，
+  其余交互项因多重共线而失显。
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+\vspace*{\fill}
+\end{landscape}
+
+\clearpage
+
+% ============================================================
+%  PART 2：SQL 取数逻辑
+% ============================================================
+\section{SQL 取数逻辑}
+
+\subsection*{数据背景}
+
+原始数据为2017年全国增值税发票记录，存储于关系型数据库。取数共提取五张聚合视图，
+分别对应样本企业的进销项记录与全量市场的买卖汇总。取数完成后，数据清洗与样本构建在 Python 中完成。
+
+\subsection*{五张取数视图}
+
+\begin{enumerate}[leftmargin=2em, itemsep=6pt]
+
+\item \textbf{样本企业采购汇总}\\
+  口径：样本企业作为\textbf{购买方}的增值税进项发票。\\
+  聚合粒度：购方企业ID $\times$ 商品编码。\\
+  字段：金额合计（元）、数量合计。\\
+  规模：473,268行（清洗后425,713行，涵盖2,731种合法商品）。
+
+\item \textbf{样本企业销售汇总}\\
+  口径：样本企业作为\textbf{销售方}的增值税销项发票。\\
+  聚合粒度：销方企业ID $\times$ 商品编码。\\
+  字段：金额合计（元）、数量合计。\\
+  规模：101,844行（清洗后89,584行，涵盖2,542种合法商品）。
+
+\item \textbf{企业地区对照}\\
+  口径：样本企业注册所在地级市。\\
+  字段：企业ID、地区代码。\\
+  规模：3,410行。\\
+  用途：样本企业采购/销售视图本身不含地区字段，通过此表按企业ID合并得到城市 $c$。
+
+\item \textbf{全量城市采购汇总}\\
+  口径：\textbf{全部}企业（不限样本）的增值税进项记录。\\
+  聚合粒度：购方地区 $\times$ 商品编码。\\
+  字段：买方企业数、金额合计、数量合计。\\
+  规模：2,104,901行（清洗后1,393,329行）。\\
+  用途：构造市场需求侧指标 $n^{B}_{jct}$（买方数）、$q^{m}_{jct}$（市场总量）、$\bar{p}^{m}_{jct}$（市场均价）。
+
+\item \textbf{全量城市销售汇总}\\
+  口径：全部企业的增值税销项记录。\\
+  聚合粒度：销方地区 $\times$ 商品编码。\\
+  字段：卖方企业数、金额合计、数量合计。\\
+  规模：1,540,065行（清洗后954,222行）。\\
+  用途：构造市场供给侧指标 $n^{S}_{jct}$（卖方数）。
+  
+  批注：这里不用写这么详细，字段规模什么的都不需要。
+
+\end{enumerate}
+
+\subsection*{核心处理步骤（Python）}
+
+\begin{enumerate}[leftmargin=2em, itemsep=4pt]
+  \item \textbf{商品码标准化：}所有商品编码右补零至19位后截取前9位，
+    仅保留在国家标准码库中的2,778个合法9位编码（过滤率约30\%）。
+
+  \item \textbf{外包产品识别：}对采购汇总与销售汇总取企业-产品对的交集，
+    凡同一企业对同一商品既有进项又有销项者认定为外包。
+    外包额 $= \min(\text{采购额},\,\text{销售额}) > 0$。
+
+  \item \textbf{企业地区合并：}采购/销售视图本身不含城市字段，
+    通过地区对照表按企业ID合并得到买方所在地级市 $c$。
+
+  \item \textbf{市场条件构造：}以全量采购视图按产品$\times$城市聚合，
+    计算 $n^{B}_{jct}$、$q^{m}_{jct}$、$\bar{p}^{m}_{jct}$；
+    以全量销售视图聚合计算 $n^{S}_{jct}$。市场条件基于全量口径，不限于样本企业。
+
+  \item \textbf{剔除中介企业：}计算每家企业外包额/总采购额，
+    超过90\%者认定为中介转卖商，从主回归样本中删除。
+\end{enumerate}
+
+\subsection*{最终样本规模汇总}
+
+\begin{center}
+{\small
+\begin{tabular}{@{} l r @{}}
+\toprule
+指标 & 数量 \\
+\midrule
+样本企业数（去中介后） & 3,376 \\
+外包产品种数（9位商品码） & 2,731 \\
+主回归面板行数（去中介后） & 403,400 \\
+主回归观测数（$N$，表二--四） & $\approx 46{,}100$ \\
+涵盖城市数 & 319 \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\clearpage
+
+% ============================================================
+%  PART 3：桥接数据
+% ============================================================
+\section{桥接数据来源与匹配率}
+
+\subsection*{桥接目的}
+
+增值税发票数据本身不含企业财务报表信息。为在表一 OLS 规格中控制企业资本规模
+（$\ln K_{ft}$），需将增值税企业ID与汇算清缴数据进行桥接，获取企业资产总额。
+
+\subsection*{桥接路径}
+
+\[
+  \underbrace{\text{企业ID（增值税口径）}}_{\texttt{cid}}
+  \;\longrightarrow\;
+  \underbrace{\text{汇算清缴匹配文件}}_{\texttt{total\_assets,\ double\ 类型}}
+  \;\longrightarrow\;
+  K_{ft}\ (\text{Capital})
+\]
+
+桥接一步完成：匹配文件以 \texttt{cid} 为连接键，直接提供企业资产总额
+（\texttt{total\_assets}，double 类型，单位：元），无需中间转换。
+匹配完成后资产数据写入企业特征文件，列名改为 $K_{ft}$（Capital），
+取对数得 $\ln K_{ft}$，随企业特征文件一并进入回归面板。
+
+\subsection*{匹配率}
+
+\begin{center}
+{\small
+\begin{tabular}{@{} l r @{}}
+\toprule
+指标 & 数值 \\
+\midrule
+外包样本企业总数（去中介后） & $\approx 3{,}376$ \\
+成功匹配企业数（有 $K_{ft}$ 数据） & $\approx 2{,}104$ \\
+\textbf{企业层面匹配率} & \textbf{62.3\%} \\
+\midrule
+表一 OLS 有效观测数（受匹配率限制） & $\approx 29{,}200$ \\
+表二--四有效观测数（不依赖 $K_{ft}$） & $\approx 46{,}100$ \\
+因未匹配损失的观测比例 & $\approx 37\%$ \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\subsection*{说明}
+
+\begin{itemize}[nosep, leftmargin=2em]
+  \item 匹配率62.3\%已较初始版本（约48\%）显著提升，源于桥接键的更新。
+  \item 未匹配的约37.7\%企业在表一 OLS 规格中被 Stata 自动删除（变量缺失），
+    表二至表四不受影响，其样本量约46,100。
+  \item $K_{ft}$ 在表一 FE 规格（列3--5）中被 Firm FE 完全吸收，无法识别，
+    经济意义仅来自 OLS 规格（列1--2）中的截面变异。
+  \item 匹配后资产数值范围合理（双精度浮点型），可直接取对数。
+  
+  批注：不需要讲初始版本，也不需要讲桥接路径，只需要讲一下匹配率，哪些不受影响的也不用说。数值范围这些也都不用说。
+\end{itemize}
+
+\end{document}
