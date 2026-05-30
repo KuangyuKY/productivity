@@ -1,0 +1,224 @@
+-------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  g:\Kuangyu_Temp\Outsource\productivity\productivity/products_per_f
+> irm.log
+  log type:  text
+ opened on:  30 May 2026, 14:39:19
+
+. 
+. * ============================================================
+. * 1. invoice_panel.dta: 01_clean output before 02 drops intermediaries
+. * ============================================================
+. display ""
+
+
+. display "===== invoice_panel.dta: firm-product distribution before dropping i
+> ntermediaries ====="
+===== invoice_panel.dta: firm-product distribution before dropping intermediari
+> es =====
+
+. use "invoice_panel.dta", clear
+
+. count
+  59,445
+
+. display "invoice_panel observations: " r(N)
+invoice_panel observations: 59445
+
+. 
+. bysort firm_id: gen firm_tag = (_n == 1)
+
+. count if firm_tag
+  2,108
+
+. display "distinct firms: " r(N)
+distinct firms: 2108
+
+. drop firm_tag
+
+. 
+. bysort firm_id product_id: gen firm_prod_tag = (_n == 1)
+
+. bysort firm_id: egen n_purchase_products = total(firm_prod_tag)
+
+. bysort firm_id: gen n_rows_firm = _N
+
+. bysort firm_id: keep if _n == 1
+(57,337 observations deleted)
+
+. 
+. summarize n_purchase_products, detail
+
+                     n_purchase_products
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%            1              1
+ 5%            1              1
+10%            1              1       Obs               2,108
+25%            1              1       Sum of wgt.       2,108
+
+50%            3                      Mean           28.19972
+                        Largest       Std. dev.       80.6021
+75%           11            700
+90%           62            728       Variance       6496.699
+95%          181            751       Skewness       4.965494
+99%          436            925       Kurtosis       33.28066
+
+. tabstat n_purchase_products n_rows_firm, stat(n mean sd min p10 p25 p50 p75 p
+> 90 p95 p99 max) columns(statistics)
+
+    Variable |         N      Mean        SD       Min       p10       p25
+-------------+------------------------------------------------------------
+n_purchase~s |      2108  28.19972   80.6021         1         1         1
+ n_rows_firm |      2108  28.19972   80.6021         1         1         1
+--------------------------------------------------------------------------
+
+    Variable |       p50       p75       p90       p95       p99       Max
+-------------+------------------------------------------------------------
+n_purchase~s |         3        11        62       181       436       925
+ n_rows_firm |         3        11        62       181       436       925
+--------------------------------------------------------------------------
+
+. 
+. count if n_purchase_products == 1
+  578
+
+. display "firms with 1 product: " r(N)
+firms with 1 product: 578
+
+. count if inrange(n_purchase_products, 2, 5)
+  748
+
+. display "firms with 2-5 products: " r(N)
+firms with 2-5 products: 748
+
+. count if inrange(n_purchase_products, 6, 10)
+  237
+
+. display "firms with 6-10 products: " r(N)
+firms with 6-10 products: 237
+
+. count if inrange(n_purchase_products, 11, 20)
+  153
+
+. display "firms with 11-20 products: " r(N)
+firms with 11-20 products: 153
+
+. count if n_purchase_products > 20
+  392
+
+. display "firms with >20 products: " r(N)
+firms with >20 products: 392
+
+. 
+. * ============================================================
+. * 2. reg_panel.dta: final regression panel after dropping intermediaries
+. * ============================================================
+. display ""
+
+
+. display "===== reg_panel.dta: firm-product distribution in final regression s
+> ample ====="
+===== reg_panel.dta: firm-product distribution in final regression sample =====
+
+. use "reg_panel.dta", clear
+
+. count
+  46,945
+
+. display "reg_panel observations: " r(N)
+reg_panel observations: 46945
+
+. 
+. bysort firm_id: gen firm_tag = (_n == 1)
+
+. count if firm_tag
+  1,875
+
+. display "distinct firms: " r(N)
+distinct firms: 1875
+
+. drop firm_tag
+
+. 
+. bysort firm_id product_id: gen firm_prod_tag = (_n == 1)
+
+. bysort firm_id: egen n_purchase_products = total(firm_prod_tag)
+
+. bysort firm_id: gen n_rows_firm = _N
+
+. bysort firm_id: keep if _n == 1
+(45,070 observations deleted)
+
+. 
+. summarize n_purchase_products, detail
+
+                     n_purchase_products
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%            1              1
+ 5%            1              1
+10%            1              1       Obs               1,875
+25%            1              1       Sum of wgt.       1,875
+
+50%            3                      Mean           25.03733
+                        Largest       Std. dev.      74.61064
+75%           11            700
+90%           53            728       Variance       5566.748
+95%          132            751       Skewness       5.790451
+99%          411            925       Kurtosis       45.07599
+
+. tabstat n_purchase_products n_rows_firm, stat(n mean sd min p10 p25 p50 p75 p
+> 90 p95 p99 max) columns(statistics)
+
+    Variable |         N      Mean        SD       Min       p10       p25
+-------------+------------------------------------------------------------
+n_purchase~s |      1875  25.03733  74.61064         1         1         1
+ n_rows_firm |      1875  25.03733  74.61064         1         1         1
+--------------------------------------------------------------------------
+
+    Variable |       p50       p75       p90       p95       p99       Max
+-------------+------------------------------------------------------------
+n_purchase~s |         3        11        53       132       411       925
+ n_rows_firm |         3        11        53       132       411       925
+--------------------------------------------------------------------------
+
+. 
+. count if n_purchase_products == 1
+  488
+
+. display "firms with 1 product: " r(N)
+firms with 1 product: 488
+
+. count if inrange(n_purchase_products, 2, 5)
+  685
+
+. display "firms with 2-5 products: " r(N)
+firms with 2-5 products: 685
+
+. count if inrange(n_purchase_products, 6, 10)
+  220
+
+. display "firms with 6-10 products: " r(N)
+firms with 6-10 products: 220
+
+. count if inrange(n_purchase_products, 11, 20)
+  148
+
+. display "firms with 11-20 products: " r(N)
+firms with 11-20 products: 148
+
+. count if n_purchase_products > 20
+  334
+
+. display "firms with >20 products: " r(N)
+firms with >20 products: 334
+
+. 
+. log close
+      name:  <unnamed>
+       log:  g:\Kuangyu_Temp\Outsource\productivity\productivity/products_per_f
+> irm.log
+  log type:  text
+ closed on:  30 May 2026, 14:39:19
+-------------------------------------------------------------------------------

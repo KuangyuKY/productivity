@@ -1,0 +1,235 @@
+
+  ___  ____  ____  ____  ____ ©
+ /__    /   ____/   /   ____/      17.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2021 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-STATA-PC        https://www.stata.com
+                                   979-696-4600        stata@stata.com
+
+Stata license: Single-user 64-core  perpetual
+Serial number: 501706382399
+  Licensed to: Ming
+               CUHKSZ
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000; see help set_maxvar.
+
+. do data_outputs_overview.do 
+
+. clear all
+
+. set more off
+
+. capture log close
+
+. log using "data_outputs_overview_latest.log", replace text
+(file G:\Kuangyu_Temp\Outsource\productivity\data_outputs_overview_latest.log
+    not found)
+-------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  G:\Kuangyu_Temp\Outsource\productivity\data_outputs_overview_lates
+> t.log
+  log type:  text
+ opened on:  30 May 2026, 15:31:31
+
+. 
+. * ============================================================
+. * Overview stats for 01_clean outputs and reg_panel
+. * ============================================================
+. 
+. foreach f in invoice_panel market_conds firm_chars reg_panel {
+  2.     display ""
+  3.     display "===== `f'.dta ====="
+  4.     use "`f'.dta", clear
+  5.     count
+  6.     display "rows: " r(N)
+  7.     describe, short
+  8. 
+.     capture confirm variable firm_id
+  9.     if _rc == 0 {
+ 10.         bysort firm_id: gen tag_firm = (_n == 1)
+ 11.         count if tag_firm
+ 12.         display "distinct firm_id: " r(N)
+ 13.         drop tag_firm
+ 14.     }
+ 15. 
+.     capture confirm variable product_id
+ 16.     if _rc == 0 {
+ 17.         bysort product_id: gen tag_product = (_n == 1)
+ 18.         count if tag_product
+ 19.         display "distinct product_id: " r(N)
+ 20.         drop tag_product
+ 21.     }
+ 22. 
+.     capture confirm variable city
+ 23.     if _rc == 0 {
+ 24.         bysort city: gen tag_city = (_n == 1)
+ 25.         count if tag_city
+ 26.         display "distinct city: " r(N)
+ 27.         drop tag_city
+ 28.     }
+ 29. 
+.     capture confirm variable year
+ 30.     if _rc == 0 {
+ 31.         tab year
+ 32.     }
+ 33. 
+.     capture confirm variable ln_Capital
+ 34.     if _rc == 0 {
+ 35.         count if !missing(ln_Capital)
+ 36.         display "nonmissing ln_Capital: " r(N)
+ 37.         count if missing(ln_Capital)
+ 38.         display "missing ln_Capital: " r(N)
+ 39.     }
+ 40. 
+.     capture confirm variable is_intermediary
+ 41.     if _rc == 0 {
+ 42.         tab is_intermediary, missing
+ 43.     }
+ 44. 
+.     capture confirm variable input_similarity
+ 45.     if _rc == 0 {
+ 46.         count if !missing(input_similarity)
+ 47.         display "nonmissing input_similarity: " r(N)
+ 48.         count if missing(input_similarity)
+ 49.         display "missing input_similarity: " r(N)
+ 50.     }
+ 51. 
+.     capture confirm variable output_similarity
+ 52.     if _rc == 0 {
+ 53.         count if !missing(output_similarity)
+ 54.         display "nonmissing output_similarity: " r(N)
+ 55.         count if missing(output_similarity)
+ 56.         display "missing output_similarity: " r(N)
+ 57.     }
+ 58. }
+
+===== invoice_panel.dta =====
+  59,445
+rows: 59445
+
+Contains data from invoice_panel.dta
+ Observations:        59,445                  
+    Variables:            12                  30 May 2026 15:02
+Sorted by: 
+  2,108
+distinct firm_id: 2108
+  2,160
+distinct product_id: 2160
+  272
+distinct city: 272
+
+       year |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       2017 |     59,445      100.00      100.00
+------------+-----------------------------------
+      Total |     59,445      100.00
+
+===== market_conds.dta =====
+  1,066,579
+rows: 1066579
+
+Contains data from market_conds.dta
+ Observations:     1,066,579                  
+    Variables:            14                  30 May 2026 15:02
+Sorted by: 
+  2,778
+distinct product_id: 2778
+  1,174
+distinct city: 1174
+
+       year |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       2017 |  1,066,579      100.00      100.00
+------------+-----------------------------------
+      Total |  1,066,579      100.00
+
+===== firm_chars.dta =====
+  12,339,537
+rows: 12339537
+
+Contains data from firm_chars.dta
+ Observations:    12,339,537                  
+    Variables:            10                  30 May 2026 15:02
+Sorted by: 
+  7,191,877
+distinct firm_id: 7191877
+
+       year |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       2017 |  5,719,292       46.35       46.35
+       2018 |  6,620,245       53.65      100.00
+------------+-----------------------------------
+      Total | 12,339,537      100.00
+  7,974,680
+nonmissing ln_Capital: 7974680
+  4,364,857
+missing ln_Capital: 4364857
+
+is_intermed |
+       iary |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 | 11,569,923       93.76       93.76
+          1 |    769,614        6.24      100.00
+------------+-----------------------------------
+      Total | 12,339,537      100.00
+
+===== reg_panel.dta =====
+  46,945
+rows: 46945
+
+Contains data from reg_panel.dta
+ Observations:        46,945                  
+    Variables:            36                  30 May 2026 11:32
+Sorted by: 
+  1,875
+distinct firm_id: 1875
+  2,143
+distinct product_id: 2143
+  262
+distinct city: 262
+
+       year |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       2017 |     46,945      100.00      100.00
+------------+-----------------------------------
+      Total |     46,945      100.00
+  29,247
+nonmissing ln_Capital: 29247
+  17,698
+missing ln_Capital: 17698
+
+is_intermed |
+       iary |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |     46,945      100.00      100.00
+------------+-----------------------------------
+      Total |     46,945      100.00
+  46,933
+nonmissing input_similarity: 46933
+  12
+missing input_similarity: 12
+  46,933
+nonmissing output_similarity: 46933
+  12
+missing output_similarity: 12
+
+. 
+. log close
+      name:  <unnamed>
+       log:  G:\Kuangyu_Temp\Outsource\productivity\data_outputs_overview_lates
+> t.log
+  log type:  text
+ closed on:  30 May 2026, 15:31:53
+-------------------------------------------------------------------------------
+
+. exit
+
+end of do-file
