@@ -1,0 +1,1953 @@
+-------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  G:\Kuangyu_Temp\Outsource\productivity\productivity\regression\lea
+> ve_one_out\02_price_reg.log
+  log type:  text
+ opened on:  31 May 2026, 10:10:52
+
+. 
+. global REGOUT      "regression\leave_one_out"
+
+. global esttab_opts "b(3) se(3) star(* 0.10 ** 0.05 *** 0.01) nogaps compress"
+
+. 
+. 
+. * ===========================================================================
+> ===
+. * PART 1: 构造回归数据
+. * ===========================================================================
+> ===
+. 
+. display ""
+
+
+. display "===== PART 1: 构造回归数据 ====="
+===== PART 1: 构造回归数据 =====
+
+. 
+. use "$DATA\invoice_panel.dta", clear
+
+. count
+  59,445
+
+. display "主面板观测数 (firm × prod × city × year): " r(N)
+主面板观测数 (firm × prod × city × year): 59445
+
+. 
+. merge m:1 product_id city year using "$DATA\market_conds.dta", keep(master ma
+> tch) nogen
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                            22
+        from master                        22  
+        from using                          0  
+
+    Matched                            59,423  
+    -----------------------------------------
+
+. count
+  59,445
+
+. display "after market_conds merge: " r(N)
+after market_conds merge: 59445
+
+. 
+. merge m:1 firm_id year using "$DATA\firm_chars.dta", keep(master match) nogen
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                             0
+    Matched                            59,445  
+    -----------------------------------------
+
+. count
+  59,445
+
+. display "after firm_chars merge: " r(N)
+after firm_chars merge: 59445
+
+. 
+. * --- 去掉中介企业 ---
+. drop if is_intermediary == 1
+(12,500 observations deleted)
+
+. count
+  46,945
+
+. display "after dropping intermediaries: " r(N)
+after dropping intermediaries: 46945
+
+. 
+. * --- 合并产品相似度 ---
+. preserve
+
+.     use "$ROOT\full_data.dta", clear
+
+.     keep firm_id year product_id input_similarity output_similarity
+
+.     duplicates drop firm_id year product_id, force
+
+Duplicates in terms of firm_id year product_id
+
+(0 observations are duplicates)
+
+.     save "$DATA\sim_temp.dta", replace
+(file G:\Kuangyu_Temp\Outsource\productivity\sim_temp.dta not found)
+file G:\Kuangyu_Temp\Outsource\productivity\sim_temp.dta saved
+
+. restore
+
+. 
+. merge m:1 firm_id product_id year using "$DATA\sim_temp.dta", ///
+>     keepusing(input_similarity output_similarity) keep(master match) nogen
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                            12
+        from master                        12  
+        from using                          0  
+
+    Matched                            46,933  
+    -----------------------------------------
+
+. erase "$DATA\sim_temp.dta"
+
+. 
+. * --- 数值 ID（供 reghdfe 使用）---
+. gegen firm_n = group(firm_id)
+
+. gegen prod_n = group(product_id)
+
+. gegen city_n = group(city)
+
+. 
+. display ""
+
+
+. display "==== 关键变量缺失统计 ===="
+==== 关键变量缺失统计 ====
+
+. foreach v in ln_p_net ln_firm_output ln_Capital ln_sell_qty ///
+>              input_similarity output_similarity ///
+>              ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_l
+> oo {
+  2.     count if missing(`v')
+  3.     display "  missing `v': " r(N)
+  4. }
+  0
+  missing ln_p_net: 0
+  0
+  missing ln_firm_output: 0
+  17,698
+  missing ln_Capital: 17698
+  0
+  missing ln_sell_qty: 0
+  12
+  missing input_similarity: 12
+  12
+  missing output_similarity: 12
+  18
+  missing ln_n_buyers: 18
+  76
+  missing ln_n_sellers: 76
+  18
+  missing ln_mkt_qty: 18
+  166
+  missing ln_p_mkt_loo: 166
+  455
+  missing ln_p_mkt_sell_loo: 455
+
+. 
+. display ""
+
+
+. display "==== 回归面板汇总 ===="
+==== 回归面板汇总 ====
+
+. count
+  46,945
+
+. display "总观测数: " r(N)
+总观测数: 46945
+
+. gdistinct firm_n
+
+        |        Observations
+        |      total   distinct
+--------+----------------------
+ firm_n |      46945       1875
+
+. gdistinct prod_n
+
+        |        Observations
+        |      total   distinct
+--------+----------------------
+ prod_n |      46945       2143
+
+. gdistinct city_n
+
+        |        Observations
+        |      total   distinct
+--------+----------------------
+ city_n |      46945        262
+
+. 
+. compress
+  variable year was long now int
+  variable n_rows was long now int
+  variable n_products was long now int
+  variable is_intermediary was long now byte
+  variable firm_n was float now int
+  variable prod_n was float now int
+  variable city_n was float now int
+  variable n_sellers was double now long
+  (891,955 bytes saved)
+
+. save "$DATA\reg_panel.dta", replace
+file G:\Kuangyu_Temp\Outsource\productivity\reg_panel.dta saved
+
+. 
+. 
+. * ===========================================================================
+> ===
+. * TABLE 1: 仅企业层面
+. *
+. * 展示企业特征（规模、资本、产量）对外包价格的截面相关性。
+. * ln_firm_output / ln_Capital 在 OLS 可识别，加入 Firm FE 后被吸收（firm×year
+>  级）。
+. * ln_sell_qty 为 firm×product 级，Firm FE 下仍可识别。
+. * ===========================================================================
+> ===
+. 
+. display ""
+
+
+. display "===== TABLE 1: Firm-level only ====="
+===== TABLE 1: Firm-level only =====
+
+. 
+. use "$DATA\reg_panel.dta", clear
+
+. 
+. * (1) OLS
+. reg ln_p_net ln_firm_output ln_Capital ln_sell_qty, vce(cluster firm_n)
+
+Linear regression                               Number of obs     =     29,247
+                                                F(3, 1266)        =      65.49
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0809
+                                                Root MSE          =     2.4987
+
+                             (Std. err. adjusted for 1,267 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |   .2344137   .0509972     4.60   0.000     .1343653    .3344621
+  ln_Capital |  -.1560955   .0466623    -3.35   0.001    -.2476394   -.0645516
+ ln_sell_qty |  -.1767036   .0129827   -13.61   0.000    -.2021736   -.1512336
+       _cons |   3.527183   .4523465     7.80   0.000     2.639751    4.414614
+------------------------------------------------------------------------------
+
+. estadd local firm_fe "No",  replace
+
+added macro:
+            e(firm_fe) : "No"
+
+. estadd local prod_fe "No",  replace
+
+added macro:
+            e(prod_fe) : "No"
+
+. estadd local city_fe "No",  replace
+
+added macro:
+            e(city_fe) : "No"
+
+. est store t1_m1
+
+. 
+. * (2) + Firm FE（ln_firm_output / ln_Capital 被吸收；ln_sell_qty 存活）
+. reghdfe ln_p_net ln_firm_output ln_Capital ln_sell_qty, ///
+>     absorb(firm_n) vce(cluster firm_n)
+(dropped 332 singleton observations)
+(MWFE estimator converged in 1 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partiall
+> ed-out values are close to zero; tol = 1.0e-09)
+note: ln_Capital is probably collinear with the fixed effects (all partialled-o
+> ut values are close to zero; tol = 1.0e-09)
+
+HDFE Linear regression                            Number of obs   =     28,915
+Absorbing 1 HDFE group                            F(   1,    934) =     161.93
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.3333
+                                                  Adj R-squared   =     0.3110
+                                                  Within R-sq.    =     0.0646
+Number of clusters (firm_n)  =        935         Root MSE        =     2.1508
+
+                               (Std. err. adjusted for 935 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |          0  (omitted)
+  ln_Capital |          0  (omitted)
+ ln_sell_qty |   -.168965   .0132778   -12.73   0.000    -.1950228   -.1429072
+       _cons |   4.968579   .0807195    61.55   0.000     4.810167    5.126992
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |       935         935           0    *|
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "No",  replace
+
+added macro:
+            e(prod_fe) : "No"
+
+. estadd local city_fe "No",  replace
+
+added macro:
+            e(city_fe) : "No"
+
+. est store t1_m2
+
+. 
+. esttab t1_m1 t1_m2 ///
+>     using "$REGOUT/T1_firm_only.txt", replace ///
+>     $esttab_opts ///
+>     order(ln_firm_output ln_Capital ln_sell_qty) ///
+>     stats(firm_fe prod_fe city_fe N r2_a, ///
+>           labels("Firm FE" "Product FE" "City FE" "Observations" "Adj. R-sq")
+>  ///
+>           fmt(%s %s %s %12.0fc 3)) ///
+>     title("DV: ln(purchase price). Firm-level variables only.") ///
+>     mtitles("OLS" "+Firm FE")
+(file regression\leave_one_out/T1_firm_only.txt not found)
+(output written to regression\leave_one_out/T1_firm_only.txt)
+
+. display "T1 saved."
+T1 saved.
+
+. est clear
+
+. clear all
+
+. set output proc
+
+. set max_memory ., permanently
+(set max_memory preference recorded)
+
+. global DATA        "G:\Kuangyu_Temp\Outsource\productivity"
+
+. global REGOUT      "regression\leave_one_out"
+
+. global esttab_opts "b(3) se(3) star(* 0.10 ** 0.05 *** 0.01) nogaps compress"
+
+. 
+. 
+. * ===========================================================================
+> ===
+. * TABLE 2: 企业层面 + 产品相似性
+. *
+. * S_mj / C_mj 在 firm×product 层面变化，FE 规格下可识别。
+. * OLS 三类变量均可识别；加入 Firm FE 后 firm 级企业变量被吸收，相似度系数存活
+> 。
+. * ===========================================================================
+> ===
+. 
+. display ""
+
+
+. display "===== TABLE 2: Firm-level + Similarity ====="
+===== TABLE 2: Firm-level + Similarity =====
+
+. 
+. use "$DATA\reg_panel.dta", clear
+
+. 
+. * (1) OLS
+. reg ln_p_net ln_firm_output ln_Capital ln_sell_qty ///
+>     input_similarity output_similarity, vce(cluster firm_n)
+
+Linear regression                               Number of obs     =     29,237
+                                                F(5, 1266)        =      85.23
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.1272
+                                                Root MSE          =     2.4354
+
+                             (Std. err. adjusted for 1,267 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |   .2667923   .0421197     6.33   0.000     .1841602    .3494245
+  ln_Capital |  -.1122183   .0396951    -2.83   0.005    -.1900936   -.0343429
+ ln_sell_qty |  -.2263309   .0131079   -17.27   0.000    -.2520466   -.2006153
+input_simi~y |   1.491024    .255216     5.84   0.000     .9903309    1.991717
+output_sim~y |   1.480579   .2854999     5.19   0.000     .9204738    2.040684
+       _cons |   1.826108   .4524604     4.04   0.000     .9384529    2.713762
+------------------------------------------------------------------------------
+
+. estadd local firm_fe "No",  replace
+
+added macro:
+            e(firm_fe) : "No"
+
+. estadd local prod_fe "No",  replace
+
+added macro:
+            e(prod_fe) : "No"
+
+. estadd local city_fe "No",  replace
+
+added macro:
+            e(city_fe) : "No"
+
+. est store t2_m1
+
+. 
+. * (2) + Firm FE
+. reghdfe ln_p_net ln_firm_output ln_Capital ln_sell_qty ///
+>     input_similarity output_similarity, ///
+>     absorb(firm_n) vce(cluster firm_n)
+(dropped 332 singleton observations)
+(MWFE estimator converged in 1 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partiall
+> ed-out values are close to zero; tol = 1.0e-09)
+note: ln_Capital is probably collinear with the fixed effects (all partialled-o
+> ut values are close to zero; tol = 1.0e-09)
+
+HDFE Linear regression                            Number of obs   =     28,905
+Absorbing 1 HDFE group                            F(   3,    934) =      68.93
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.3428
+                                                  Adj R-squared   =     0.3208
+                                                  Within R-sq.    =     0.0780
+Number of clusters (firm_n)  =        935         Root MSE        =     2.1356
+
+                               (Std. err. adjusted for 935 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |          0  (omitted)
+  ln_Capital |          0  (omitted)
+ ln_sell_qty |  -.1934609   .0138701   -13.95   0.000    -.2206811   -.1662407
+input_simi~y |   .4598828   .1862811     2.47   0.014     .0943048    .8254608
+output_sim~y |   1.360647   .2101515     6.47   0.000     .9482233    1.773071
+       _cons |   4.845655   .0758409    63.89   0.000     4.696817    4.994494
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |       935         935           0    *|
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "No",  replace
+
+added macro:
+            e(prod_fe) : "No"
+
+. estadd local city_fe "No",  replace
+
+added macro:
+            e(city_fe) : "No"
+
+. est store t2_m2
+
+. 
+. * (3) + Firm + Product FE
+. reghdfe ln_p_net ln_firm_output ln_Capital ln_sell_qty ///
+>     input_similarity output_similarity, ///
+>     absorb(firm_n prod_n) vce(cluster firm_n)
+(dropped 685 singleton observations)
+(MWFE estimator converged in 14 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partiall
+> ed-out values are close to zero; tol = 1.0e-09)
+note: ln_Capital is probably collinear with the fixed effects (all partialled-o
+> ut values are close to zero; tol = 1.0e-09)
+
+HDFE Linear regression                            Number of obs   =     28,552
+Absorbing 2 HDFE groups                           F(   3,    926) =      24.35
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.6321
+                                                  Adj R-squared   =     0.5951
+                                                  Within R-sq.    =     0.0140
+Number of clusters (firm_n)  =        927         Root MSE        =     1.6380
+
+                               (Std. err. adjusted for 927 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |          0  (omitted)
+  ln_Capital |          0  (omitted)
+ ln_sell_qty |  -.0698729    .008323    -8.40   0.000    -.0862071   -.0535388
+input_simi~y |   .1858573   .1089405     1.71   0.088    -.0279417    .3996563
+output_sim~y |   .2632839   .1407888     1.87   0.062    -.0130182     .539586
+       _cons |   4.274241    .047456    90.07   0.000     4.181107    4.367375
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |       927         927           0    *|
+      prod_n |      1680           1        1679     |
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "Yes", replace
+
+added macro:
+            e(prod_fe) : "Yes"
+
+. estadd local city_fe "No",  replace
+
+added macro:
+            e(city_fe) : "No"
+
+. est store t2_m3
+
+. 
+. * (4) + Firm + Product + City FE（首选规格）
+. reghdfe ln_p_net ln_firm_output ln_Capital ln_sell_qty ///
+>     input_similarity output_similarity, ///
+>     absorb(firm_n prod_n city_n) vce(cluster firm_n)
+(dropped 685 singleton observations)
+(MWFE estimator converged in 12 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partiall
+> ed-out values are close to zero; tol = 1.0e-09)
+note: ln_Capital is probably collinear with the fixed effects (all partialled-o
+> ut values are close to zero; tol = 1.0e-09)
+
+HDFE Linear regression                            Number of obs   =     28,552
+Absorbing 3 HDFE groups                           F(   3,    926) =      24.18
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.6321
+                                                  Adj R-squared   =     0.5921
+                                                  Within R-sq.    =     0.0140
+Number of clusters (firm_n)  =        927         Root MSE        =     1.6439
+
+                               (Std. err. adjusted for 927 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |          0  (omitted)
+  ln_Capital |          0  (omitted)
+ ln_sell_qty |  -.0698729   .0083521    -8.37   0.000    -.0862642   -.0534816
+input_simi~y |   .1858573   .1093216     1.70   0.089    -.0286896    .4004042
+output_sim~y |   .2632839   .1412813     1.86   0.063    -.0139847    .5405526
+       _cons |   4.274241    .047622    89.75   0.000     4.180781    4.367701
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |       927         927           0    *|
+      prod_n |      1680           1        1679     |
+      city_n |       188           1         187     |
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "Yes", replace
+
+added macro:
+            e(prod_fe) : "Yes"
+
+. estadd local city_fe "Yes", replace
+
+added macro:
+            e(city_fe) : "Yes"
+
+. est store t2_m4
+
+. 
+. esttab t2_m1 t2_m2 t2_m3 t2_m4 ///
+>     using "$REGOUT/T2_firm_similarity.txt", replace ///
+>     $esttab_opts ///
+>     order(ln_firm_output ln_Capital ln_sell_qty input_similarity output_simil
+> arity) ///
+>     stats(firm_fe prod_fe city_fe N r2_a, ///
+>           labels("Firm FE" "Product FE" "City FE" "Observations" "Adj. R-sq")
+>  ///
+>           fmt(%s %s %s %12.0fc 3)) ///
+>     title("DV: ln(purchase price). Firm-level + product similarity (S_mj, C_m
+> j).") ///
+>     mtitles("OLS" "+Firm FE" "+Firm+Prod" "+Firm+Prod+City")
+(file regression\leave_one_out/T2_firm_similarity.txt not found)
+(output written to regression\leave_one_out/T2_firm_similarity.txt)
+
+. display "T2 saved."
+T2 saved.
+
+. est clear
+
+. clear all
+
+. set output proc
+
+. set max_memory ., permanently
+(set max_memory preference recorded)
+
+. global DATA        "G:\Kuangyu_Temp\Outsource\productivity"
+
+. global REGOUT      "regression\leave_one_out"
+
+. global esttab_opts "b(3) se(3) star(* 0.10 ** 0.05 *** 0.01) nogaps compress"
+
+. 
+. 
+. * ===========================================================================
+> ===
+. * TABLE 3: 仅市场层面
+. *
+. * 展示买卖双方竞争结构与买/卖方侧市场均价对外包采购价格的影响。
+. * 市场变量在 product×city 层面变化，OLS 和 FE 规格均可识别。
+. * ===========================================================================
+> ===
+. 
+. display ""
+
+
+. display "===== TABLE 3: Market-level only ====="
+===== TABLE 3: Market-level only =====
+
+. 
+. use "$DATA\reg_panel.dta", clear
+
+. 
+. * (1) OLS
+. reg ln_p_net ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_l
+> oo, ///
+>     vce(cluster firm_n)
+
+Linear regression                               Number of obs     =     46,444
+                                                F(5, 1871)        =     505.97
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.3098
+                                                Root MSE          =     2.1873
+
+                             (Std. err. adjusted for 1,872 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ ln_n_buyers |   .1701988   .0505662     3.37   0.001     .0710268    .2693709
+ln_n_sellers |   .1044987   .0607877     1.72   0.086    -.0147201    .2237175
+  ln_mkt_qty |  -.0094928   .0165536    -0.57   0.566    -.0419582    .0229726
+ln_p_mkt_loo |   .4402655   .0169874    25.92   0.000     .4069494    .4735817
+ln_p_mkt_s~o |   .3024159   .0198499    15.24   0.000     .2634856    .3413461
+       _cons |   .2175967   .2588968     0.84   0.401    -.2901601    .7253535
+------------------------------------------------------------------------------
+
+. estadd local firm_fe "No",  replace
+
+added macro:
+            e(firm_fe) : "No"
+
+. estadd local prod_fe "No",  replace
+
+added macro:
+            e(prod_fe) : "No"
+
+. estadd local city_fe "No",  replace
+
+added macro:
+            e(city_fe) : "No"
+
+. est store t3_m1
+
+. 
+. * (2) + Firm FE
+. reghdfe ln_p_net ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_se
+> ll_loo, ///
+>     absorb(firm_n) vce(cluster firm_n)
+(dropped 488 singleton observations)
+(MWFE estimator converged in 1 iterations)
+
+HDFE Linear regression                            Number of obs   =     45,956
+Absorbing 1 HDFE group                            F(   5,   1383) =     618.85
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.4838
+                                                  Adj R-squared   =     0.4678
+                                                  Within R-sq.    =     0.2563
+Number of clusters (firm_n)  =      1,384         Root MSE        =     1.9110
+
+                             (Std. err. adjusted for 1,384 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ ln_n_buyers |   .0979714   .0287873     3.40   0.001     .0414999    .1544429
+ln_n_sellers |   .0644157   .0355075     1.81   0.070    -.0052388    .1340702
+  ln_mkt_qty |  -.0289517   .0152585    -1.90   0.058    -.0588839    .0009806
+ln_p_mkt_loo |   .3654827   .0156399    23.37   0.000     .3348022    .3961632
+ln_p_mkt_s~o |   .2463879    .016327    15.09   0.000     .2143597    .2784162
+       _cons |   1.643411    .208429     7.88   0.000      1.23454    2.052282
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |      1384        1384           0    *|
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "No",  replace
+
+added macro:
+            e(prod_fe) : "No"
+
+. estadd local city_fe "No",  replace
+
+added macro:
+            e(city_fe) : "No"
+
+. est store t3_m2
+
+. 
+. * (3) + Firm + Product FE
+. reghdfe ln_p_net ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_se
+> ll_loo, ///
+>     absorb(firm_n prod_n) vce(cluster firm_n)
+(dropped 775 singleton observations)
+(MWFE estimator converged in 14 iterations)
+
+HDFE Linear regression                            Number of obs   =     45,669
+Absorbing 2 HDFE groups                           F(   5,   1376) =      16.43
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.6319
+                                                  Adj R-squared   =     0.6040
+                                                  Within R-sq.    =     0.0061
+Number of clusters (firm_n)  =      1,377         Root MSE        =     1.6423
+
+                             (Std. err. adjusted for 1,377 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ ln_n_buyers |   .1152316   .0400126     2.88   0.004     .0367392    .1937239
+ln_n_sellers |  -.0063413   .0352239    -0.18   0.857    -.0754397    .0627571
+  ln_mkt_qty |  -.1002607   .0173224    -5.79   0.000    -.1342418   -.0662796
+ln_p_mkt_loo |  -.0291862   .0167622    -1.74   0.082    -.0620684     .003696
+ln_p_mkt_s~o |   .0524437   .0113139     4.64   0.000     .0302493    .0746382
+       _cons |   4.912231   .3015948    16.29   0.000     4.320596    5.503866
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |      1377        1377           0    *|
+      prod_n |      1845           1        1844     |
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "Yes", replace
+
+added macro:
+            e(prod_fe) : "Yes"
+
+. estadd local city_fe "No",  replace
+
+added macro:
+            e(city_fe) : "No"
+
+. est store t3_m3
+
+. 
+. * (4) + Firm + Product + City FE（首选规格）
+. reghdfe ln_p_net ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_se
+> ll_loo, ///
+>     absorb(firm_n prod_n city_n) vce(cluster firm_n)
+(dropped 775 singleton observations)
+(MWFE estimator converged in 13 iterations)
+
+HDFE Linear regression                            Number of obs   =     45,669
+Absorbing 3 HDFE groups                           F(   5,   1376) =      16.34
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.6319
+                                                  Adj R-squared   =     0.6018
+                                                  Within R-sq.    =     0.0061
+Number of clusters (firm_n)  =      1,377         Root MSE        =     1.6469
+
+                             (Std. err. adjusted for 1,377 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ ln_n_buyers |   .1152316   .0401213     2.87   0.004     .0365261     .193937
+ln_n_sellers |  -.0063413   .0353196    -0.18   0.858    -.0756273    .0629447
+  ln_mkt_qty |  -.1002607   .0173694    -5.77   0.000    -.1343341   -.0661874
+ln_p_mkt_loo |  -.0291862   .0168077    -1.74   0.083    -.0621577    .0037852
+ln_p_mkt_s~o |   .0524437   .0113447     4.62   0.000     .0301891    .0746984
+       _cons |   4.912231   .3024137    16.24   0.000     4.318989    5.505473
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |      1377        1377           0    *|
+      prod_n |      1845           1        1844     |
+      city_n |       238           1         237     |
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "Yes", replace
+
+added macro:
+            e(prod_fe) : "Yes"
+
+. estadd local city_fe "Yes", replace
+
+added macro:
+            e(city_fe) : "Yes"
+
+. est store t3_m4
+
+. 
+. esttab t3_m1 t3_m2 t3_m3 t3_m4 ///
+>     using "$REGOUT/T3_market_only.txt", replace ///
+>     $esttab_opts ///
+>     order(ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo)
+>  ///
+>     stats(firm_fe prod_fe city_fe N r2_a, ///
+>           labels("Firm FE" "Product FE" "City FE" "Observations" "Adj. R-sq")
+>  ///
+>           fmt(%s %s %s %12.0fc 3)) ///
+>     title("DV: ln(purchase price). Market-level variables only.") ///
+>     mtitles("OLS" "+Firm FE" "+Firm+Prod" "+Firm+Prod+City")
+(file regression\leave_one_out/T3_market_only.txt not found)
+(output written to regression\leave_one_out/T3_market_only.txt)
+
+. display "T3 saved."
+T3 saved.
+
+. est clear
+
+. clear all
+
+. set output proc
+
+. set max_memory ., permanently
+(set max_memory preference recorded)
+
+. global DATA        "G:\Kuangyu_Temp\Outsource\productivity"
+
+. global REGOUT      "regression\leave_one_out"
+
+. global esttab_opts "b(3) se(3) star(* 0.10 ** 0.05 *** 0.01) nogaps compress"
+
+. 
+. 
+. * ===========================================================================
+> ===
+. * TABLE 4: 企业层面 + 市场层面
+. *
+. * OLS：企业变量与市场变量均可识别，展示控制市场条件后企业特征的净效应。
+. * FE：firm 级企业变量被吸收，市场变量与 ln_sell_qty 存活；与 T3 对比揭示稳健
+> 性。
+. * ===========================================================================
+> ===
+. 
+. display ""
+
+
+. display "===== TABLE 4: Firm-level + Market-level ====="
+===== TABLE 4: Firm-level + Market-level =====
+
+. 
+. use "$DATA\reg_panel.dta", clear
+
+. 
+. * (1) OLS
+. reg ln_p_net ln_firm_output ln_Capital ln_sell_qty ///
+>     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo, ///
+>     vce(cluster firm_n)
+
+Linear regression                               Number of obs     =     28,967
+                                                F(8, 1264)        =     231.63
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.3319
+                                                Root MSE          =     2.1278
+
+                             (Std. err. adjusted for 1,265 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |   .1566244   .0374296     4.18   0.000     .0831933    .2300555
+  ln_Capital |  -.1013336   .0333969    -3.03   0.002    -.1668531   -.0358142
+ ln_sell_qty |   -.125621   .0096633   -13.00   0.000    -.1445789   -.1066631
+ ln_n_buyers |    .045165   .0597273     0.76   0.450    -.0720107    .1623406
+ln_n_sellers |   .1379652   .0749376     1.84   0.066    -.0090505     .284981
+  ln_mkt_qty |    .077494    .021464     3.61   0.000      .035385     .119603
+ln_p_mkt_loo |   .5034199   .0231258    21.77   0.000     .4580508     .548789
+ln_p_mkt_s~o |   .2418239    .022346    10.82   0.000     .1979845    .2856633
+       _cons |  -.9375192   .5032673    -1.86   0.063     -1.92485     .049812
+------------------------------------------------------------------------------
+
+. estadd local firm_fe "No",  replace
+
+added macro:
+            e(firm_fe) : "No"
+
+. estadd local prod_fe "No",  replace
+
+added macro:
+            e(prod_fe) : "No"
+
+. estadd local city_fe "No",  replace
+
+added macro:
+            e(city_fe) : "No"
+
+. est store t4_m1
+
+. 
+. * (2) + Firm FE
+. reghdfe ln_p_net ln_firm_output ln_Capital ln_sell_qty ///
+>     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo, ///
+>     absorb(firm_n) vce(cluster firm_n)
+(dropped 331 singleton observations)
+(MWFE estimator converged in 1 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partiall
+> ed-out values are close to zero; tol = 1.0e-09)
+note: ln_Capital is probably collinear with the fixed effects (all partialled-o
+> ut values are close to zero; tol = 1.0e-09)
+
+HDFE Linear regression                            Number of obs   =     28,636
+Absorbing 1 HDFE group                            F(   6,    933) =     375.54
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.4891
+                                                  Adj R-squared   =     0.4718
+                                                  Within R-sq.    =     0.2816
+Number of clusters (firm_n)  =        934         Root MSE        =     1.8806
+
+                               (Std. err. adjusted for 934 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |          0  (omitted)
+  ln_Capital |          0  (omitted)
+ ln_sell_qty |  -.1223573   .0089342   -13.70   0.000    -.1398908   -.1048238
+ ln_n_buyers |   .1323785   .0315865     4.19   0.000     .0703898    .1943672
+ln_n_sellers |  -.0084595   .0404448    -0.21   0.834    -.0878328    .0709138
+  ln_mkt_qty |   .0327331    .016053     2.04   0.042     .0012289    .0642373
+ln_p_mkt_loo |   .4027985   .0193208    20.85   0.000     .3648813    .4407157
+ln_p_mkt_s~o |   .2189442   .0191103    11.46   0.000     .1814401    .2564483
+       _cons |   1.385255   .2405471     5.76   0.000     .9131793    1.857331
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |       934         934           0    *|
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "No",  replace
+
+added macro:
+            e(prod_fe) : "No"
+
+. estadd local city_fe "No",  replace
+
+added macro:
+            e(city_fe) : "No"
+
+. est store t4_m2
+
+. 
+. * (3) + Firm + Product FE
+. reghdfe ln_p_net ln_firm_output ln_Capital ln_sell_qty ///
+>     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo, ///
+>     absorb(firm_n prod_n) vce(cluster firm_n)
+(dropped 680 singleton observations)
+(MWFE estimator converged in 14 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partiall
+> ed-out values are close to zero; tol = 1.0e-09)
+note: ln_Capital is probably collinear with the fixed effects (all partialled-o
+> ut values are close to zero; tol = 1.0e-09)
+
+HDFE Linear regression                            Number of obs   =     28,287
+Absorbing 2 HDFE groups                           F(   6,    924) =      14.67
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.6344
+                                                  Adj R-squared   =     0.5975
+                                                  Within R-sq.    =     0.0174
+Number of clusters (firm_n)  =        925         Root MSE        =     1.6302
+
+                               (Std. err. adjusted for 925 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |          0  (omitted)
+  ln_Capital |          0  (omitted)
+ ln_sell_qty |  -.0611665   .0075262    -8.13   0.000    -.0759369   -.0463961
+ ln_n_buyers |   .1057395   .0516919     2.05   0.041     .0042924    .2071867
+ln_n_sellers |   .0116168   .0399212     0.29   0.771      -.06673    .0899636
+  ln_mkt_qty |  -.0782156   .0218546    -3.58   0.000    -.1211061   -.0353251
+ln_p_mkt_loo |  -.0081833   .0212113    -0.39   0.700    -.0498112    .0334445
+ln_p_mkt_s~o |   .0474332   .0146352     3.24   0.001      .018711    .0761553
+       _cons |   4.663796   .3629019    12.85   0.000     3.951589    5.376004
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |       925         925           0    *|
+      prod_n |      1670           1        1669     |
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "Yes", replace
+
+added macro:
+            e(prod_fe) : "Yes"
+
+. estadd local city_fe "No",  replace
+
+added macro:
+            e(city_fe) : "No"
+
+. est store t4_m3
+
+. 
+. * (4) + Firm + Product + City FE（首选规格）
+. reghdfe ln_p_net ln_firm_output ln_Capital ln_sell_qty ///
+>     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo, ///
+>     absorb(firm_n prod_n city_n) vce(cluster firm_n)
+(dropped 680 singleton observations)
+(MWFE estimator converged in 13 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partiall
+> ed-out values are close to zero; tol = 1.0e-09)
+note: ln_Capital is probably collinear with the fixed effects (all partialled-o
+> ut values are close to zero; tol = 1.0e-09)
+
+HDFE Linear regression                            Number of obs   =     28,287
+Absorbing 3 HDFE groups                           F(   6,    924) =      14.57
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.6344
+                                                  Adj R-squared   =     0.5945
+                                                  Within R-sq.    =     0.0174
+Number of clusters (firm_n)  =        925         Root MSE        =     1.6362
+
+                               (Std. err. adjusted for 925 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |          0  (omitted)
+  ln_Capital |          0  (omitted)
+ ln_sell_qty |  -.0611665   .0075526    -8.10   0.000    -.0759888   -.0463443
+ ln_n_buyers |   .1057395   .0518735     2.04   0.042      .003936    .2075431
+ln_n_sellers |   .0116168   .0400615     0.29   0.772    -.0670052    .0902389
+  ln_mkt_qty |  -.0782156   .0219314    -3.57   0.000    -.1212567   -.0351744
+ln_p_mkt_loo |  -.0081833   .0212858    -0.38   0.701    -.0499575    .0335908
+ln_p_mkt_s~o |   .0474332   .0146867     3.23   0.001     .0186101    .0762562
+       _cons |   4.663796   .3641768    12.81   0.000     3.949087    5.378506
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |       925         925           0    *|
+      prod_n |      1670           1        1669     |
+      city_n |       187           1         186     |
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "Yes", replace
+
+added macro:
+            e(prod_fe) : "Yes"
+
+. estadd local city_fe "Yes", replace
+
+added macro:
+            e(city_fe) : "Yes"
+
+. est store t4_m4
+
+. 
+. esttab t4_m1 t4_m2 t4_m3 t4_m4 ///
+>     using "$REGOUT/T4_firm_market.txt", replace ///
+>     $esttab_opts ///
+>     order(ln_firm_output ln_Capital ln_sell_qty ///
+>           ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo)
+>  ///
+>     stats(firm_fe prod_fe city_fe N r2_a, ///
+>           labels("Firm FE" "Product FE" "City FE" "Observations" "Adj. R-sq")
+>  ///
+>           fmt(%s %s %s %12.0fc 3)) ///
+>     title("DV: ln(purchase price). Firm-level + market-level variables.") ///
+>     mtitles("OLS" "+Firm FE" "+Firm+Prod" "+Firm+Prod+City")
+(file regression\leave_one_out/T4_firm_market.txt not found)
+(output written to regression\leave_one_out/T4_firm_market.txt)
+
+. display "T4 saved."
+T4 saved.
+
+. est clear
+
+. clear all
+
+. set output proc
+
+. set max_memory ., permanently
+(set max_memory preference recorded)
+
+. global DATA        "G:\Kuangyu_Temp\Outsource\productivity"
+
+. global REGOUT      "regression\leave_one_out"
+
+. global esttab_opts "b(3) se(3) star(* 0.10 ** 0.05 *** 0.01) nogaps compress"
+
+. 
+. 
+. * ===========================================================================
+> ===
+. * TABLE 5: 全规格（企业层面 + 产品相似性 + 市场层面）
+. *
+. * 三类变量同时纳入的完整规格。
+. * OLS：所有变量可识别；FE：firm 级企业变量被吸收，相似度、市场变量、ln_sell_q
+> ty 存活。
+. * ===========================================================================
+> ===
+. 
+. display ""
+
+
+. display "===== TABLE 5: Full specification ====="
+===== TABLE 5: Full specification =====
+
+. 
+. use "$DATA\reg_panel.dta", clear
+
+. 
+. * (1) OLS
+. reg ln_p_net ln_firm_output ln_Capital ln_sell_qty ///
+>     input_similarity output_similarity ///
+>     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo, ///
+>     vce(cluster firm_n)
+
+Linear regression                               Number of obs     =     28,957
+                                                F(10, 1264)       =     232.21
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.3518
+                                                Root MSE          =     2.0962
+
+                             (Std. err. adjusted for 1,265 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |   .1808732   .0325136     5.56   0.000     .1170866    .2446597
+  ln_Capital |  -.0743277   .0291202    -2.55   0.011     -.131457   -.0171984
+ ln_sell_qty |  -.1579885   .0100575   -15.71   0.000    -.1777198   -.1382573
+input_simi~y |   1.076159   .1848993     5.82   0.000     .7134155    1.438902
+output_sim~y |    .887805   .2291235     3.87   0.000     .4383009    1.337309
+ ln_n_buyers |   .0915702   .0585349     1.56   0.118    -.0232661    .2064065
+ln_n_sellers |   .1072276   .0738341     1.45   0.147    -.0376232    .2520783
+  ln_mkt_qty |   .0479193   .0204081     2.35   0.019     .0078818    .0879568
+ln_p_mkt_loo |   .4671903   .0222794    20.97   0.000     .4234817    .5108989
+ln_p_mkt_s~o |   .2283646   .0212873    10.73   0.000     .1866022     .270127
+       _cons |  -1.602165   .4906772    -3.27   0.001    -2.564796   -.6395333
+------------------------------------------------------------------------------
+
+. estadd local firm_fe "No",  replace
+
+added macro:
+            e(firm_fe) : "No"
+
+. estadd local prod_fe "No",  replace
+
+added macro:
+            e(prod_fe) : "No"
+
+. estadd local city_fe "No",  replace
+
+added macro:
+            e(city_fe) : "No"
+
+. est store t5_m1
+
+. 
+. * (2) + Firm FE
+. reghdfe ln_p_net ln_firm_output ln_Capital ln_sell_qty ///
+>     input_similarity output_similarity ///
+>     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo, ///
+>     absorb(firm_n) vce(cluster firm_n)
+(dropped 331 singleton observations)
+(MWFE estimator converged in 1 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partiall
+> ed-out values are close to zero; tol = 1.0e-09)
+note: ln_Capital is probably collinear with the fixed effects (all partialled-o
+> ut values are close to zero; tol = 1.0e-09)
+
+HDFE Linear regression                            Number of obs   =     28,626
+Absorbing 1 HDFE group                            F(   8,    933) =     289.80
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.4931
+                                                  Adj R-squared   =     0.4759
+                                                  Within R-sq.    =     0.2873
+Number of clusters (firm_n)  =        934         Root MSE        =     1.8735
+
+                               (Std. err. adjusted for 934 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |          0  (omitted)
+  ln_Capital |          0  (omitted)
+ ln_sell_qty |  -.1382341    .009367   -14.76   0.000    -.1566168   -.1198513
+input_simi~y |   .3862513   .1152358     3.35   0.001     .1600998    .6124027
+output_sim~y |   .7945208   .1493683     5.32   0.000      .501384    1.087657
+ ln_n_buyers |   .1353406   .0314119     4.31   0.000     .0736944    .1969867
+ln_n_sellers |  -.0033262   .0405635    -0.08   0.935    -.0829324    .0762799
+  ln_mkt_qty |   .0254238   .0157296     1.62   0.106    -.0054458    .0562933
+ln_p_mkt_loo |    .393037   .0190617    20.62   0.000     .3556282    .4304458
+ln_p_mkt_s~o |   .2153454   .0188857    11.40   0.000     .1782819    .2524088
+       _cons |   1.412987   .2360233     5.99   0.000      .949789    1.876185
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |       934         934           0    *|
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "No",  replace
+
+added macro:
+            e(prod_fe) : "No"
+
+. estadd local city_fe "No",  replace
+
+added macro:
+            e(city_fe) : "No"
+
+. est store t5_m2
+
+. 
+. * (3) + Firm + Product FE
+. reghdfe ln_p_net ln_firm_output ln_Capital ln_sell_qty ///
+>     input_similarity output_similarity ///
+>     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo, ///
+>     absorb(firm_n prod_n) vce(cluster firm_n)
+(dropped 680 singleton observations)
+(MWFE estimator converged in 14 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partiall
+> ed-out values are close to zero; tol = 1.0e-09)
+note: ln_Capital is probably collinear with the fixed effects (all partialled-o
+> ut values are close to zero; tol = 1.0e-09)
+
+HDFE Linear regression                            Number of obs   =     28,277
+Absorbing 2 HDFE groups                           F(   8,    924) =      11.24
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.6349
+                                                  Adj R-squared   =     0.5979
+                                                  Within R-sq.    =     0.0188
+Number of clusters (firm_n)  =        925         Root MSE        =     1.6294
+
+                               (Std. err. adjusted for 925 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |          0  (omitted)
+  ln_Capital |          0  (omitted)
+ ln_sell_qty |  -.0679213   .0080671    -8.42   0.000    -.0837532   -.0520894
+input_simi~y |    .197232   .1071521     1.84   0.066    -.0130577    .4075218
+output_sim~y |     .25829   .1393785     1.85   0.064    -.0152453    .5318252
+ ln_n_buyers |   .1020374   .0515901     1.98   0.048     .0007901    .2032847
+ln_n_sellers |   .0154839   .0397814     0.39   0.697    -.0625884    .0935562
+  ln_mkt_qty |  -.0822779   .0222263    -3.70   0.000    -.1258978    -.038658
+ln_p_mkt_loo |  -.0111881   .0212524    -0.53   0.599    -.0528967    .0305205
+ln_p_mkt_s~o |   .0474948   .0145587     3.26   0.001     .0189228    .0760668
+       _cons |   4.712381   .3626529    12.99   0.000     4.000662      5.4241
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |       925         925           0    *|
+      prod_n |      1670           1        1669     |
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "Yes", replace
+
+added macro:
+            e(prod_fe) : "Yes"
+
+. estadd local city_fe "No",  replace
+
+added macro:
+            e(city_fe) : "No"
+
+. est store t5_m3
+
+. 
+. * (4) + Firm + Product + City FE（首选规格）
+. reghdfe ln_p_net ln_firm_output ln_Capital ln_sell_qty ///
+>     input_similarity output_similarity ///
+>     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo, ///
+>     absorb(firm_n prod_n city_n) vce(cluster firm_n)
+(dropped 680 singleton observations)
+(MWFE estimator converged in 13 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partiall
+> ed-out values are close to zero; tol = 1.0e-09)
+note: ln_Capital is probably collinear with the fixed effects (all partialled-o
+> ut values are close to zero; tol = 1.0e-09)
+
+HDFE Linear regression                            Number of obs   =     28,277
+Absorbing 3 HDFE groups                           F(   8,    924) =      11.16
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.6349
+                                                  Adj R-squared   =     0.5950
+                                                  Within R-sq.    =     0.0188
+Number of clusters (firm_n)  =        925         Root MSE        =     1.6354
+
+                               (Std. err. adjusted for 925 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |          0  (omitted)
+  ln_Capital |          0  (omitted)
+ ln_sell_qty |  -.0679213   .0080954    -8.39   0.000    -.0838089   -.0520338
+input_simi~y |    .197232   .1075287     1.83   0.067    -.0137969    .4082609
+output_sim~y |     .25829   .1398684     1.85   0.065    -.0162067    .5327866
+ ln_n_buyers |   .1020374   .0517714     1.97   0.049     .0004342    .2036406
+ln_n_sellers |   .0154839   .0399212     0.39   0.698    -.0628628    .0938307
+  ln_mkt_qty |  -.0822779   .0223045    -3.69   0.000    -.1260512   -.0385046
+ln_p_mkt_loo |  -.0111881   .0213271    -0.52   0.600    -.0530433    .0306671
+ln_p_mkt_s~o |   .0474948   .0146099     3.25   0.001     .0188224    .0761673
+       _cons |   4.712381   .3639276    12.95   0.000     3.998161    5.426602
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |       925         925           0    *|
+      prod_n |      1670           1        1669     |
+      city_n |       187           1         186     |
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "Yes", replace
+
+added macro:
+            e(prod_fe) : "Yes"
+
+. estadd local city_fe "Yes", replace
+
+added macro:
+            e(city_fe) : "Yes"
+
+. est store t5_m4
+
+. 
+. esttab t5_m1 t5_m2 t5_m3 t5_m4 ///
+>     using "$REGOUT/T5_full_spec.txt", replace ///
+>     $esttab_opts ///
+>     order(ln_firm_output ln_Capital ln_sell_qty ///
+>           input_similarity output_similarity ///
+>           ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo)
+>  ///
+>     stats(firm_fe prod_fe city_fe N r2_a, ///
+>           labels("Firm FE" "Product FE" "City FE" "Observations" "Adj. R-sq")
+>  ///
+>           fmt(%s %s %s %12.0fc 3)) ///
+>     title("DV: ln(purchase price). Full specification (firm + similarity + ma
+> rket).") ///
+>     mtitles("OLS" "+Firm FE" "+Firm+Prod" "+Firm+Prod+City")
+(file regression\leave_one_out/T5_full_spec.txt not found)
+(output written to regression\leave_one_out/T5_full_spec.txt)
+
+. display "T5 saved."
+T5 saved.
+
+. est clear
+
+. clear all
+
+. set output proc
+
+. set max_memory ., permanently
+(set max_memory preference recorded)
+
+. global DATA        "G:\Kuangyu_Temp\Outsource\productivity"
+
+. global REGOUT      "regression\leave_one_out"
+
+. global esttab_opts "b(3) se(3) star(* 0.10 ** 0.05 *** 0.01) nogaps compress"
+
+. 
+. 
+. * ===========================================================================
+> ===
+. * TABLE 6: 交互项（企业规模 × 市场条件）
+. *
+. * 检验：大企业是否能更好地利用市场厚度获取折扣？
+. * 交互项在 firm×product 层面变化，FE 规格下可识别。
+. * ln_firm_output 主效应被 Firm FE 吸收，但交互项系数可识别。
+. * ===========================================================================
+> ===
+. 
+. display ""
+
+
+. display "===== TABLE 6: Firm-size × Market interactions ====="
+===== TABLE 6: Firm-size × Market interactions =====
+
+. 
+. use "$DATA\reg_panel.dta", clear
+
+. 
+. gen size_x_nbuy   = ln_firm_output * ln_n_buyers
+(18 missing values generated)
+
+. gen size_x_nsell  = ln_firm_output * ln_n_sellers
+(76 missing values generated)
+
+. gen size_x_pmkt   = ln_firm_output * ln_p_mkt_loo
+(166 missing values generated)
+
+. gen size_x_psell  = ln_firm_output * ln_p_mkt_sell_loo
+(455 missing values generated)
+
+. gen size_x_mktqty = ln_firm_output * ln_mkt_qty
+(18 missing values generated)
+
+. 
+. * (1) 基准（全 FE，无交互）
+. reghdfe ln_p_net ln_firm_output ln_sell_qty ///
+>     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo, ///
+>     absorb(firm_n prod_n city_n) vce(cluster firm_n)
+(dropped 775 singleton observations)
+(MWFE estimator converged in 13 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partiall
+> ed-out values are close to zero; tol = 1.0e-09)
+
+HDFE Linear regression                            Number of obs   =     45,669
+Absorbing 3 HDFE groups                           F(   6,   1376) =      20.78
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.6346
+                                                  Adj R-squared   =     0.6046
+                                                  Within R-sq.    =     0.0132
+Number of clusters (firm_n)  =      1,377         Root MSE        =     1.6410
+
+                             (Std. err. adjusted for 1,377 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |          0  (omitted)
+ ln_sell_qty |  -.0474904     .00602    -7.89   0.000    -.0592997    -.035681
+ ln_n_buyers |   .1331294   .0396397     3.36   0.001     .0553686    .2108901
+ln_n_sellers |  -.0030133   .0346304    -0.09   0.931    -.0709474    .0649207
+  ln_mkt_qty |  -.0834348   .0169988    -4.91   0.000    -.1167812   -.0500884
+ln_p_mkt_loo |  -.0175823   .0167104    -1.05   0.293    -.0503628    .0151982
+ln_p_mkt_s~o |   .0523433   .0113403     4.62   0.000     .0300972    .0745895
+       _cons |   4.748824   .2975449    15.96   0.000     4.165133    5.332515
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |      1377        1377           0    *|
+      prod_n |      1845           1        1844     |
+      city_n |       238           1         237     |
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "Yes", replace
+
+added macro:
+            e(prod_fe) : "Yes"
+
+. estadd local city_fe "Yes", replace
+
+added macro:
+            e(city_fe) : "Yes"
+
+. est store t6_m1
+
+. 
+. * (2) + 规模 × 买方数
+. reghdfe ln_p_net ln_firm_output ln_sell_qty ///
+>     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo ///
+>     size_x_nbuy, ///
+>     absorb(firm_n prod_n city_n) vce(cluster firm_n)
+(dropped 775 singleton observations)
+(MWFE estimator converged in 13 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partiall
+> ed-out values are close to zero; tol = 1.0e-09)
+
+HDFE Linear regression                            Number of obs   =     45,669
+Absorbing 3 HDFE groups                           F(   7,   1376) =      18.06
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.6351
+                                                  Adj R-squared   =     0.6051
+                                                  Within R-sq.    =     0.0145
+Number of clusters (firm_n)  =      1,377         Root MSE        =     1.6400
+
+                             (Std. err. adjusted for 1,377 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |          0  (omitted)
+ ln_sell_qty |  -.0470101   .0059503    -7.90   0.000    -.0586828   -.0353373
+ ln_n_buyers |   .5159656   .1007723     5.12   0.000     .3182816    .7136496
+ln_n_sellers |  -.0099275   .0349354    -0.28   0.776      -.07846    .0586049
+  ln_mkt_qty |  -.0844573   .0170701    -4.95   0.000    -.1179437    -.050971
+ln_p_mkt_loo |  -.0183985   .0167717    -1.10   0.273    -.0512994    .0145025
+ln_p_mkt_s~o |   .0520701   .0113609     4.58   0.000     .0297836    .0743567
+ size_x_nbuy |  -.0188117    .004675    -4.02   0.000    -.0279825   -.0096409
+       _cons |   4.702173   .2912412    16.15   0.000     4.130848    5.273498
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |      1377        1377           0    *|
+      prod_n |      1845           1        1844     |
+      city_n |       238           1         237     |
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "Yes", replace
+
+added macro:
+            e(prod_fe) : "Yes"
+
+. estadd local city_fe "Yes", replace
+
+added macro:
+            e(city_fe) : "Yes"
+
+. est store t6_m2
+
+. 
+. * (3) + 规模 × 卖方数
+. reghdfe ln_p_net ln_firm_output ln_sell_qty ///
+>     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo ///
+>     size_x_nsell, ///
+>     absorb(firm_n prod_n city_n) vce(cluster firm_n)
+(dropped 775 singleton observations)
+(MWFE estimator converged in 13 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partiall
+> ed-out values are close to zero; tol = 1.0e-09)
+
+HDFE Linear regression                            Number of obs   =     45,669
+Absorbing 3 HDFE groups                           F(   7,   1376) =      18.31
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.6352
+                                                  Adj R-squared   =     0.6053
+                                                  Within R-sq.    =     0.0149
+Number of clusters (firm_n)  =      1,377         Root MSE        =     1.6397
+
+                             (Std. err. adjusted for 1,377 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |          0  (omitted)
+ ln_sell_qty |  -.0470746   .0058883    -7.99   0.000    -.0586255   -.0355237
+ ln_n_buyers |   .1377088   .0395636     3.48   0.001     .0600972    .2153204
+ln_n_sellers |    .457235   .1150456     3.97   0.000     .2315512    .6829187
+  ln_mkt_qty |   -.085444   .0170167    -5.02   0.000    -.1188254   -.0520626
+ln_p_mkt_loo |  -.0194602   .0167505    -1.16   0.246    -.0523195     .013399
+ln_p_mkt_s~o |   .0522837   .0113719     4.60   0.000     .0299755    .0745919
+size_x_nsell |  -.0233073   .0056579    -4.12   0.000    -.0344064   -.0122082
+       _cons |   4.725947   .2901642    16.29   0.000     4.156735    5.295159
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |      1377        1377           0    *|
+      prod_n |      1845           1        1844     |
+      city_n |       238           1         237     |
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "Yes", replace
+
+added macro:
+            e(prod_fe) : "Yes"
+
+. estadd local city_fe "Yes", replace
+
+added macro:
+            e(city_fe) : "Yes"
+
+. est store t6_m3
+
+. 
+. * (4) + 规模 × 买方侧均价
+. reghdfe ln_p_net ln_firm_output ln_sell_qty ///
+>     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo ///
+>     size_x_pmkt, ///
+>     absorb(firm_n prod_n city_n) vce(cluster firm_n)
+(dropped 775 singleton observations)
+(MWFE estimator converged in 13 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partiall
+> ed-out values are close to zero; tol = 1.0e-09)
+
+HDFE Linear regression                            Number of obs   =     45,669
+Absorbing 3 HDFE groups                           F(   7,   1376) =      18.86
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.6351
+                                                  Adj R-squared   =     0.6051
+                                                  Within R-sq.    =     0.0145
+Number of clusters (firm_n)  =      1,377         Root MSE        =     1.6400
+
+                             (Std. err. adjusted for 1,377 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |          0  (omitted)
+ ln_sell_qty |  -.0470959   .0058897    -8.00   0.000    -.0586495   -.0355422
+ ln_n_buyers |   .1381934    .039547     3.49   0.000     .0606146    .2157723
+ln_n_sellers |  -.0045729   .0343603    -0.13   0.894    -.0719772    .0628314
+  ln_mkt_qty |  -.0866799   .0169271    -5.12   0.000    -.1198855   -.0534742
+ln_p_mkt_loo |   -.235821   .0731568    -3.22   0.001     -.379332     -.09231
+ln_p_mkt_s~o |   .0521657   .0113363     4.60   0.000     .0299274    .0744039
+ size_x_pmkt |    .010861   .0035801     3.03   0.002     .0038379    .0178841
+       _cons |   4.786398   .2991003    16.00   0.000     4.199656     5.37314
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |      1377        1377           0    *|
+      prod_n |      1845           1        1844     |
+      city_n |       238           1         237     |
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "Yes", replace
+
+added macro:
+            e(prod_fe) : "Yes"
+
+. estadd local city_fe "Yes", replace
+
+added macro:
+            e(city_fe) : "Yes"
+
+. est store t6_m4
+
+. 
+. * (5) + 规模 × 卖方侧均价
+. reghdfe ln_p_net ln_firm_output ln_sell_qty ///
+>     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo ///
+>     size_x_psell, ///
+>     absorb(firm_n prod_n city_n) vce(cluster firm_n)
+(dropped 775 singleton observations)
+(MWFE estimator converged in 13 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partiall
+> ed-out values are close to zero; tol = 1.0e-09)
+
+HDFE Linear regression                            Number of obs   =     45,669
+Absorbing 3 HDFE groups                           F(   7,   1376) =      18.85
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.6351
+                                                  Adj R-squared   =     0.6052
+                                                  Within R-sq.    =     0.0146
+Number of clusters (firm_n)  =      1,377         Root MSE        =     1.6399
+
+                             (Std. err. adjusted for 1,377 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |          0  (omitted)
+ ln_sell_qty |  -.0470555   .0058852    -8.00   0.000    -.0586004   -.0355107
+ ln_n_buyers |   .1376423   .0396166     3.47   0.001     .0599269    .2153578
+ln_n_sellers |  -.0059798    .034612    -0.17   0.863    -.0738778    .0619181
+  ln_mkt_qty |  -.0853417   .0169737    -5.03   0.000    -.1186387   -.0520446
+ln_p_mkt_loo |  -.0174629   .0166313    -1.05   0.294    -.0500883    .0151625
+ln_p_mkt_s~o |  -.1606792   .0635383    -2.53   0.012    -.2853217   -.0360367
+size_x_psell |    .010592   .0032436     3.27   0.001      .004229    .0169549
+       _cons |   4.773475   .2993119    15.95   0.000     4.186318    5.360632
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |      1377        1377           0    *|
+      prod_n |      1845           1        1844     |
+      city_n |       238           1         237     |
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "Yes", replace
+
+added macro:
+            e(prod_fe) : "Yes"
+
+. estadd local city_fe "Yes", replace
+
+added macro:
+            e(city_fe) : "Yes"
+
+. est store t6_m5
+
+. 
+. * (6) 全部交互
+. reghdfe ln_p_net ln_firm_output ln_sell_qty ///
+>     ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo ///
+>     size_x_nbuy size_x_nsell size_x_pmkt size_x_psell size_x_mktqty, ///
+>     absorb(firm_n prod_n city_n) vce(cluster firm_n)
+(dropped 775 singleton observations)
+(MWFE estimator converged in 13 iterations)
+note: ln_firm_output is probably collinear with the fixed effects (all partiall
+> ed-out values are close to zero; tol = 1.0e-09)
+
+HDFE Linear regression                            Number of obs   =     45,669
+Absorbing 3 HDFE groups                           F(  11,   1376) =      13.08
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.6358
+                                                  Adj R-squared   =     0.6058
+                                                  Within R-sq.    =     0.0164
+Number of clusters (firm_n)  =      1,377         Root MSE        =     1.6385
+
+                             (Std. err. adjusted for 1,377 clusters in firm_n)
+------------------------------------------------------------------------------
+             |               Robust
+    ln_p_net | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ln_firm_ou~t |          0  (omitted)
+ ln_sell_qty |  -.0457813   .0057708    -7.93   0.000    -.0571017   -.0344608
+ ln_n_buyers |   .0086358   .1484109     0.06   0.954    -.2825003    .2997718
+ln_n_sellers |   .2112587   .1557746     1.36   0.175    -.0943226    .5168401
+  ln_mkt_qty |   .1337237   .0715593     1.87   0.062    -.0066534    .2741007
+ln_p_mkt_loo |   .0829702   .0874047     0.95   0.343    -.0884907    .2544311
+ln_p_mkt_s~o |  -.0754033   .0737713    -1.02   0.307    -.2201197    .0693131
+ size_x_nbuy |   .0065049   .0067075     0.97   0.332    -.0066532     .019663
+size_x_nsell |  -.0109305   .0075483    -1.45   0.148    -.0257379    .0038769
+ size_x_pmkt |  -.0051399   .0044165    -1.16   0.245    -.0138037    .0035239
+size_x_psell |   .0063284    .003857     1.64   0.101    -.0012378    .0138946
+size_x_mkt~y |   -.011138   .0037277    -2.99   0.003    -.0184505   -.0038254
+       _cons |   4.743682   .2902152    16.35   0.000      4.17437    5.312994
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+      firm_n |      1377        1377           0    *|
+      prod_n |      1845           1        1844     |
+      city_n |       238           1         237     |
+-----------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+. estadd local firm_fe "Yes", replace
+
+added macro:
+            e(firm_fe) : "Yes"
+
+. estadd local prod_fe "Yes", replace
+
+added macro:
+            e(prod_fe) : "Yes"
+
+. estadd local city_fe "Yes", replace
+
+added macro:
+            e(city_fe) : "Yes"
+
+. est store t6_m6
+
+. 
+. esttab t6_m1 t6_m2 t6_m3 t6_m4 t6_m5 t6_m6 ///
+>     using "$REGOUT/T6_interactions.txt", replace ///
+>     $esttab_opts ///
+>     order(ln_firm_output ln_sell_qty ///
+>           ln_n_buyers ln_n_sellers ln_mkt_qty ln_p_mkt_loo ln_p_mkt_sell_loo 
+> ///
+>           size_x_nbuy size_x_nsell size_x_pmkt size_x_psell size_x_mktqty) //
+> /
+>     stats(firm_fe prod_fe city_fe N r2_a, ///
+>           labels("Firm FE" "Product FE" "City FE" "Observations" "Adj. R-sq")
+>  ///
+>           fmt(%s %s %s %12.0fc 3)) ///
+>     title("DV: ln(purchase price). Firm-size x market condition interactions.
+> ") ///
+>     mtitles("Baseline" "+Size*Nbuy" "+Size*Nsell" "+Size*Pmkt" "+Size*Psell" 
+> "All")
+(file regression\leave_one_out/T6_interactions.txt not found)
+(output written to regression\leave_one_out/T6_interactions.txt)
+
+. display "T6 saved."
+T6 saved.
+
+. est clear
+
+. 
+. display ""
+
+
+. display "====================================================="
+=====================================================
+
+. display "All six tables saved to: $REGOUT"
+All six tables saved to: regression\leave_one_out
+
+. display "  T1_firm_only.txt         (仅企业层面)"
+  T1_firm_only.txt         (仅企业层面)
+
+. display "  T2_firm_similarity.txt   (企业层面 + 产品相似性)"
+  T2_firm_similarity.txt   (企业层面 + 产品相似性)
+
+. display "  T3_market_only.txt       (仅市场层面)"
+  T3_market_only.txt       (仅市场层面)
+
+. display "  T4_firm_market.txt       (企业层面 + 市场层面)"
+  T4_firm_market.txt       (企业层面 + 市场层面)
+
+. display "  T5_full_spec.txt         (全规格)"
+  T5_full_spec.txt         (全规格)
+
+. display "  T6_interactions.txt      (企业规模 × 市场条件交互)"
+  T6_interactions.txt      (企业规模 × 市场条件交互)
+
+. display "  样本：均已去掉中介企业（is_intermediary == 1）"
+  样本：均已去掉中介企业（is_intermediary == 1）
+
+. display "====================================================="
+=====================================================
+
+. 
+. log close
+      name:  <unnamed>
+       log:  G:\Kuangyu_Temp\Outsource\productivity\productivity\regression\lea
+> ve_one_out\02_price_reg.log
+  log type:  text
+ closed on:  31 May 2026, 10:18:01
+-------------------------------------------------------------------------------
