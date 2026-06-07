@@ -1,0 +1,108 @@
+/* ============================================================
+   01_extract_aggregates —— 5 张聚合查询
+   ★ 每张查询单独复制到 Navicat 新建 query 运行，
+     跑完后把结果手动 export 成对应 CSV。
+   相比上一版：全部带上 [year] 和 [单位] 维度。
+   样本表：dbo.tmp_sample_cid2（由 00_build_sample 生成）
+   数据源：
+     2017     GX17.dbo.GX1701 / GX1702 / GX1703
+     2018 H1  GX.dbo.gaoxiao1801
+     2018 H2  GX02.dbo.GX02
+   注意：数量用 TRY_CAST 转 float，红冲负值由 SUM 自动对冲为净额。
+   ============================================================ */
+
+
+/* ============================================================
+   表1：企业购买表  →  导出 firm_buy.csv
+   颗粒度：购方企业ID × 项目代码 × 单位 × year
+   ============================================================ */
+SELECT 购方企业ID, 项目代码, 单位, [year],
+       SUM(开票金额) AS 金额合计,
+       SUM(TRY_CAST(数量 AS float)) AS 数量合计
+FROM (
+    SELECT 购方企业ID, 项目代码, 单位, 开票金额, 数量, 2017 AS [year] FROM GX17.dbo.GX1701
+    UNION ALL SELECT 购方企业ID, 项目代码, 单位, 开票金额, 数量, 2017 FROM GX17.dbo.GX1702
+    UNION ALL SELECT 购方企业ID, 项目代码, 单位, 开票金额, 数量, 2017 FROM GX17.dbo.GX1703
+    UNION ALL SELECT 购方企业ID, 项目代码, 单位, 开票金额, 数量, 2018 FROM GX.dbo.gaoxiao1801
+    UNION ALL SELECT 购方企业ID, 项目代码, 单位, 开票金额, 数量, 2018 FROM GX02.dbo.GX02
+) a
+WHERE EXISTS (SELECT 1 FROM dbo.tmp_sample_cid2 s WHERE s.cid = a.购方企业ID)
+GROUP BY 购方企业ID, 项目代码, 单位, [year];
+
+
+/* ============================================================
+   表2：企业销售表  →  导出 firm_sell.csv
+   颗粒度：销方企业ID × 项目代码 × 单位 × year
+   ============================================================ */
+SELECT 销方企业ID, 项目代码, 单位, [year],
+       SUM(开票金额) AS 金额合计,
+       SUM(TRY_CAST(数量 AS float)) AS 数量合计
+FROM (
+    SELECT 销方企业ID, 项目代码, 单位, 开票金额, 数量, 2017 AS [year] FROM GX17.dbo.GX1701
+    UNION ALL SELECT 销方企业ID, 项目代码, 单位, 开票金额, 数量, 2017 FROM GX17.dbo.GX1702
+    UNION ALL SELECT 销方企业ID, 项目代码, 单位, 开票金额, 数量, 2017 FROM GX17.dbo.GX1703
+    UNION ALL SELECT 销方企业ID, 项目代码, 单位, 开票金额, 数量, 2018 FROM GX.dbo.gaoxiao1801
+    UNION ALL SELECT 销方企业ID, 项目代码, 单位, 开票金额, 数量, 2018 FROM GX02.dbo.GX02
+) a
+WHERE EXISTS (SELECT 1 FROM dbo.tmp_sample_cid2 s WHERE s.cid = a.销方企业ID)
+GROUP BY 销方企业ID, 项目代码, 单位, [year];
+
+
+/* ============================================================
+   表3：地区购买表（全量，不限样本）  →  导出 city_buy.csv
+   颗粒度：购方地区 × 项目代码 × 单位 × year
+   注：买方企业数按 (地区,产品,单位,年) 计数（per-unit），
+       跨单位如何合并留到 harmonize 阶段决定。
+   ============================================================ */
+SELECT 购方地区, 项目代码, 单位, [year],
+       COUNT(DISTINCT 购方企业ID) AS 买方企业数,
+       SUM(开票金额) AS 金额合计,
+       SUM(TRY_CAST(数量 AS float)) AS 数量合计
+FROM (
+    SELECT 购方地区, 购方企业ID, 项目代码, 单位, 开票金额, 数量, 2017 AS [year] FROM GX17.dbo.GX1701
+    UNION ALL SELECT 购方地区, 购方企业ID, 项目代码, 单位, 开票金额, 数量, 2017 FROM GX17.dbo.GX1702
+    UNION ALL SELECT 购方地区, 购方企业ID, 项目代码, 单位, 开票金额, 数量, 2017 FROM GX17.dbo.GX1703
+    UNION ALL SELECT 购方地区, 购方企业ID, 项目代码, 单位, 开票金额, 数量, 2018 FROM GX.dbo.gaoxiao1801
+    UNION ALL SELECT 购方地区, 购方企业ID, 项目代码, 单位, 开票金额, 数量, 2018 FROM GX02.dbo.GX02
+) a
+WHERE 购方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+GROUP BY 购方地区, 项目代码, 单位, [year];
+
+
+/* ============================================================
+   表4：地区销售表（全量，不限样本）  →  导出 city_sell.csv
+   颗粒度：销方地区 × 项目代码 × 单位 × year
+   口径A（当前）：按销方地区分组，衡量本地供给集聚。
+   ============================================================ */
+SELECT 销方地区, 项目代码, 单位, [year],
+       COUNT(DISTINCT 销方企业ID) AS 卖方企业数,
+       SUM(开票金额) AS 金额合计,
+       SUM(TRY_CAST(数量 AS float)) AS 数量合计
+FROM (
+    SELECT 销方地区, 销方企业ID, 项目代码, 单位, 开票金额, 数量, 2017 AS [year] FROM GX17.dbo.GX1701
+    UNION ALL SELECT 销方地区, 销方企业ID, 项目代码, 单位, 开票金额, 数量, 2017 FROM GX17.dbo.GX1702
+    UNION ALL SELECT 销方地区, 销方企业ID, 项目代码, 单位, 开票金额, 数量, 2017 FROM GX17.dbo.GX1703
+    UNION ALL SELECT 销方地区, 销方企业ID, 项目代码, 单位, 开票金额, 数量, 2018 FROM GX.dbo.gaoxiao1801
+    UNION ALL SELECT 销方地区, 销方企业ID, 项目代码, 单位, 开票金额, 数量, 2018 FROM GX02.dbo.GX02
+) a
+WHERE 销方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+GROUP BY 销方地区, 项目代码, 单位, [year];
+
+
+/* ============================================================
+   表5：企业-地区对照表（买方侧）  →  导出 firm_city.csv
+   颗粒度：企业ID × year × 地区，带出现次数 cnt
+   Python 端按 (企业ID, year) 取 cnt 最大的地区作为该企业当年所在地。
+   （DV 的 city 用购方地区，故此处只取买方侧地区）
+   ============================================================ */
+SELECT 企业ID, [year], 地区, COUNT(*) AS cnt
+FROM (
+    SELECT 购方企业ID AS 企业ID, 购方地区 AS 地区, 2017 AS [year] FROM GX17.dbo.GX1701
+    UNION ALL SELECT 购方企业ID, 购方地区, 2017 FROM GX17.dbo.GX1702
+    UNION ALL SELECT 购方企业ID, 购方地区, 2017 FROM GX17.dbo.GX1703
+    UNION ALL SELECT 购方企业ID, 购方地区, 2018 FROM GX.dbo.gaoxiao1801
+    UNION ALL SELECT 购方企业ID, 购方地区, 2018 FROM GX02.dbo.GX02
+) a
+WHERE 地区 IS NOT NULL
+  AND EXISTS (SELECT 1 FROM dbo.tmp_sample_cid2 s WHERE s.cid = a.企业ID)
+GROUP BY 企业ID, [year], 地区;

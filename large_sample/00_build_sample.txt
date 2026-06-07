@@ -1,0 +1,88 @@
+/* ============================================================
+   00_build_sample —— 复制本段到 Navicat 新建 query 运行
+   构建 large_sample 样本企业名单 dbo.tmp_sample_cid2
+   口径：2017 与 2018 两年，每年都"既是买方又是卖方"的企业，
+        从该企业池随机抽 50,000 家（确定性随机，可复现）。
+   ★ 只需运行一次；生成后不要重跑，保证后续聚合查询口径一致。
+   ★ 本脚本不产生需导出的数据，只在服务器上建表 tmp_sample_cid2。
+   数据源：
+     2017     GX17.dbo.GX1701 / GX1702 / GX1703
+     2018 H1  GX.dbo.gaoxiao1801
+     2018 H2  GX02.dbo.GX02
+   ============================================================ */
+
+------------------------------------------------------------
+-- 1. 2017 年"既买又卖"的企业（买方 ∩ 卖方）
+------------------------------------------------------------
+IF OBJECT_ID('dbo.s_both17') IS NOT NULL DROP TABLE dbo.s_both17;
+
+SELECT cid
+INTO dbo.s_both17
+FROM (
+    SELECT DISTINCT 购方企业ID AS cid FROM GX17.dbo.GX1701 WHERE 购方企业ID IS NOT NULL
+    UNION SELECT DISTINCT 购方企业ID FROM GX17.dbo.GX1702 WHERE 购方企业ID IS NOT NULL
+    UNION SELECT DISTINCT 购方企业ID FROM GX17.dbo.GX1703 WHERE 购方企业ID IS NOT NULL
+) buy17
+INTERSECT
+SELECT cid
+FROM (
+    SELECT DISTINCT 销方企业ID AS cid FROM GX17.dbo.GX1701 WHERE 销方企业ID IS NOT NULL
+    UNION SELECT DISTINCT 销方企业ID FROM GX17.dbo.GX1702 WHERE 销方企业ID IS NOT NULL
+    UNION SELECT DISTINCT 销方企业ID FROM GX17.dbo.GX1703 WHERE 销方企业ID IS NOT NULL
+) sell17;
+
+------------------------------------------------------------
+-- 2. 2018 年"既买又卖"的企业（上半年 + 下半年合并）
+------------------------------------------------------------
+IF OBJECT_ID('dbo.s_both18') IS NOT NULL DROP TABLE dbo.s_both18;
+
+SELECT cid
+INTO dbo.s_both18
+FROM (
+    SELECT DISTINCT 购方企业ID AS cid FROM GX.dbo.gaoxiao1801 WHERE 购方企业ID IS NOT NULL
+    UNION SELECT DISTINCT 购方企业ID FROM GX02.dbo.GX02 WHERE 购方企业ID IS NOT NULL
+) buy18
+INTERSECT
+SELECT cid
+FROM (
+    SELECT DISTINCT 销方企业ID AS cid FROM GX.dbo.gaoxiao1801 WHERE 销方企业ID IS NOT NULL
+    UNION SELECT DISTINCT 销方企业ID FROM GX02.dbo.GX02 WHERE 销方企业ID IS NOT NULL
+) sell18;
+
+------------------------------------------------------------
+-- 3. 两年都"既买又卖"的企业池
+------------------------------------------------------------
+IF OBJECT_ID('dbo.s_pool') IS NOT NULL DROP TABLE dbo.s_pool;
+
+SELECT cid
+INTO dbo.s_pool
+FROM dbo.s_both17
+INTERSECT
+SELECT cid FROM dbo.s_both18;
+
+-- 先看企业池大小：若明显小于 50,000，停下来商量放宽口径
+SELECT COUNT(*) AS pool_size FROM dbo.s_pool;
+
+------------------------------------------------------------
+-- 4. 从企业池随机抽 50,000 家（确定性：按 MD5(cid) 排序）
+--    若企业池不足 5 万，TOP 会返回全部
+------------------------------------------------------------
+IF OBJECT_ID('dbo.tmp_sample_cid2') IS NOT NULL DROP TABLE dbo.tmp_sample_cid2;
+
+SELECT TOP (50000) cid
+INTO dbo.tmp_sample_cid2
+FROM dbo.s_pool
+ORDER BY HASHBYTES('MD5', CONVERT(varchar(50), cid));
+
+-- 加聚集索引，加速后续 EXISTS 关联
+CREATE CLUSTERED INDEX ix_tmp_sample_cid2 ON dbo.tmp_sample_cid2(cid);
+
+-- 核对抽样结果
+SELECT COUNT(*) AS sample_size FROM dbo.tmp_sample_cid2;
+
+------------------------------------------------------------
+-- 5.（可选）清理中间表
+------------------------------------------------------------
+-- DROP TABLE dbo.s_both17;
+-- DROP TABLE dbo.s_both18;
+-- DROP TABLE dbo.s_pool;

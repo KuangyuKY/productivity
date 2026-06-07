@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.22)  30 MAY 2026 16:08
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.3.22)  31 MAY 2026 15:03
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -425,24 +425,24 @@ File: l3backend-pdftex.def 2024-05-08 L3 backend support: PDF output (pdfTeX)
 ) (./price_regression_report_en.aux)
 \openout1 = `price_regression_report_en.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -510,137 +510,134 @@ pstopdf-sys.cfg
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-Package hyperref Info: Link coloring OFF on input line 31.
+Package hyperref Info: Link coloring OFF on input line 29.
  (./price_regression_report_en.out)
 (./price_regression_report_en.out)
 \@outlinefile=\write3
 \openout3 = `price_regression_report_en.out'.
 
-LaTeX Font Info:    Trying to load font information for U+msa on input line 34.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 32.
 
 
 (c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/tex/latex/amsfonts/umsa
 .fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 34.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 32.
 
 
 (c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/tex/latex/amsfonts/umsb
 .fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-) (./price_regression_report_en.toc)
-\tf@toc=\write4
-\openout4 = `price_regression_report_en.toc'.
+)
+
+LaTeX Warning: No \author given.
 
 
 
 [1
 
 {c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-var/fonts/map/pdftex/updmap/
-pdftex.map}]
+pdftex.map}{c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/fonts/enc/dv
+ips/cm-super/cm-super-ts1.enc}]
+Overfull \hbox (10.68001pt too wide) in paragraph at lines 145--148
+[]$[] \OML/cmm/m/it/12 Q$ \OT1/cmr/m/n/12 is sig-nif-i-cantly neg-a-tive in bot
+h OLS and the firm-FE col-umn ($\OMS/cmsy/m/n/12 ^^@\OT1/cmr/m/n/12 0\OML/cmm/m
+/it/12 :\OT1/cmr/m/n/12 177[]$, $\OMS/cmsy/m/n/12 ^^@\OT1/cmr/m/n/12 0\OML/cmm/
+m/it/12 :\OT1/cmr/m/n/12 169[]$):
+ []
 
-[2
 
-{c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/fonts/enc/dvips/cm-supe
-r/cm-super-ts1.enc}]
+
+[2]
 
 [3]
 
 [4]
 
 [5]
+Overfull \hbox (8.04529pt too wide) in paragraph at lines 371--374
+[]\OT1/cmr/m/n/12 Market vol-ume $[] \OML/cmm/m/it/12 q[]$ \OT1/cmr/m/n/12 is p
+os-i-tive in OLS ($0\OML/cmm/m/it/12 :\OT1/cmr/m/n/12 077[]$) but neg-a-tive un
+-der full FE ($\OMS/cmsy/m/n/12 ^^@\OT1/cmr/m/n/12 0\OML/cmm/m/it/12 :\OT1/cmr/
+m/n/12 078[]$);
+ []
+
+
 
 [6]
+Overfull \hbox (3.94205pt too wide) in paragraph at lines 438--441
+[]\OT1/cmr/m/n/12 Buyer count ($0\OML/cmm/m/it/12 :\OT1/cmr/m/n/12 102[]$), mar
+-ket vol-ume ($\OMS/cmsy/m/n/12 ^^@\OT1/cmr/m/n/12 0\OML/cmm/m/it/12 :\OT1/cmr/
+m/n/12 082[]$), and pro-duc-tion quan-tity ($\OMS/cmsy/m/n/12 ^^@\OT1/cmr/m/n/1
+2 0\OML/cmm/m/it/12 :\OT1/cmr/m/n/12 068[]$)
+ []
+
+
 
 [7]
-
-[8
-
-]
-
-[9
-
-]
-
-[10
-
-]
-Overfull \vbox (52.00705pt too high) has occurred while \output is active []
+Overfull \hbox (84.17291pt too wide) in paragraph at lines 549--587
+ [] 
+ []
 
 
+
+[8]
+
+[9]
+
+[10]
 
 [11]
 
-[12
-
-]
-
-[13
-
-]
-Overfull \vbox (43.4166pt too high) has occurred while \output is active []
-
-
-
-[14]
-
-[15
-
-]
-Overfull \hbox (9.03827pt too wide) detected at line 710
+[12]
+Overfull \hbox (9.03827pt too wide) detected at line 794
 []  [][]\OMS/cmsy/m/n/12 !  []  [][]!  []
  []
 
 
 
-[16]
+[13]
 
-[17] (./price_regression_report_en.aux)
+[14] (./price_regression_report_en.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
 Package rerunfilecheck Info: File `price_regression_report_en.out' has not chan
 ged.
-(rerunfilecheck)             Checksum: 839861E44991234D3E14E8BA823A330E;2030.
+(rerunfilecheck)             Checksum: C401B86EF6792A6A316C4F46BB12C4E5;2243.
  ) 
 Here is how much of TeX's memory you used:
- 12282 strings out of 473190
- 197170 string characters out of 5705391
- 600495 words of memory out of 5000000
- 35301 multiletter control sequences out of 15000+600000
- 575332 words of font info for 98 fonts, out of 8000000 for 9000
+ 12269 strings out of 473190
+ 196858 string characters out of 5705391
+ 606428 words of memory out of 5000000
+ 35289 multiletter control sequences out of 15000+600000
+ 574032 words of font info for 93 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 89i,15n,95p,387b,593s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 89i,15n,95p,387b,591s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/fonts/type1/public/am
 sfonts/cm/cmbx10.pfb><c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/fo
 nts/type1/public/amsfonts/cm/cmbx12.pfb><c:/Users/HKUBS/Downloads/Latex/texlive
 /2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/Users/HKUBS/Down
-loads/Latex/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><
+loads/Latex/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb><
 c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/fonts/type1/public/amsfo
-nts/cm/cmmi12.pfb><c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/fonts
-/type1/public/amsfonts/cm/cmmi7.pfb><c:/Users/HKUBS/Downloads/Latex/texlive/202
-5/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><c:/Users/HKUBS/Downloads
-/Latex/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb><c:/U
-sers/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/
-cm/cmr10.pfb><c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/fonts/type
-1/public/amsfonts/cm/cmr12.pfb><c:/Users/HKUBS/Downloads/Latex/texlive/2025/tex
-mf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb><c:/Users/HKUBS/Downloads/Latex
-/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb><c:/Users/HKUB
-S/Downloads/Latex/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10
-.pfb><c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/fonts/type1/public
-/amsfonts/cm/cmsy7.pfb><c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/
-fonts/type1/public/amsfonts/cm/cmsy8.pfb><c:/Users/HKUBS/Downloads/Latex/texliv
-e/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb><c:/Users/HKUBS/Dow
-nloads/Latex/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb>
-<c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/fonts/type1/public/amsf
-onts/cm/cmtt12.pfb><c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/font
-s/type1/public/cm-super/sfrm1200.pfb>
-Output written on price_regression_report_en.pdf (17 pages, 242590 bytes).
+nts/cm/cmmi8.pfb><c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/fonts/
+type1/public/amsfonts/cm/cmmib10.pfb><c:/Users/HKUBS/Downloads/Latex/texlive/20
+25/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/Users/HKUBS/Download
+s/Latex/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/Us
+ers/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/c
+m/cmr8.pfb><c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/fonts/type1/
+public/amsfonts/cm/cmsy10.pfb><c:/Users/HKUBS/Downloads/Latex/texlive/2025/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb><c:/Users/HKUBS/Downloads/Latex
+/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb><c:/Users/HK
+UBS/Downloads/Latex/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt
+12.pfb><c:/Users/HKUBS/Downloads/Latex/texlive/2025/texmf-dist/fonts/type1/publ
+ic/cm-super/sfrm1200.pfb>
+Output written on price_regression_report_en.pdf (14 pages, 202661 bytes).
 PDF statistics:
- 284 PDF objects out of 1000 (max. 8388607)
- 224 compressed objects within 3 object streams
- 70 named destinations out of 1000 (max. 500000)
- 73 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 250 PDF objects out of 1000 (max. 8388607)
+ 203 compressed objects within 3 object streams
+ 76 named destinations out of 1000 (max. 500000)
+ 81 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -62,15 +62,14 @@
 **本地**（代码写作 + git 同步）：
 ```
 C:\Users\HKUBS\Documents\aproject\Outsourcing\code\productivity\
-├── HANDOFF.md                          ← 本文件
-├── sql_reference.md                    ← 所有 SQL 查询汇总（含两种卖方口径说明）
-├── data_des.md                         ← 虚拟机数据位置说明（调试用）
-├── original_data.md                    ← 早期原始发票字段说明（已部分过时）
-├── data_outputs_and_reg_panel_overview.md  ← 三个 .dta 输出 + reg_panel 字段说明
-├── sample_firm_count_explanation.md    ← 企业数变化链条说明（3410→3376→2108→1875）
-├── baidu_huisuan_2017_data_description.md  ← Capital 桥接数据源说明
+├── HANDOFF.md                          ← 本文件（总交接 / 索引）
+├── data_sources.md                     ← 数据来源与 SQL 抽取（合并：原始字段 + VM 位置 + 5 张 SQL + Capital 桥接源）
+├── data_outputs.md                     ← 数据输出与回归面板（合并：3 个 .dta + reg_panel 字段 + 企业数链条 3410→3376→2108→1875）
 ├── 01_clean.ipynb                      ← Python 清洗脚本（★ 主要工作文件）
 └── 02_price_reg.do                     ← Stata 回归脚本（★ 主要工作文件）
+
+> 文档已于合并：原 sql_reference.md / data_des.md / original_data.md / baidu_huisuan_2017_data_description.md → `data_sources.md`；
+> 原 data_outputs_and_reg_panel_overview.md / sample_firm_count_explanation.md → `data_outputs.md`。
 ```
 
 **虚拟机**（实际运行数据 + 跑代码）：
@@ -171,7 +170,7 @@ H:\BaiduNetdiskDownload\汇算file\final_joinby_matched_data_2017_With_cid.dta
 | `金额合计` | 该地区该产品全量销售金额 |
 | `数量合计` | 该地区该产品全量销售数量 |
 
-用途：构造 `n_sellers`、`ln_n_sellers`。注意当前 `city` 用销方地区，与 invoice_panel 的买方地区存在口径差异，详见 `sql_reference.md` § 表4。
+用途：构造 `n_sellers`、`ln_n_sellers`。注意当前 `city` 用销方地区，与 invoice_panel 的买方地区存在口径差异，详见 `data_sources.md` § 3.2 表4。
 
 #### `firm_city.csv` 列结构
 
@@ -193,13 +192,13 @@ H:\BaiduNetdiskDownload\汇算file\final_joinby_matched_data_2017_With_cid.dta
 
 **关于 similarity 来源**：`input_similarity`、`output_similarity` 存储在 `full_data`（firm × product 层面，= sim(main_product, product_j)），外包产品必然出现在销售侧，因而在 `full_data` 中有对应记录，可直接 merge on `(firm_id, product_id)`。无需使用 `full_product_similarity.dta`（全产品对宇宙文件，15% 覆盖率低的原因是旧代码包含了原材料采购，而非方法问题）。
 
-**关于 Capital 来源（已更新）**：Capital 现由百度网盘汇算文件 `final_joinby_matched_data_2017_With_cid.dta` 提供——该文件本身已含 `total_assets`（double，标签 Total Assets）和 cid↔eid 桥接，**一步完成** firm_id (cid) → total_assets → Capital，写入 `firm_chars.dta`。不再需要 `cid_entid_unique.dta` + `H:\汇算数据\2017.dta` 的两步桥接路径。覆盖率约 48%，详见 `baidu_huisuan_2017_data_description.md`。
+**关于 Capital 来源（已更新）**：Capital 现由百度网盘汇算文件 `final_joinby_matched_data_2017_With_cid.dta` 提供——该文件本身已含 `total_assets`（double，标签 Total Assets）和 cid↔eid 桥接，**一步完成** firm_id (cid) → total_assets → Capital，写入 `firm_chars.dta`。不再需要 `cid_entid_unique.dta` + `H:\汇算数据\2017.dta` 的两步桥接路径。覆盖率（回归面板内）约 62.3%，详见 `data_sources.md` § 5 与 `data_outputs.md` § 6.2。
 
 ---
 
 ## 5. SQL 数据抽取逻辑
 
-完整 SQL 代码见 `sql_reference.md`。以下是关键要点：
+完整 SQL 代码见 `data_sources.md` § 3.2。以下是关键要点：
 
 - 三张年表（GX1701/02/03）在每个查询内部 `UNION ALL` 合并，直接出全年结果
 - 红冲发票（负值）**未被过滤**，直接与正值合并求和；净值可能 ≤ 0，由 Python 端清洗
@@ -207,7 +206,7 @@ H:\BaiduNetdiskDownload\汇算file\final_joinby_matched_data_2017_With_cid.dta
 - `项目代码` 未做清洗，Python 端处理
 - 样本企业为 `dbo.tmp_sample_cid`（约 3410 家），city 级聚合（city_buy/city_sell）为**全量**口径
 
-**卖方口径注意**：当前 `city_sell.csv` 按**销方地区**分组，衡量本地供给集聚。若需衡量买方面对的供应商竞争，应按**购方地区**分组重新抓取，详见 `sql_reference.md` § 表4。
+**卖方口径注意**：当前 `city_sell.csv` 按**销方地区**分组，衡量本地供给集聚。若需衡量买方面对的供应商竞争，应按**购方地区**分组重新抓取，详见 `data_sources.md` § 3.2 表4（口径 B）。
 
 ---
 
@@ -346,7 +345,7 @@ $$\log c^B_{fjt} = \delta^B_{jct} + x^{B\prime}_{ft}\,\gamma_B + z^{B\prime}_{jc
 | **Capital 桥接路径** | **百度汇算文件 total_assets 一步桥接** | **该文件自带 cid↔eid + total_assets，无需 cid_entid_unique + H:\汇算数据\2017.dta 两步** |
 | **LOO 结果存放** | **`regression\leave_one_out\`** | **与早期 `ln_p_mkt` 版本旧结果分开，便于对比** |
 
-### 样本企业数变化链条（详见 `sample_firm_count_explanation.md`）
+### 样本企业数变化链条（详见 `data_outputs.md` § 7）
 
 | 阶段 | 行数 | 企业数 | 含义 |
 |---|---:|---:|---|
@@ -371,7 +370,7 @@ $$\log c^B_{fjt} = \delta^B_{jct} + x^{B\prime}_{ft}\,\gamma_B + z^{B\prime}_{jc
 - [x] LOO 版本结果与日志统一落盘到 `regression\leave_one_out\`（6 处 REGOUT + log 全部切换）
 - [x] Capital 改为百度汇算文件 total_assets 一步桥接
 - [x] 确认外包定义（fb ∩ fs）、主产品定义（净生产额）、similarity 来源（full_data）
-- [x] 厘清企业数变化链条（3,410→3,376→2,108→1,875）并写入 sample_firm_count_explanation.md
+- [x] 厘清企业数变化链条（3,410→3,376→2,108→1,875）并写入 data_outputs.md § 7
 
 ### 待完成（按优先级）
 
@@ -380,7 +379,7 @@ $$\log c^B_{fjt} = \delta^B_{jct} + x^{B\prime}_{ft}\,\gamma_B + z^{B\prime}_{jc
    - T3/T4/T5/T6 含市场价规格的有效 N 下降幅度
 2. **结果解读**：市场层面（LOO 市场价、买/卖方数、市场量）系数方向；T2/T5 相似度 S_mj/C_mj 经济含义；T6 规模×市场条件交互。
 3. **稳健性对比**：如需，可保留 `regression\`（原 `ln_p_mkt`）与 `leave_one_out\`（LOO）两套结果对照，验证机械相关的影响。
-4. **卖方口径决定**：是否重新抓取按购方地区分组的 city_sell（见 sql_reference.md § 表4）。
+4. **卖方口径决定**：是否重新抓取按购方地区分组的 city_sell（见 data_sources.md § 3.2 表4）。
 5. **（可选）reg_panel.dta 落盘位置**：当前写在 productivity 根目录，会被 LOO 版覆盖；若需保留原版需另存。
 
 ---
