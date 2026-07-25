@@ -106,3 +106,6 @@ FROM (
 WHERE 地区 IS NOT NULL
   AND EXISTS (SELECT 1 FROM dbo.tmp_sample_cid2 s WHERE s.cid = a.企业ID)
 GROUP BY 企业ID, [year], 地区;
+
+
+[42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]无法为数据库 'tempdb' 中的对象 'dbo.SORT temporary run storage:  140744344272896' 分配空间，因为 'PRIMARY' 文件组已满。请删除不需要的文件、删除文件组中的对象、将其他文件添加到文件组或为文件组中的现有文件启用自动增长，以便增加可用磁盘空间。 (1105)
