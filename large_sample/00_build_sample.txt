@@ -60,12 +60,15 @@ FROM dbo.s_both17
 INTERSECT
 SELECT cid FROM dbo.s_both18;
 
--- 先看企业池大小：若明显小于 50,000，停下来商量放宽口径
-SELECT COUNT(*) AS pool_size FROM dbo.s_pool;
+
 
 ------------------------------------------------------------
 -- 4. 从企业池随机抽 100,000 家（确定性：按 MD5(cid) 排序）
+<<<<<<< HEAD
 --    若企业池不足 10 万，TOP 会返回全部
+=======
+--    若企业池不足 10万，TOP 会返回全部
+>>>>>>> c5a2bb1a339ab211a5a6b9a35958e3877c1cfe14
 ------------------------------------------------------------
 IF OBJECT_ID('dbo.tmp_sample_cid2') IS NOT NULL DROP TABLE dbo.tmp_sample_cid2;
 

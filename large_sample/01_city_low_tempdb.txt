@@ -1,0 +1,99 @@
+/* ============================================================
+   01_city_low_tempdb —— 表3/表4 的低 tempdb 版本
+   tempdb 满的原因：全量 city 查询一次性 UNION 五张大表再 COUNT(DISTINCT)+GROUP BY，
+   中间排序峰值太大。改为：逐源表分别聚合、依次追加到永久 staging 表
+   （每次排序只 1/5、且做完即释放 tempdb），最后从 staging 出结果。
+   ★ 每个 IF/SELECT/INSERT 块可以整段一次跑；最后的导出 SELECT 单独跑并导 CSV。
+   ============================================================ */
+
+
+/* ========== 表3：city_buy（购方地区侧）→ 导出 city_buy.csv ========== */
+
+IF OBJECT_ID('dbo.cb_stage') IS NOT NULL DROP TABLE dbo.cb_stage;
+
+-- 2017-1（建表 + 首次插入）
+SELECT 购方地区, 购方企业ID, 项目代码, 单位, CAST(2017 AS int) AS [year],
+       SUM(开票金额) AS 金额, SUM(TRY_CAST(数量 AS float)) AS 数量
+INTO dbo.cb_stage
+FROM GX17.dbo.GX1701
+WHERE 购方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+GROUP BY 购方地区, 购方企业ID, 项目代码, 单位;
+
+-- 2017-2
+INSERT INTO dbo.cb_stage
+SELECT 购方地区, 购方企业ID, 项目代码, 单位, 2017,
+       SUM(开票金额), SUM(TRY_CAST(数量 AS float))
+FROM GX17.dbo.GX1702 WHERE 购方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+GROUP BY 购方地区, 购方企业ID, 项目代码, 单位;
+
+-- 2017-3
+INSERT INTO dbo.cb_stage
+SELECT 购方地区, 购方企业ID, 项目代码, 单位, 2017,
+       SUM(开票金额), SUM(TRY_CAST(数量 AS float))
+FROM GX17.dbo.GX1703 WHERE 购方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+GROUP BY 购方地区, 购方企业ID, 项目代码, 单位;
+
+-- 2018 上半年
+INSERT INTO dbo.cb_stage
+SELECT 购方地区, 购方企业ID, 项目代码, 单位, 2018,
+       SUM(开票金额), SUM(TRY_CAST(数量 AS float))
+FROM GX.dbo.gaoxiao1801 WHERE 购方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+GROUP BY 购方地区, 购方企业ID, 项目代码, 单位;
+
+-- 2018 下半年
+INSERT INTO dbo.cb_stage
+SELECT 购方地区, 购方企业ID, 项目代码, 单位, 2018,
+       SUM(开票金额), SUM(TRY_CAST(数量 AS float))
+FROM GX02.dbo.GX02 WHERE 购方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+GROUP BY 购方地区, 购方企业ID, 项目代码, 单位;
+
+-- 最终结果（从小表出，tempdb 压力小）→ 导出 city_buy.csv
+SELECT 购方地区, 项目代码, 单位, [year],
+       COUNT(DISTINCT 购方企业ID) AS 买方企业数,
+       SUM(金额) AS 金额合计, SUM(数量) AS 数量合计
+FROM dbo.cb_stage
+GROUP BY 购方地区, 项目代码, 单位, [year];
+
+
+/* ========== 表4：city_sell（销方地区侧）→ 导出 city_sell.csv ========== */
+
+IF OBJECT_ID('dbo.cs_stage') IS NOT NULL DROP TABLE dbo.cs_stage;
+
+SELECT 销方地区, 销方企业ID, 项目代码, 单位, CAST(2017 AS int) AS [year],
+       SUM(开票金额) AS 金额, SUM(TRY_CAST(数量 AS float)) AS 数量
+INTO dbo.cs_stage
+FROM GX17.dbo.GX1701
+WHERE 销方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+GROUP BY 销方地区, 销方企业ID, 项目代码, 单位;
+
+INSERT INTO dbo.cs_stage
+SELECT 销方地区, 销方企业ID, 项目代码, 单位, 2017, SUM(开票金额), SUM(TRY_CAST(数量 AS float))
+FROM GX17.dbo.GX1702 WHERE 销方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+GROUP BY 销方地区, 销方企业ID, 项目代码, 单位;
+
+INSERT INTO dbo.cs_stage
+SELECT 销方地区, 销方企业ID, 项目代码, 单位, 2017, SUM(开票金额), SUM(TRY_CAST(数量 AS float))
+FROM GX17.dbo.GX1703 WHERE 销方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+GROUP BY 销方地区, 销方企业ID, 项目代码, 单位;
+
+INSERT INTO dbo.cs_stage
+SELECT 销方地区, 销方企业ID, 项目代码, 单位, 2018, SUM(开票金额), SUM(TRY_CAST(数量 AS float))
+FROM GX.dbo.gaoxiao1801 WHERE 销方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+GROUP BY 销方地区, 销方企业ID, 项目代码, 单位;
+
+INSERT INTO dbo.cs_stage
+SELECT 销方地区, 销方企业ID, 项目代码, 单位, 2018, SUM(开票金额), SUM(TRY_CAST(数量 AS float))
+FROM GX02.dbo.GX02 WHERE 销方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+GROUP BY 销方地区, 销方企业ID, 项目代码, 单位;
+
+-- 最终结果 → 导出 city_sell.csv
+SELECT 销方地区, 项目代码, 单位, [year],
+       COUNT(DISTINCT 销方企业ID) AS 卖方企业数,
+       SUM(金额) AS 金额合计, SUM(数量) AS 数量合计
+FROM dbo.cs_stage
+GROUP BY 销方地区, 项目代码, 单位, [year];
+
+
+/* 跑完并导出后，清理 staging： */
+-- DROP TABLE dbo.cb_stage;
+-- DROP TABLE dbo.cs_stage;
