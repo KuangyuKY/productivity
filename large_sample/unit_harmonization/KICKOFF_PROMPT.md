@@ -15,7 +15,10 @@
 3. 所有产出（画像报告、unit_map.csv、代码、影响评估）都放在 `unit_harmonization\` 这个文件夹里。
 
 注意：
-- 数据在 VM 上，文件大（firm 侧上千万行、city 侧更大），分块读。
+- 数据在虚拟机上：`G:\Kuangyu_Temp\Outsource\productivity\productivity\large_sample\`
+  （5 个 CSV：firm_buy / firm_sell / city_buy / city_sell / firm_city，UTF-8、带表头、中文列名）
+- 文件大（firm 侧上千万行、city 侧更大），分块读；ID/项目代码/地区/单位一律 `dtype=str`。
+- 产品键 = 项目代码右补零至 19 位后取前 9 位，再与 `G:\Kuangyu_Temp\Outsource\bianma.dta`（2778 个合法码）匹配。
 - firm 侧（firm_buy/sell）和 city 侧（city_buy/sell）必须用同一套单位标准化（后面 LOO 要在同一单位内相减）。
 - 不要擅自改项目已定的核心口径（min(买,卖) 外包、leave-one-out）；单位这块有决策先问我。
 - 先别写大量代码，画像 + 决策简报优先。
