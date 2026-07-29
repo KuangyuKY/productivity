@@ -1,0 +1,6 @@
+level,nunit
+L0 原始（02 已 trim）,89477
+L1 ustrtrim,89477
+L2 + 去所有空白,88971
+L3 + upper,87760
+L4 + NFKC 全角转半角,87444
