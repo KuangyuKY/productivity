@@ -1,0 +1,35 @@
+/* ============================================================
+   02_check_space —— 查"到底哪块磁盘满了"
+   整段一次跑，会返回 3 个结果集。
+   ============================================================ */
+
+/* --- (1) 每个数据库的文件在哪块盘、多大、还能涨多少 --- */
+SELECT DB_NAME(f.database_id)              AS 数据库,
+       f.name                              AS 逻辑名,
+       f.physical_name                     AS 物理路径,
+       LEFT(f.physical_name, 1)            AS 盘符,
+       CAST(f.size/128.0 AS decimal(18,1)) AS 文件MB,
+       CASE f.max_size WHEN -1 THEN '不限' WHEN 0 THEN '不可增长'
+            ELSE CAST(CAST(f.max_size/128.0 AS decimal(18,1)) AS varchar(20)) END AS 上限MB,
+       CASE f.growth WHEN 0 THEN '★关闭自动增长' ELSE '开启' END AS 自动增长
+FROM sys.master_files f
+WHERE DB_NAME(f.database_id) IN ('GX17','GX','GX02','tempdb')
+ORDER BY 数据库, f.file_id;
+
+/* --- (2) 各磁盘剩余空间（关键：看 GX17 所在盘还剩多少） --- */
+SELECT DISTINCT
+       vs.volume_mount_point                                   AS 盘,
+       CAST(vs.total_bytes /1073741824.0 AS decimal(18,1))      AS 总GB,
+       CAST(vs.available_bytes/1073741824.0 AS decimal(18,1))   AS 剩余GB,
+       CAST(100.0*vs.available_bytes/vs.total_bytes AS decimal(5,1)) AS 剩余百分比
+FROM sys.master_files f
+CROSS APPLY sys.dm_os_volume_stats(f.database_id, f.file_id) vs;
+
+/* --- (3) GX17 库内部：已用 vs 未用
+       若"已用"远小于"文件MB"，说明不是真占满，而是文件涨不动/到上限 --- */
+USE GX17;
+SELECT name AS 逻辑名,
+       CAST(size/128.0 AS decimal(18,1))                                  AS 文件MB,
+       CAST(FILEPROPERTY(name,'SpaceUsed')/128.0 AS decimal(18,1))        AS 已用MB,
+       CAST((size - FILEPROPERTY(name,'SpaceUsed'))/128.0 AS decimal(18,1)) AS 空闲MB
+FROM sys.database_files;
