@@ -1,2 +1,5 @@
-[01003] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]警告: 聚合或其他 SET 操作消除了 Null 值。 (8153)
-[42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]由于文件组 'PRIMARY 中的磁盘空间不足，无法为数据库 'GX17' 分配新页。请删除文件组中的对象、将其他文件添加到文件组或者为文件组中的现有文件启用自动增长，以便增加必要的空间。 (1101)
+Affected rows: 36786103
+Affected rows: 50846888
+Affected rows: 45638636
+Affected rows: 64509661
+Affected rows: 143729398
