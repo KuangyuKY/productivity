@@ -1,18 +1,17 @@
 /* ============================================================
-   04_city_sell_sharded —— 表4 city_sell：分片版（方案2）
+   04_city_sell_sharded —— 表4 city_sell：按源表分 5 片（方案2）
    背景：共享服务器，C盘(tempdb) 与 D盘(三个库) 均已 0 GB。
-        不动任何配置、不建任何永久表，改为「按年 × 按省」拆成小片查询，
-        每片结果直接手动导出 CSV 到 G 盘，Python 端合并。
+        不动配置、不建任何永久表。把原来「5 张源表 UNION 后一次聚合」
+        改成「每张源表各聚合一次」，共 5 次查询、各导一个 CSV。
+        每次排序量约为原来的 1/5，且没有 staging 写入磁盘。
    导出目录：G:\Kuangyu_Temp\Outsource\productivity\productivity\large_sample\city_sell_parts\
-   命名规则：city_sell_<年>_<省2位>.csv    例如 city_sell_2017_11.csv
    ============================================================ */
 
 
 /* ############################################################
    第 0 步：清理我们自己建的中间表（必须先做！）
-   cs_stage 是 3.4 亿行，正是它把 D 盘写满、影响共享服务器。
-   表3 city_buy.csv 已导出成功，cb_stage 也可删。
-   DROP 很快，即使盘满也能执行。
+   cs_stage 3.4 亿行是把 D 盘写满的直接原因；表3 已导出，cb_stage 也可删。
+   DROP 很快，盘满也能执行。
    ############################################################ */
 USE GX17;
 IF OBJECT_ID('dbo.cs_stage') IS NOT NULL DROP TABLE dbo.cs_stage;
@@ -20,10 +19,9 @@ IF OBJECT_ID('dbo.cb_stage') IS NOT NULL DROP TABLE dbo.cb_stage;
 IF OBJECT_ID('dbo.s_both17') IS NOT NULL DROP TABLE dbo.s_both17;
 IF OBJECT_ID('dbo.s_both18') IS NOT NULL DROP TABLE dbo.s_both18;
 IF OBJECT_ID('dbo.s_pool')   IS NOT NULL DROP TABLE dbo.s_pool;
--- ★ 保留 dbo.tmp_sample_cid2（10 万样本名单，很小，后面还要用）
+-- ★ 保留 dbo.tmp_sample_cid2
 
-
-/* --- 第 0.1 步：确认空间已释放（GX17 空闲MB 应明显变大） --- */
+/* 确认空间已释放（空闲MB 应从 5 万明显变大） */
 USE GX17;
 SELECT name AS 逻辑名,
        CAST(size/128.0 AS decimal(18,1))                                    AS 文件MB,
@@ -32,80 +30,101 @@ SELECT name AS 逻辑名,
 FROM sys.database_files;
 
 
-/* --- 第 0.2 步：列出所有省份前2位 + 各自数据量，决定要跑哪些片、以及哪些省需要再细拆 ---
-   （这条本身也要排序，若报 tempdb 满，就跳过它，直接按下面的常见省份列表逐个跑） */
-SELECT LEFT(销方地区,2) AS 省, COUNT(*) AS 行数
-FROM GX17.dbo.GX1701
-WHERE 销方地区 IS NOT NULL
-GROUP BY LEFT(销方地区,2)
-ORDER BY 行数 DESC;
-
-
 /* ############################################################
-   第 1 步：2017 年，逐省跑 —— 每跑完一个省导出一个 CSV
-   用法：把下面 @省 那行的 '11' 改成目标省份，跑，导出
-        city_sell_2017_11.csv，再换下一个省。
+   5 片查询：每张源表跑一次，各导一个 CSV。
+   注意：同一 (地区,产品,单位,年) 可能在多片里都出现 —— 这是正常的，
+        Python 端会把各片按键合并：金额/数量相加。
+   ★ 卖方企业数不能直接相加（会重复计数），见文末说明。
    ############################################################ */
+
+/* --- 片1：GX1701（2017）→ city_sell_p1_1701.csv --- */
 SELECT 销方地区, 项目代码, 单位, 2017 AS [year],
        COUNT(DISTINCT 销方企业ID) AS 卖方企业数,
        SUM(开票金额)               AS 金额合计,
        SUM(TRY_CAST(数量 AS float)) AS 数量合计
-FROM (
-    SELECT 销方地区, 销方企业ID, 项目代码, 单位, 开票金额, 数量
-      FROM GX17.dbo.GX1701 WHERE LEFT(销方地区,2) = '11'
-    UNION ALL
-    SELECT 销方地区, 销方企业ID, 项目代码, 单位, 开票金额, 数量
-      FROM GX17.dbo.GX1702 WHERE LEFT(销方地区,2) = '11'
-    UNION ALL
-    SELECT 销方地区, 销方企业ID, 项目代码, 单位, 开票金额, 数量
-      FROM GX17.dbo.GX1703 WHERE LEFT(销方地区,2) = '11'
-) a
+FROM GX17.dbo.GX1701
 WHERE 销方地区 IS NOT NULL AND 项目代码 IS NOT NULL
 GROUP BY 销方地区, 项目代码, 单位;
--- → 导出 city_sell_2017_11.csv
 
+/* --- 片2：GX1702（2017）→ city_sell_p2_1702.csv --- */
+SELECT 销方地区, 项目代码, 单位, 2017 AS [year],
+       COUNT(DISTINCT 销方企业ID) AS 卖方企业数,
+       SUM(开票金额)               AS 金额合计,
+       SUM(TRY_CAST(数量 AS float)) AS 数量合计
+FROM GX17.dbo.GX1702
+WHERE 销方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+GROUP BY 销方地区, 项目代码, 单位;
 
-/* ############################################################
-   第 2 步：2018 年，逐省跑 —— 同样每省导出一个 CSV
-   ############################################################ */
+/* --- 片3：GX1703（2017）→ city_sell_p3_1703.csv --- */
+SELECT 销方地区, 项目代码, 单位, 2017 AS [year],
+       COUNT(DISTINCT 销方企业ID) AS 卖方企业数,
+       SUM(开票金额)               AS 金额合计,
+       SUM(TRY_CAST(数量 AS float)) AS 数量合计
+FROM GX17.dbo.GX1703
+WHERE 销方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+GROUP BY 销方地区, 项目代码, 单位;
+
+/* --- 片4：gaoxiao1801（2018上半年）→ city_sell_p4_1801.csv --- */
 SELECT 销方地区, 项目代码, 单位, 2018 AS [year],
        COUNT(DISTINCT 销方企业ID) AS 卖方企业数,
        SUM(开票金额)               AS 金额合计,
        SUM(TRY_CAST(数量 AS float)) AS 数量合计
-FROM (
-    SELECT 销方地区, 销方企业ID, 项目代码, 单位, 开票金额, 数量
-      FROM GX.dbo.gaoxiao1801 WHERE LEFT(销方地区,2) = '11'
-    UNION ALL
-    SELECT 销方地区, 销方企业ID, 项目代码, 单位, 开票金额, 数量
-      FROM GX02.dbo.GX02     WHERE LEFT(销方地区,2) = '11'
-) a
+FROM GX.dbo.gaoxiao1801
 WHERE 销方地区 IS NOT NULL AND 项目代码 IS NOT NULL
 GROUP BY 销方地区, 项目代码, 单位;
--- → 导出 city_sell_2018_11.csv
+
+/* --- 片5：GX02（2018下半年）→ city_sell_p5_GX02.csv --- */
+SELECT 销方地区, 项目代码, 单位, 2018 AS [year],
+       COUNT(DISTINCT 销方企业ID) AS 卖方企业数,
+       SUM(开票金额)               AS 金额合计,
+       SUM(TRY_CAST(数量 AS float)) AS 数量合计
+FROM GX02.dbo.GX02
+WHERE 销方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+GROUP BY 销方地区, 项目代码, 单位;
 
 
 /* ############################################################
-   省份前2位参考清单（依次替换上面的 '11'）
-   11 北京  12 天津  13 河北  14 山西  15 内蒙古
-   21 辽宁  22 吉林  23 黑龙江
-   31 上海  32 江苏  33 浙江  34 安徽  35 福建  36 江西  37 山东
-   41 河南  42 湖北  43 湖南  44 广东  45 广西  46 海南
-   50 重庆  51 四川  52 贵州  53 云南  54 西藏
-   61 陕西  62 甘肃  63 青海  64 宁夏  65 新疆
-   （实际以第 0.2 步查出来的为准；数据里没有的省跳过即可）
+   ★ 关于「卖方企业数」的口径说明（重要）
+   分片后每片只能数出「该片内的不同卖方数」，跨片相加会重复计数
+   （同一家企业在 1701 和 1702 都卖过，会被数两次）。
+   处理方式二选一：
+   (a) 先用上面 5 片把 金额/数量 拿到（这两个相加是精确的）；
+       卖方企业数另外单独跑下面这条「只查企业数」的轻查询（列少、
+       不带金额数量，排序压力小得多），一次出准确值：
+   (b) 若 (a) 仍跑不动，再按年拆成 2017/2018 两次跑。
 
-   ★ 若某个大省（如 32 江苏、44 广东、33 浙江）仍报 tempdb 满，
-     把该省再按地区码前 3 位细拆：
-       WHERE LEFT(销方地区,3) = '320'   然后 '321','322'...
-     导出命名 city_sell_2017_320.csv 依此类推。
+   --- 只查卖方企业数（2017）→ city_sell_nseller_2017.csv ---
+   SELECT 销方地区, 项目代码, 单位, 2017 AS [year],
+          COUNT(DISTINCT 销方企业ID) AS 卖方企业数
+   FROM (
+       SELECT 销方地区, 销方企业ID, 项目代码, 单位 FROM GX17.dbo.GX1701
+       UNION ALL SELECT 销方地区, 销方企业ID, 项目代码, 单位 FROM GX17.dbo.GX1702
+       UNION ALL SELECT 销方地区, 销方企业ID, 项目代码, 单位 FROM GX17.dbo.GX1703
+   ) a
+   WHERE 销方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+   GROUP BY 销方地区, 项目代码, 单位;
+
+   --- 只查卖方企业数（2018）→ city_sell_nseller_2018.csv ---
+   SELECT 销方地区, 项目代码, 单位, 2018 AS [year],
+          COUNT(DISTINCT 销方企业ID) AS 卖方企业数
+   FROM (
+       SELECT 销方地区, 销方企业ID, 项目代码, 单位 FROM GX.dbo.gaoxiao1801
+       UNION ALL SELECT 销方地区, 销方企业ID, 项目代码, 单位 FROM GX02.dbo.GX02
+   ) a
+   WHERE 销方地区 IS NOT NULL AND 项目代码 IS NOT NULL
+   GROUP BY 销方地区, 项目代码, 单位;
    ############################################################ */
 
 
 /* ############################################################
-   导出约定（务必遵守，方便 Python 端合并）
+   若 5 片里某片仍报 tempdb 满 —— 只把那一片再按省细拆：
+     在该片的 WHERE 加：AND LEFT(销方地区,2) = '32'
+     依次换省码，导出 city_sell_p4_1801_32.csv 之类。
+     （只拆报错的那片，其余片已成功的不用重跑）
+
+   导出约定（方便 Python 合并）：
    - 目录：G:\...\large_sample\city_sell_parts\
-   - 命名：city_sell_<年>_<省码>.csv
    - 格式：CSV、UTF-8、带表头、逗号分隔
-   - 表头统一为：销方地区,项目代码,单位,year,卖方企业数,金额合计,数量合计
-   - 每片行数记一下，最后核对总量
+   - 表头：销方地区,项目代码,单位,year,卖方企业数,金额合计,数量合计
+   - 每片行数记一下
    ############################################################ */
