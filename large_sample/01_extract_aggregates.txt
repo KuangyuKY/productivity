@@ -96,18 +96,30 @@ GROUP BY 购方地区, 项目代码, 单位, [year];
 
 /* ############################################################
    表4：地区销售表（全量）→ 导出 city_sell.csv
-   先清理腾空间，再逐源表预聚合到 dbo.cs_stage，再出结果。
+   与表3 完全相同的做法（逐源表预聚合到 staging，再出结果），
+   唯一区别：★ 显式 USE GX，把 cs_stage 建在 GX 库。
+   原因：D 盘物理剩余为 0，数据库文件无法再增长，只能用文件内部空闲页。
+        GX 内部空闲约 451 GB，GX17 仅 72 GB、GX02 仅 26 GB。
+        不写库名时表会建到"当前连接的库"，上次很可能就是建到了空闲不足的库。
    ############################################################ */
 
-/* --- 4.0 清理：把不再需要的中间表删掉，给 cs_stage 腾 GX17 空间（整段跑） --- */
-IF OBJECT_ID('dbo.cb_stage') IS NOT NULL DROP TABLE dbo.cb_stage;   -- 表3 用完的 staging
-IF OBJECT_ID('dbo.cs_stage') IS NOT NULL DROP TABLE dbo.cs_stage;   -- 上次失败的半成品
+/* --- 4.0 清理：把不再需要的中间表删掉（三个库都清一遍，存在才删） --- */
+USE GX17;
+IF OBJECT_ID('dbo.cb_stage') IS NOT NULL DROP TABLE dbo.cb_stage;
+IF OBJECT_ID('dbo.cs_stage') IS NOT NULL DROP TABLE dbo.cs_stage;
+USE GX02;
+IF OBJECT_ID('dbo.cb_stage') IS NOT NULL DROP TABLE dbo.cb_stage;
+IF OBJECT_ID('dbo.cs_stage') IS NOT NULL DROP TABLE dbo.cs_stage;
+USE GX;
+IF OBJECT_ID('dbo.cb_stage') IS NOT NULL DROP TABLE dbo.cb_stage;
+IF OBJECT_ID('dbo.cs_stage') IS NOT NULL DROP TABLE dbo.cs_stage;
 IF OBJECT_ID('dbo.s_both17') IS NOT NULL DROP TABLE dbo.s_both17;   -- 00 的中间表
 IF OBJECT_ID('dbo.s_both18') IS NOT NULL DROP TABLE dbo.s_both18;
 IF OBJECT_ID('dbo.s_pool')   IS NOT NULL DROP TABLE dbo.s_pool;
--- ★ 保留 dbo.tmp_sample_cid2（导数还要用）
+-- ★ 保留 tmp_sample_cid2（GX17 里那份 10 万的，导数还要用）
 
 /* --- 4.1 建 cs_stage（整段一次跑） --- */
+USE GX;   -- ★ 必须：cs_stage 建在 GX（内部空闲最多）
 SELECT 销方地区, 销方企业ID, 项目代码, 单位, CAST(2017 AS int) AS [year],
        SUM(开票金额) AS 金额, SUM(TRY_CAST(数量 AS float)) AS 数量
 INTO dbo.cs_stage
@@ -135,6 +147,7 @@ FROM GX02.dbo.GX02 WHERE 销方地区 IS NOT NULL AND 项目代码 IS NOT NULL
 GROUP BY 销方地区, 销方企业ID, 项目代码, 单位;
 
 /* --- 4.2 出结果（单独跑）→ 导出 city_sell.csv --- */
+USE GX;
 SELECT 销方地区, 项目代码, 单位, [year],
        COUNT(DISTINCT 销方企业ID) AS 卖方企业数,
        SUM(金额) AS 金额合计, SUM(数量) AS 数量合计
@@ -142,7 +155,14 @@ FROM dbo.cs_stage
 GROUP BY 销方地区, 项目代码, 单位, [year];
 
 /* --- 4.3 导出完成后再运行：删掉 cs_stage 腾空间 --- */
--- DROP TABLE dbo.cs_stage;
+-- USE GX; DROP TABLE dbo.cs_stage;
+
+/* --- 可选：4.1 跑完后看一眼 GX 空闲，确认 cs_stage 占了多少 --- */
+-- USE GX;
+-- SELECT name, CAST(size/128.0 AS decimal(18,1)) AS 文件MB,
+--        CAST(FILEPROPERTY(name,'SpaceUsed')/128.0 AS decimal(18,1)) AS 已用MB,
+--        CAST((size-FILEPROPERTY(name,'SpaceUsed'))/128.0 AS decimal(18,1)) AS 空闲MB
+-- FROM sys.database_files;
 
 
 /* ############################################################
