@@ -157,12 +157,7 @@ GROUP BY 销方地区, 项目代码, 单位, [year];
 /* --- 4.3 导出完成后再运行：删掉 cs_stage 腾空间 --- */
 -- USE GX; DROP TABLE dbo.cs_stage;
 
-/* --- 可选：4.1 跑完后看一眼 GX 空闲，确认 cs_stage 占了多少 --- */
--- USE GX;
--- SELECT name, CAST(size/128.0 AS decimal(18,1)) AS 文件MB,
---        CAST(FILEPROPERTY(name,'SpaceUsed')/128.0 AS decimal(18,1)) AS 已用MB,
---        CAST((size-FILEPROPERTY(name,'SpaceUsed'))/128.0 AS decimal(18,1)) AS 空闲MB
--- FROM sys.database_files;
+
 
 
 /* ############################################################

@@ -1,3 +1,4 @@
+G:\Kuangyu_Temp\Outsource\productivity\large
 *=====================================================================
 * 01_inspect_raw —— 原始 CSV 体检（表1 firm_buy / 表2 firm_sell）
 *
