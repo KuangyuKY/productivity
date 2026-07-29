@@ -1,4 +1,24 @@
-G:\Kuangyu_Temp\Outsource\productivity\large
+clear all
+set more off
+set linesize 200
+
+*---------------------------------------------------------------------
+* ★ 路径：只有这两行需要按机器改 ★
+*   （必须放在 clear all 之后 —— clear all 会把 global 一起清掉）
+*---------------------------------------------------------------------
+* CSV 输入目录（firm_buy.csv / firm_sell.csv 所在的地方）
+global csv "G:/Kuangyu_Temp/Outsource/productivity/large"
+* 代码/产出目录（= 本 do 文件所在的 git 文件夹，log 写这里才能同步回来）
+global out "G:/Kuangyu_Temp/Outsource/productivity/productivity/large_sample/unit_harmonization"
+*---------------------------------------------------------------------
+
+global log "$out/logs"
+capture mkdir "$out"
+capture mkdir "$log"
+
+capture log close _all
+log using "$log/01_inspect_raw.log", replace text
+
 *=====================================================================
 * 01_inspect_raw —— 原始 CSV 体检（表1 firm_buy / 表2 firm_sell）
 *
@@ -12,21 +32,6 @@ G:\Kuangyu_Temp\Outsource\productivity\large
 * 运行：Stata 里 do "…/unit_harmonization/01_inspect_raw.do"
 *       两个文件都是千万行级别，整段跑完预计较慢，建议挂着跑。
 *=====================================================================
-clear all
-set more off
-set linesize 200
-
-* ---- 路径 ----------------------------------------------------------
-* CSV 输入目录（Navicat 手动导出，UTF-8、带表头、中文列名）
-global csv "G:/Kuangyu_Temp/Outsource/productivity/productivity/large_sample"
-* 产出目录（= 本文件所在的 git 文件夹，log 随 git 同步回来）
-global out "G:/Kuangyu_Temp/Outsource/productivity/productivity/large_sample/unit_harmonization"
-global log "$out/logs"
-capture mkdir "$out"
-capture mkdir "$log"
-
-capture log close _all
-log using "$log/01_inspect_raw.log", replace text
 
 
 *########################### 环境信息 ###########################
