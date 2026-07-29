@@ -15,7 +15,7 @@
 - **抽样框**：从"**两年（2017、2018）都既是买方又是卖方**"的企业池里抽。
   - 即 `2017既买又卖 ∩ 2018既买又卖`（每年内都要求买方∩卖方）。
   - 这样保证两年都有观测、且两年都具备外包识别前提（既买又卖）。
-- **抽样方法**：从企业池中按 `HASHBYTES('MD5', cid)` 排序取前 50,000——**确定性随机**（同一池子结果可复现），落成固定表 `dbo.tmp_sample_cid2`。
+- **抽样方法**：从企业池中按 `HASHBYTES('MD5', cid)` 排序取前 100,000——**确定性随机**（同一池子结果可复现），落成固定表 `dbo.tmp_sample_cid2`（已跑出 10 万家）。
 - **只建一次**：生成后不要重跑，保证后续 5 张聚合查询口径一致。
 
 ## 数据源
@@ -32,16 +32,29 @@
 
 > SQL 存成 `.txt`，方便直接复制进 Navicat 新建 query 运行。
 
-1. **`00_build_sample.txt`** — 整段复制运行，构建企业池并抽 50,000 家 → `dbo.tmp_sample_cid2`。
-   先看打印的 `pool_size`（企业池大小）；若不足 5 万再回来商量放宽口径。**本步只在服务器建表，无需导出。**
-2. **`01_extract_aggregates.txt`** — 5 张聚合查询，**每张单独复制运行，跑完手动 export 成对应 CSV**：
+1. **`00_build_sample.txt`** — 整段复制运行，构建企业池并抽 100,000 家 → `dbo.tmp_sample_cid2`。**本步只在服务器建表，无需导出。**（已完成：10 万家）
+2. **`01_extract_aggregates.txt`** — 表 1/2/3/5，**每张单独复制运行，跑完手动 export 成对应 CSV**。
+   表 4（city_sell）因数据量太大跑不动，**改用 `04_city_sell_sharded.txt`**，见下。
    | 查询 | 导出文件名 | 颗粒度 |
    |---|---|---|
    | 表1 | `firm_buy.csv` | 购方企业ID × 项目代码 × 单位 × year |
    | 表2 | `firm_sell.csv` | 销方企业ID × 项目代码 × 单位 × year |
    | 表3 | `city_buy.csv` | 购方地区 × 项目代码 × 单位 × year（全量） |
-   | 表4 | `city_sell.csv` | 销方地区 × 项目代码 × 单位 × year（全量） |
+   | 表4 | → 见 `04_city_sell_sharded.txt` | 销方地区 × 项目代码 × 单位 × year（全量） |
    | 表5 | `firm_city.csv` | 企业ID × year × 地区（买方侧，带出现次数 cnt） |
+3. **`04_city_sell_sharded.txt`** — 表 4 专用（数据量太大，01 里那条整体查询跑不动）：
+   - **A 段**：按源表拆 5 片，各导 `city_sell_p1..p5.csv`（只含金额、数量；这两个跨片相加精确）。
+   - **B 段**：卖方企业数按年各跑一条，导 `city_sell_nseller_2017/2018.csv`。
+     `COUNT(DISTINCT)` 不可加，必须同年内 UNION 后再去重，口径与 01 原写法一致。
+   - Python 端把分片按 (销方地区, 项目代码, 单位, year) 合并，再接上企业数。
+
+## 当前进度
+
+- [x] 00 建样本 → `tmp_sample_cid2`（10 万家）
+- [x] 表1 `firm_buy.csv`、表2 `firm_sell.csv`
+- [x] 表3 `city_buy.csv`
+- [ ] 表4 → 用 `04_city_sell_sharded.txt` 分片跑
+- [ ] 表5 `firm_city.csv`
 
 ## 运行注意
 
