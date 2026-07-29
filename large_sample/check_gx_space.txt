@@ -1,0 +1,54 @@
+/* ============================================================
+   check_gx_space —— 查 GX 库内部空闲空间（表4 跑 staging 时用）
+
+   为什么需要它：
+   D 盘物理剩余为 0，Windows 会一直弹"磁盘空间不足"，但这不代表 SQL 不能写。
+   数据库文件（.mdf）本身已经占着磁盘，文件内部还有大量空闲页可以填；
+   填内部空洞不需要向操作系统再要空间，所以 D 盘剩余始终是 0 也不影响写入。
+   表4 的 cs_stage 之所以指定 USE GX，就是因为 GX 内部空闲最多（约 451 GB），
+   而 GX17 仅约 72 GB、GX02 仅约 26 GB。
+
+   真正出问题的信号是这个报错（内部空洞也用完、文件又涨不动）：
+     无法为数据库 'GX' 分配新页 ... (1101)
+   只要没报 1101，Windows 那个弹窗可以无视。
+   ============================================================ */
+
+
+/* --- GX 库内部空闲（表4 建 cs_stage 用的就是这里） --- */
+USE GX;
+SELECT name AS 逻辑名,
+       CAST(size/128.0 AS decimal(18,1))                                    AS 文件MB,
+       CAST(FILEPROPERTY(name,'SpaceUsed')/128.0 AS decimal(18,1))          AS 已用MB,
+       CAST((size - FILEPROPERTY(name,'SpaceUsed'))/128.0 AS decimal(18,1)) AS 空闲MB
+FROM sys.database_files;
+
+/* 判读方法：
+   - 基准：GX 行的"空闲MB"起初约 451,165（≈451 GB）。
+   - 4.1 跑的过程中/跑完再查一次，空闲MB 掉下去的量 = cs_stage 目前占用。
+   - 只要还剩几十 GB 就安全；接近 0 就要停手。
+   - GX_log 的空闲也要留意（起初约 935 GB 空），批量 INSERT 会用到日志。   */
+
+
+/* --- 可选：三个库一起看 --- */
+-- USE GX17;
+-- SELECT 'GX17' AS 库, name AS 逻辑名,
+--        CAST(size/128.0 AS decimal(18,1)) AS 文件MB,
+--        CAST(FILEPROPERTY(name,'SpaceUsed')/128.0 AS decimal(18,1)) AS 已用MB,
+--        CAST((size-FILEPROPERTY(name,'SpaceUsed'))/128.0 AS decimal(18,1)) AS 空闲MB
+-- FROM sys.database_files;
+--
+-- USE GX02;
+-- SELECT 'GX02' AS 库, name AS 逻辑名,
+--        CAST(size/128.0 AS decimal(18,1)) AS 文件MB,
+--        CAST(FILEPROPERTY(name,'SpaceUsed')/128.0 AS decimal(18,1)) AS 已用MB,
+--        CAST((size-FILEPROPERTY(name,'SpaceUsed'))/128.0 AS decimal(18,1)) AS 空闲MB
+-- FROM sys.database_files;
+
+
+/* --- 可选：各物理磁盘的剩余（这个会一直显示 D 盘 0，属正常） --- */
+-- SELECT DISTINCT
+--        vs.volume_mount_point                                     AS 盘,
+--        CAST(vs.total_bytes    /1073741824.0 AS decimal(18,1))    AS 总GB,
+--        CAST(vs.available_bytes/1073741824.0 AS decimal(18,1))    AS 剩余GB
+-- FROM sys.master_files f
+-- CROSS APPLY sys.dm_os_volume_stats(f.database_id, f.file_id) vs;
