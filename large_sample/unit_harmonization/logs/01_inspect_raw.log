@@ -1,0 +1,650 @@
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  G:/Kuangyu_Temp/Outsource/productivity/productivity/large_sample/unit_harmonization/logs/01_inspect_raw.log
+  log type:  text
+ opened on:  29 Jul 2026, 16:10:48
+
+. 
+. *=====================================================================
+. * 01_inspect_raw —— 原始 CSV 体检（表1 firm_buy / 表2 firm_sell）
+. *
+. * 目的：在写清洗代码之前，先看清楚 import delimited 读进来的原始数据长什么样
+. *       —— 列名叫什么、每列被 Stata 读成了什么类型、有没有 NULL/空串、
+. *          项目代码有没有被读成数值（19 位码会丢精度）、单位字段有多脏。
+. *
+. * 本步【只读不写】：不生成任何 dta，只产出一份 log。
+. * 跑完把 $log 目录下的 .log 文件 commit 回 git，据此再写 02 清洗代码。
+. *
+. * 运行：Stata 里 do "…/unit_harmonization/01_inspect_raw.do"
+. *       两个文件都是千万行级别，整段跑完预计较慢，建议挂着跑。
+. *=====================================================================
+. 
+. 
+. *########################### 环境信息 ###########################
+. di _n as text "==================== 运行环境 ===================="
+
+==================== 运行环境 ====================
+
+. di as text "Stata 版本 : " as result c(stata_version)
+Stata 版本 : 17
+
+. di as text "flavor     : " as result c(flavor)
+flavor     : IC
+
+. di as text "处理器数   : " as result c(processors)
+处理器数   : 64
+
+. di as text "系统       : " as result c(os)
+系统       : Windows
+
+. di as text "当前时间   : " as result c(current_date) " " c(current_time)
+当前时间   : 29 Jul 2026 16:10:48
+
+. 
+. 
+. *########################### 体检程序 ###########################
+. * _inspect：对内存中已 import 好的数据做逐列体检
+. *   1) 行数 / describe（列名 + 存储类型 + 显示格式）
+. *   2) 前 20 行原样打印
+. *   3) 逐列：字符串 → 空串数、字面 NULL 数、长度 min/max、去重取值数
+. *             数值   → 缺失数、summarize（N/mean/sd/min/max）
+. *   4) 项目代码专项：是否被读成数值（19 位码丢精度的红线）
+. *   5) 单位专项：去重取值数 + 按频次排序的 Top 40（★ 破坏性，放最后）
+. capture program drop _inspect
+
+. program define _inspect
+  1.     args tag
+  2. 
+.     di _n(2) as text "================================================================"
+  3.     di as result "  数据集：`tag'"
+  4.     di as text "================================================================"
+  5. 
+.     * ----- 1) 行数 + 结构 -----
+.     count
+  6.     di _n as text ">>> 行数 = " as result r(N)
+  7.     di _n as text ">>> describe（列名 / 存储类型 / 显示格式 / 值标签）"
+  8.     describe, fullnames
+  9. 
+.     * ----- 2) 前 20 行原样 -----
+.     qui count
+ 10.     local n20 = min(20, r(N))
+ 11.     di _n as text ">>> 前 `n20' 行原样"
+ 12.     list in 1/`n20', clean noobs
+ 13. 
+.     * ----- 3) 逐列体检 -----
+.     di _n as text ">>> 逐列体检"
+ 14.     foreach v of varlist _all {
+ 15.         di _n as text "  ----------------------------------------------------------"
+ 16.         capture confirm string variable `v'
+ 17.         if _rc == 0 {
+ 18.             di as result "  [字符串] `v'"
+ 19. 
+.             qui count if trim(`v') == ""
+ 20.             di as text "    空串/纯空白           : " as result r(N)
+ 21. 
+.             qui count if inlist(upper(trim(`v')), "NULL", "(NULL)", "NA", "N/A", "#N/A", "NAN", ".")
+ 22.             di as text "    字面 NULL/NA 类       : " as result r(N)
+ 23. 
+.             tempvar L
+ 24.             qui gen int `L' = length(`v')
+ 25.             qui summ `L'
+ 26.             di as text "    字符长度 min/max      : " as result r(min) " / " r(max)
+ 27.             drop `L'
+ 28. 
+.             tempvar T
+ 29.             qui egen byte `T' = tag(`v')
+ 30.             qui count if `T'
+ 31.             di as text "    去重取值数            : " as result r(N)
+ 32.             drop `T'
+ 33.         }
+ 34.         else {
+ 35.             di as result "  [数值] `v'"
+ 36. 
+.             qui count if missing(`v')
+ 37.             di as text "    缺失（.）             : " as result r(N)
+ 38. 
+.             qui count if `v' <= 0 & !missing(`v')
+ 39.             di as text "    <= 0                  : " as result r(N)
+ 40. 
+.             summ `v', format
+ 41.         }
+ 42.     }
+ 43. 
+.     * ----- 4) 项目代码专项 -----
+.     di _n as text "  ----------------------------------------------------------"
+ 44.     capture confirm variable 项目代码
+ 45.     if _rc != 0 {
+ 46.         di as error "  ！找不到变量【项目代码】—— 请核对 describe 里的实际列名"
+ 47.     }
+ 48.     else {
+ 49.         capture confirm string variable 项目代码
+ 50.         if _rc == 0 {
+ 51.             di as result "  项目代码 = 字符串 ✓（19 位码安全）"
+ 52.             di as text   "  按长度分布："
+ 53.             tempvar LP
+ 54.             qui gen int `LP' = length(trim(项目代码))
+ 55.             tabulate `LP', missing
+ 56.             drop `LP'
+ 57.             di as text "  非纯数字的项目代码行数："
+ 58.             qui count if !regexm(trim(项目代码), "^[0-9]+$")
+ 59.             di as result "    " r(N)
+ 60.         }
+ 61.         else {
+ 62.             di as error "  ★★★ 项目代码 被 import delimited 读成了【数值型】"
+ 63.             di as error "  ★★★ 19 位码超出双精度整数上限(2^53≈16位)，末几位会被抹平"
+ 64.             di as error "  ★★★ 清洗代码里必须改成 import delimited …, stringcols(…) 或先 tostring"
+ 65.             summ 项目代码, format
+ 66.             di as text "  存储类型 / 显示格式："
+ 67.             describe 项目代码
+ 68.         }
+ 69.     }
+ 70. 
+.     * ----- 4b) year 专项 -----
+.     di _n as text "  ----------------------------------------------------------"
+ 71.     capture confirm variable year
+ 72.     if _rc != 0 {
+ 73.         di as error "  ！找不到变量【year】—— 请核对 describe 里的实际列名"
+ 74.     }
+ 75.     else {
+ 76.         di as result "  year 分布："
+ 77.         tabulate year, missing
+ 78.     }
+ 79. 
+.     * ----- 5) 单位专项（★ contract 会重塑数据，必须放最后）-----
+.     di _n as text "  ----------------------------------------------------------"
+ 80.     capture confirm variable 单位
+ 81.     if _rc != 0 {
+ 82.         di as error "  ！找不到变量【单位】—— 请核对 describe 里的实际列名"
+ 83.     }
+ 84.     else {
+ 85.         capture confirm string variable 单位
+ 86.         if _rc != 0 {
+ 87.             di as error "  ！【单位】被读成了数值型，很反常，请看上面的 describe"
+ 88.             tostring 单位, replace force
+ 89.         }
+ 90.         di as result "  单位：按频次排序的 Top 50（含空串）"
+ 91.         contract 单位, freq(_freq)
+ 92.         gsort -_freq
+ 93.         qui count
+ 94.         local nu = r(N)
+ 95.         local n50 = min(50, `nu')
+ 96.         di as text "    单位去重取值数（原始，未做任何规整）= " as result `nu'
+ 97.         list in 1/`n50', clean noobs
+ 98.         di as text "    —— 上面只列了前 `n50' 个（共 `nu' 个），完整清单进下一步画像"
+ 99.     }
+100. end
+
+. 
+. 
+. *########################### 表1：firm_buy ###########################
+. * 颗粒度：购方企业ID × 项目代码 × 单位 × year
+. * 列    ：购方企业ID, 项目代码, 单位, year, 金额合计, 数量合计
+. import delimited "$csv/firm_buy.csv", clear
+(encoding automatically selected: UTF-8)
+Note: Unmatched quote while processing row 742834; this can be due to a formatting problem in the file or because a quoted data element spans multiple lines. You should carefully inspect your data
+    after importing. Consider using option bindquote(strict) if quoted data spans multiple lines or option bindquote(nobind) if quotes are not used for binding data.
+Note: Unmatched quote while processing row 742835; this can be due to a formatting problem in the file or because a quoted data element spans multiple lines. You should carefully inspect your data
+    after importing. Consider using option bindquote(strict) if quoted data spans multiple lines or option bindquote(nobind) if quotes are not used for binding data.
+Note: Unmatched quote while processing row 742834; this can be due to a formatting problem in the file or because a quoted data element spans multiple lines. You should carefully inspect your data
+    after importing. Consider using option bindquote(strict) if quoted data spans multiple lines or option bindquote(nobind) if quotes are not used for binding data.
+Note: Unmatched quote while processing row 742835; this can be due to a formatting problem in the file or because a quoted data element spans multiple lines. You should carefully inspect your data
+    after importing. Consider using option bindquote(strict) if quoted data spans multiple lines or option bindquote(nobind) if quotes are not used for binding data.
+Note: Unmatched quote while processing row 1451921; this can be due to a formatting problem in the file or because a quoted data element spans multiple lines. You should carefully inspect your data
+    after importing. Consider using option bindquote(strict) if quoted data spans multiple lines or option bindquote(nobind) if quotes are not used for binding data.
+Note: Unmatched quote while processing row 1451922; this can be due to a formatting problem in the file or because a quoted data element spans multiple lines. You should carefully inspect your data
+    after importing. Consider using option bindquote(strict) if quoted data spans multiple lines or option bindquote(nobind) if quotes are not used for binding data.
+Note: Unmatched quote while processing row 2738870; this can be due to a formatting problem in the file or because a quoted data element spans multiple lines. You should carefully inspect your data
+    after importing. Consider using option bindquote(strict) if quoted data spans multiple lines or option bindquote(nobind) if quotes are not used for binding data.
+Note: Unmatched quote while processing row 2738871; this can be due to a formatting problem in the file or because a quoted data element spans multiple lines. You should carefully inspect your data
+    after importing. Consider using option bindquote(strict) if quoted data spans multiple lines or option bindquote(nobind) if quotes are not used for binding data.
+Note: Unmatched quote while processing row 2973979; this can be due to a formatting problem in the file or because a quoted data element spans multiple lines. You should carefully inspect your data
+    after importing. Consider using option bindquote(strict) if quoted data spans multiple lines or option bindquote(nobind) if quotes are not used for binding data.
+Note: Unmatched quote while processing row 2973980; this can be due to a formatting problem in the file or because a quoted data element spans multiple lines. You should carefully inspect your data
+    after importing. Consider using option bindquote(strict) if quoted data spans multiple lines or option bindquote(nobind) if quotes are not used for binding data.
+Note: Unmatched quote while processing row 3021804; this can be due to a formatting problem in the file or because a quoted data element spans multiple lines. You should carefully inspect your data
+    after importing. Consider using option bindquote(strict) if quoted data spans multiple lines or option bindquote(nobind) if quotes are not used for binding data.
+Note: Unmatched quote while processing row 3021805; this can be due to a formatting problem in the file or because a quoted data element spans multiple lines. You should carefully inspect your data
+    after importing. Consider using option bindquote(strict) if quoted data spans multiple lines or option bindquote(nobind) if quotes are not used for binding data.
+Note: Unmatched quote while processing row 10954454; this can be due to a formatting problem in the file or because a quoted data element spans multiple lines. You should carefully inspect your data
+    after importing. Consider using option bindquote(strict) if quoted data spans multiple lines or option bindquote(nobind) if quotes are not used for binding data.
+Note: Unmatched quote while processing row 10954455; this can be due to a formatting problem in the file or because a quoted data element spans multiple lines. You should carefully inspect your data
+    after importing. Consider using option bindquote(strict) if quoted data spans multiple lines or option bindquote(nobind) if quotes are not used for binding data.
+Note: Unmatched quote while processing row 11720897; this can be due to a formatting problem in the file or because a quoted data element spans multiple lines. You should carefully inspect your data
+    after importing. Consider using option bindquote(strict) if quoted data spans multiple lines or option bindquote(nobind) if quotes are not used for binding data.
+Note: Unmatched quote while processing row 11720898; this can be due to a formatting problem in the file or because a quoted data element spans multiple lines. You should carefully inspect your data
+    after importing. Consider using option bindquote(strict) if quoted data spans multiple lines or option bindquote(nobind) if quotes are not used for binding data.
+(6 vars, 15,243,648 obs)
+
+. _inspect "firm_buy.csv（表1 企业购买）"
+
+
+================================================================
+  数据集：firm_buy.csv（表1 企业购买）
+================================================================
+  15,243,648
+
+>>> 行数 = 15243648
+
+>>> describe（列名 / 存储类型 / 显示格式 / 值标签）
+
+Contains data
+ Observations:    15,243,648                  
+    Variables:             6                  
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+购方企业id      str40   %40s                  购方企业ID
+项目代码        str30   %30s                  
+单位            str48   %48s                  
+year            int     %8.0g                 
+金额合计        double  %10.0g                
+数量合计        double  %10.0g                
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Sorted by: 
+     Note: Dataset has changed since last saved.
+
+>>> 前 20 行原样
+
+    购方企~d              项目代码   单位   year    金额合计    数量合计  
+    24614294   1070201029900000000     瓶   2017        8858         103  
+    12931560   1030302000000000000     个   2017           2           1  
+    20619680   1070299020000000000     件   2017        2065           7  
+    44713607   1090512990000000000     个   2017        2499          21  
+    37179737   1090203010000000000     套   2017      355000           1  
+    44975982   2020000000000000000     时   2018        1282           4  
+    10452950   3040603000000000000          2017       13170           2  
+     7538792   1060401070000000000          2018       22.54           6  
+    35765686   1090519080000000000   公斤   2018   693413.82   489336.36  
+    10865790   1080401010000000000     把   2018          45           6  
+     7344369   1050105049900000000     吨   2018      714220      109.88  
+     1323637   1080122990000000000     个   2018      3306.6        1020  
+    40598178   1060201990000000000     本   2018       28197          30  
+    21675055   1060512020000000000     把   2017         270          90  
+    15704301   1090232070000000000     个   2018         936           2  
+    33936505   1030208010000000000          2017    -2631.05           .  
+    50608524   1090199000000000000     件   2018        3040          18  
+     4027180   1090254010000000000     根   2018         980          20  
+     1873879   3030299000000000000     月   2017    45389.52          36  
+    15815227   1040101060000000000          2018        3000   85.714286  
+
+>>> 逐列体检
+
+  ----------------------------------------------------------
+  [字符串] 购方企业id
+    空串/纯空白           : 0
+    字面 NULL/NA 类       : 0
+    字符长度 min/max      : 3 / 40
+    去重取值数            : 100007
+
+  ----------------------------------------------------------
+  [字符串] 项目代码
+    空串/纯空白           : 40066
+    字面 NULL/NA 类       : 114
+    字符长度 min/max      : 0 / 30
+    去重取值数            : 549733
+
+  ----------------------------------------------------------
+  [字符串] 单位
+    空串/纯空白           : 1865121
+    字面 NULL/NA 类       : 1571
+    字符长度 min/max      : 0 / 48
+    去重取值数            : 77252
+
+  ----------------------------------------------------------
+  [数值] year
+    缺失（.）             : 14
+    <= 0                  : 0
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+        year | 15,243,634    2017.614    .4868667       2017       2018
+
+  ----------------------------------------------------------
+  [数值] 金额合计
+    缺失（.）             : 14
+    <= 0                  : 703407
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+    金额合计 | 15,243,634    585514.2    5.56e+07  -3.78e+09   8.88e+10
+
+  ----------------------------------------------------------
+  [数值] 数量合计
+    缺失（.）             : 1112667
+    <= 0                  : 84206
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+    数量合计 | 14,130,981    6.06e+08    2.04e+12  -1.92e+10   7.63e+15
+
+  ----------------------------------------------------------
+  项目代码 = 字符串 ✓（19 位码安全）
+  按长度分布：
+
+   __000006 |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |     40,066        0.26        0.26
+          1 |     25,174        0.17        0.43
+          2 |    353,429        2.32        2.75
+          3 |    997,390        6.54        9.29
+          4 |    446,678        2.93       12.22
+          5 |    341,178        2.24       14.46
+          6 |    295,510        1.94       16.40
+          7 |    105,410        0.69       17.09
+          8 |    233,874        1.53       18.62
+          9 |     76,314        0.50       19.12
+         10 |     43,748        0.29       19.41
+         11 |     25,973        0.17       19.58
+         12 |     16,712        0.11       19.69
+         13 |     25,346        0.17       19.86
+         14 |      8,366        0.05       19.91
+         15 |      4,031        0.03       19.94
+         16 |     39,903        0.26       20.20
+         17 |        457        0.00       20.20
+         18 |      2,297        0.02       20.22
+         19 | 12,158,257       79.76       99.98
+         20 |      3,515        0.02      100.00
+         21 |         14        0.00      100.00
+         23 |          1        0.00      100.00
+         27 |          4        0.00      100.00
+         30 |          1        0.00      100.00
+------------+-----------------------------------
+      Total | 15,243,648      100.00
+  非纯数字的项目代码行数：
+    555894
+
+  ----------------------------------------------------------
+  year 分布：
+
+       year |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       2017 |  5,886,394       38.62       38.62
+       2018 |  9,357,240       61.38      100.00
+          . |         14        0.00      100.00
+------------+-----------------------------------
+      Total | 15,243,648      100.00
+
+  ----------------------------------------------------------
+  单位：按频次排序的 Top 50（含空串）
+    单位去重取值数（原始，未做任何规整）= 77253
+
+      单位     _freq  
+        个   2159201  
+             1865121  
+        台   1159815  
+        套    859676  
+        只    807222  
+        件    796409  
+        吨    651517  
+        支    390545  
+      公斤    349874  
+        盒    349004  
+        瓶    304553  
+        米    273571  
+        次    229850  
+        条    226163  
+        箱    215920  
+        把    197671  
+        升    188173  
+        根    186720  
+        包    176888  
+        kg    171309  
+        块    167922  
+        片    165600  
+        张    162304  
+        卷    159305  
+        桶    146554  
+        批    146133  
+        项    135697  
+        袋    135206  
+        KG    132767  
+      千克    111858  
+       PCS    101072  
+        月     96891  
+        份     92407  
+        单     89375  
+        付     76098  
+    平方米     75567  
+        本     67273  
+        辆     55563  
+        组     51723  
+        双     50595  
+        EA     38481  
+        年     38020  
+        天     38006  
+        罐     34656  
+        PC     34504  
+      EACH     31994  
+      平方     30599  
+    立方米     30396  
+        副     30309  
+    千瓦时     30033  
+    —— 上面只列了前 50 个（共 77253 个），完整清单进下一步画像
+
+. 
+. 
+. *########################### 表2：firm_sell ##########################
+. * 颗粒度：销方企业ID × 项目代码 × 单位 × year
+. * 列    ：销方企业ID, 项目代码, 单位, year, 金额合计, 数量合计
+. import delimited "$csv/firm_sell.csv", clear
+(encoding automatically selected: UTF-8)
+(6 vars, 5,510,821 obs)
+
+. _inspect "firm_sell.csv（表2 企业销售）"
+
+
+================================================================
+  数据集：firm_sell.csv（表2 企业销售）
+================================================================
+  5,510,821
+
+>>> 行数 = 5510821
+
+>>> describe（列名 / 存储类型 / 显示格式 / 值标签）
+
+Contains data
+ Observations:     5,510,821                  
+    Variables:             6                  
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+销方企业id      long    %12.0g                销方企业ID
+项目代码        str20   %20s                  
+单位            str48   %48s                  
+year            int     %8.0g                 
+金额合计        float   %9.0g                 
+数量合计        float   %9.0g                 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Sorted by: 
+     Note: Dataset has changed since last saved.
+
+>>> 前 20 行原样
+
+    销方企~d              项目代码   单位   year   金额合计   数量合计  
+       90520              U0662095     个   2018    1259.56         13  
+     1704747   1080404120000000000     台   2017       1000          1  
+    39473622   1060512040000000000     只   2017       1248         60  
+       90520             U01191896     个   2018    2297.94        152  
+       90520             U01023326     个   2018     1182.4         52  
+    36089042   1080128010000000000     片   2017        750         30  
+    30062872   1060105990000000000     吨   2018   696972.1   329.5081  
+    39744751   1100399000000000000     吨   2018   11467.17       3184  
+    51516619   1080403010000000000     支   2018      35462        797  
+    18055817   1080407020000000000     片   2018       1200         40  
+       90520              U0952527     个   2018    5696.86         42  
+       90520              U0932627     个   2018        558          9  
+    55702798   1040104040000000000     码   2017       9600       1637  
+    17633890   1080499000000000000     个   2018      29500      10000  
+     4634652   1070202150000000000     瓶   2018   42849.15        674  
+    22546817                 00328     支   2018        564          6  
+    23701272   1080207040000000000   千克   2017    28902.8       6460  
+    10831529   1060203000000000000   平方   2017    1126453     178802  
+       90520              U0572068     个   2018     127.17          7  
+    15812453                a10128     件   2018   29179.65       1635  
+
+>>> 逐列体检
+
+  ----------------------------------------------------------
+  [数值] 销方企业id
+    缺失（.）             : 0
+    <= 0                  : 0
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+  销方企业id |  5,510,821    2.05e+07    3.52e+07        348   9.35e+08
+
+  ----------------------------------------------------------
+  [字符串] 项目代码
+    空串/纯空白           : 21938
+    字面 NULL/NA 类       : 52
+    字符长度 min/max      : 0 / 20
+    去重取值数            : 1140246
+
+  ----------------------------------------------------------
+  [字符串] 单位
+    空串/纯空白           : 363776
+    字面 NULL/NA 类       : 116
+    字符长度 min/max      : 0 / 48
+    去重取值数            : 21332
+
+  ----------------------------------------------------------
+  [数值] year
+    缺失（.）             : 0
+    <= 0                  : 0
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+        year |  5,510,821    2017.733    .4423558       2017       2018
+
+  ----------------------------------------------------------
+  [数值] 金额合计
+    缺失（.）             : 0
+    <= 0                  : 107072
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+    金额合计 |  5,510,821     1691952    1.45e+08  -1.66e+10   1.26e+11
+
+  ----------------------------------------------------------
+  [数值] 数量合计
+    缺失（.）             : 175645
+    <= 0                  : 38196
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+    数量合计 |  5,335,176    382612.1    2.44e+08  -2.21e+09   5.17e+11
+
+  ----------------------------------------------------------
+  项目代码 = 字符串 ✓（19 位码安全）
+  按长度分布：
+
+   __000004 |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |     21,938        0.40        0.40
+          1 |      2,733        0.05        0.45
+          2 |    191,333        3.47        3.92
+          3 |    588,815       10.68       14.60
+          4 |    249,260        4.52       19.13
+          5 |    151,467        2.75       21.88
+          6 |    123,386        2.24       24.11
+          7 |     35,576        0.65       24.76
+          8 |    786,722       14.28       39.04
+          9 |    200,147        3.63       42.67
+         10 |      9,859        0.18       42.85
+         11 |     10,773        0.20       43.04
+         12 |      6,076        0.11       43.15
+         13 |     28,353        0.51       43.67
+         14 |      3,685        0.07       43.73
+         15 |      5,207        0.09       43.83
+         16 |     34,416        0.62       44.45
+         17 |        728        0.01       44.47
+         18 |        343        0.01       44.47
+         19 |  3,055,729       55.45       99.92
+         20 |      4,275        0.08      100.00
+------------+-----------------------------------
+      Total |  5,510,821      100.00
+  非纯数字的项目代码行数：
+    1178539
+
+  ----------------------------------------------------------
+  year 分布：
+
+       year |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       2017 |  1,471,006       26.69       26.69
+       2018 |  4,039,815       73.31      100.00
+------------+-----------------------------------
+      Total |  5,510,821      100.00
+
+  ----------------------------------------------------------
+  单位：按频次排序的 Top 50（含空串）
+    单位去重取值数（原始，未做任何规整）= 21333
+
+      单位     _freq  
+        个   1595464  
+              363776  
+        台    337618  
+        套    337281  
+        只    323997  
+        件    320803  
+        吨    134411  
+        盒    124411  
+        支    114814  
+        米    109999  
+        瓶    106248  
+        根     90490  
+        条     85223  
+      公斤     82058  
+        把     80921  
+        块     72454  
+        包     63536  
+        箱     60315  
+        升     57509  
+        张     56656  
+        片     52924  
+        卷     51780  
+        kg     50749  
+        袋     47611  
+        批     46248  
+        桶     45303  
+      千克     41924  
+       PCS     41706  
+        KG     39715  
+        项     32509  
+        付     31799  
+        次     30113  
+        本     23747  
+        组     21002  
+        双     19739  
+    平方米     19011  
+        EA     18740  
+        PC     14885  
+        副     13605  
+        斤     11640  
+        罐     10760  
+      平方     10552  
+        对     10218  
+        辆     10111  
+        盘      9949  
+        月      9883  
+        份      6283  
+       pcs      6267  
+        合      5691  
+    立方米      5398  
+    —— 上面只列了前 50 个（共 21333 个），完整清单进下一步画像
+
+. 
+. 
+. di _n(2) as result "==== 体检完成：log 在 $log/01_inspect_raw.log，请 commit 回 git ===="
+
+
+==== 体检完成：log 在 G:/Kuangyu_Temp/Outsource/productivity/productivity/large_sample/unit_harmonization/logs/01_inspect_raw.log，请 commit 回 git ====
+
+. log close
+      name:  <unnamed>
+       log:  G:/Kuangyu_Temp/Outsource/productivity/productivity/large_sample/unit_harmonization/logs/01_inspect_raw.log
+  log type:  text
+ closed on:  29 Jul 2026, 16:13:09
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
