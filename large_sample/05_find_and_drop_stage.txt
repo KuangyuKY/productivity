@@ -1,0 +1,91 @@
+/* ============================================================
+   05_find_and_drop_stage —— 定位并删除 cs_stage / cb_stage
+   现象：在 GX17 里 DROP 后，GX17 的已用/空闲完全没变
+        → 说明 staging 表不在 GX17，而在 GX 或 GX02（建表时的"当前库"）。
+   ============================================================ */
+
+
+/* ---------- 第 1 步：三个库分别找一遍，看表在哪、多大 ---------- */
+
+SELECT 'GX17' AS 库, t.name AS 表名,
+       CAST(SUM(a.total_pages)*8/1024.0 AS decimal(18,1)) AS 占用MB,
+       MAX(p.rows) AS 行数
+FROM GX17.sys.tables t
+JOIN GX17.sys.partitions p  ON p.object_id = t.object_id AND p.index_id IN (0,1)
+JOIN GX17.sys.allocation_units a ON a.container_id = p.partition_id
+WHERE t.name IN ('cs_stage','cb_stage','s_both17','s_both18','s_pool','tmp_sample_cid2')
+GROUP BY t.name
+UNION ALL
+SELECT 'GX', t.name,
+       CAST(SUM(a.total_pages)*8/1024.0 AS decimal(18,1)), MAX(p.rows)
+FROM GX.sys.tables t
+JOIN GX.sys.partitions p  ON p.object_id = t.object_id AND p.index_id IN (0,1)
+JOIN GX.sys.allocation_units a ON a.container_id = p.partition_id
+WHERE t.name IN ('cs_stage','cb_stage','s_both17','s_both18','s_pool','tmp_sample_cid2')
+GROUP BY t.name
+UNION ALL
+SELECT 'GX02', t.name,
+       CAST(SUM(a.total_pages)*8/1024.0 AS decimal(18,1)), MAX(p.rows)
+FROM GX02.sys.tables t
+JOIN GX02.sys.partitions p  ON p.object_id = t.object_id AND p.index_id IN (0,1)
+JOIN GX02.sys.allocation_units a ON a.container_id = p.partition_id
+WHERE t.name IN ('cs_stage','cb_stage','s_both17','s_both18','s_pool','tmp_sample_cid2')
+GROUP BY t.name;
+
+
+/* ---------- 第 2 步：按第 1 步的结果，去对应库删除 ----------
+   （下面三段都写好了，哪个库有就跑哪段；没有的表 IF 会自动跳过）
+   ★ 千万保留 tmp_sample_cid2 —— 它是 10 万样本名单，很小，后面还要用 */
+
+-- 若在 GX：
+USE GX;
+IF OBJECT_ID('dbo.cs_stage') IS NOT NULL DROP TABLE dbo.cs_stage;
+IF OBJECT_ID('dbo.cb_stage') IS NOT NULL DROP TABLE dbo.cb_stage;
+IF OBJECT_ID('dbo.s_both17') IS NOT NULL DROP TABLE dbo.s_both17;
+IF OBJECT_ID('dbo.s_both18') IS NOT NULL DROP TABLE dbo.s_both18;
+IF OBJECT_ID('dbo.s_pool')   IS NOT NULL DROP TABLE dbo.s_pool;
+
+-- 若在 GX02：
+USE GX02;
+IF OBJECT_ID('dbo.cs_stage') IS NOT NULL DROP TABLE dbo.cs_stage;
+IF OBJECT_ID('dbo.cb_stage') IS NOT NULL DROP TABLE dbo.cb_stage;
+IF OBJECT_ID('dbo.s_both17') IS NOT NULL DROP TABLE dbo.s_both17;
+IF OBJECT_ID('dbo.s_both18') IS NOT NULL DROP TABLE dbo.s_both18;
+IF OBJECT_ID('dbo.s_pool')   IS NOT NULL DROP TABLE dbo.s_pool;
+
+-- GX17（已跑过，保险起见再来一次）：
+USE GX17;
+IF OBJECT_ID('dbo.cs_stage') IS NOT NULL DROP TABLE dbo.cs_stage;
+IF OBJECT_ID('dbo.cb_stage') IS NOT NULL DROP TABLE dbo.cb_stage;
+IF OBJECT_ID('dbo.s_both17') IS NOT NULL DROP TABLE dbo.s_both17;
+IF OBJECT_ID('dbo.s_both18') IS NOT NULL DROP TABLE dbo.s_both18;
+IF OBJECT_ID('dbo.s_pool')   IS NOT NULL DROP TABLE dbo.s_pool;
+
+
+/* ---------- 第 3 步：确认三个库的空间变化 ---------- */
+SELECT 'GX17' AS 库, name AS 逻辑名,
+       CAST(size/128.0 AS decimal(18,1)) AS 文件MB,
+       CAST(FILEPROPERTY(name,'SpaceUsed')/128.0 AS decimal(18,1)) AS 已用MB,
+       CAST((size-FILEPROPERTY(name,'SpaceUsed'))/128.0 AS decimal(18,1)) AS 空闲MB
+FROM GX17.sys.database_files;
+GO
+USE GX;
+SELECT 'GX' AS 库, name,
+       CAST(size/128.0 AS decimal(18,1)),
+       CAST(FILEPROPERTY(name,'SpaceUsed')/128.0 AS decimal(18,1)),
+       CAST((size-FILEPROPERTY(name,'SpaceUsed'))/128.0 AS decimal(18,1))
+FROM sys.database_files;
+GO
+USE GX02;
+SELECT 'GX02' AS 库, name,
+       CAST(size/128.0 AS decimal(18,1)),
+       CAST(FILEPROPERTY(name,'SpaceUsed')/128.0 AS decimal(18,1)),
+       CAST((size-FILEPROPERTY(name,'SpaceUsed'))/128.0 AS decimal(18,1))
+FROM sys.database_files;
+
+
+/* ---------- 备用：如果三个库里都没有 cs_stage ----------
+   说明 4.1 那次虽然报了 5 行 Affected rows，但表可能因盘满而回滚/未提交，
+   或建在了别的库。用下面这条在【所有库】里扫一遍表名： */
+-- EXEC sp_MSforeachdb 'IF DB_ID(''?'') > 4
+--   SELECT ''?'' AS 库, name FROM [?].sys.tables WHERE name LIKE ''%stage%'' OR name LIKE ''s_both%'' OR name LIKE ''s_pool%'';';
