@@ -1,0 +1,125 @@
+rank,raw_unit,share_pct,dimension,base_unit,factor,confidence,note
+1,吨,39.5713,MASS,千克,1000,high,
+2,个,9.9243,COUNT,个,1,high,
+3,UNKNOWN,9.8300,UNKNOWN,UNKNOWN,1,high,单位缺失或NULL 02已归并
+4,台,7.3857,COUNT,个,1,high,
+5,套,3.1718,SET,套,1,high,一套含多件 不可换算为个
+6,件,3.0199,COUNT,个,1,high,
+7,公斤,2.0419,MASS,千克,1,high,
+8,辆,1.7350,COUNT,个,1,high,
+9,只,1.4940,COUNT,个,1,high,
+10,千克,1.4106,MASS,千克,1,high,
+11,项,1.1987,SERVICE,项,1,high,服务项数 非实物
+12,米,1.1041,LENGTH,千米,0.001,high,
+13,箱,0.9112,CONTAINER,箱,1,high,箱内件数未知 不可换算
+14,kg,0.8262,MASS,千克,1,high,
+15,KG,0.8063,MASS,千克,1,high,
+16,盒,0.7509,CONTAINER,盒,1,high,
+17,立方米,0.6871,VOLUME,立方米,1,high,
+18,次,0.6859,SERVICE,次,1,high,
+19,瓶,0.6067,CONTAINER,瓶,1,high,
+20,条,0.5526,COUNT,个,1,high,
+21,批,0.5489,BATCH,批,1,high,批量未知 不可换算
+22,支,0.5461,COUNT,个,1,high,
+23,平方米,0.5231,AREA,平方米,1,high,
+24,片,0.5166,COUNT,个,1,high,
+25,PCS,0.4980,COUNT,个,1,high,
+26,千瓦时,0.3872,ENERGY,千瓦时,1,high,
+27,兆瓦时,0.3589,ENERGY,千瓦时,1000,high,
+28,EA,0.3569,COUNT,个,1,high,each
+29,张,0.3509,COUNT,个,1,high,
+30,升,0.3266,VOLUME,立方米,0.001,high,
+31,万支,0.3260,COUNT,个,10000,high,倍数前缀
+32,双,0.3226,COUNT,个,2,medium,一双=2只
+33,克,0.3127,MASS,千克,0.001,high,
+34,PC,0.2899,COUNT,个,1,high,piece
+35,千米,0.2222,LENGTH,千米,1,high,
+36,月,0.2170,TIME,月,1,high,
+37,KKWH,0.2163,ENERGY,千瓦时,1000,medium,K前缀=千kWh
+38,块,0.2108,COUNT,个,1,high,
+39,立方,0.2044,VOLUME,立方米,1,high,
+40,度,0.1909,ENERGY,千瓦时,1,high,电力口语 1度=1kWh
+41,方,0.1766,VOLUME,立方米,1,high,口语 方=立方米
+42,千千瓦时,0.1604,ENERGY,千瓦时,1000,high,
+43,袋,0.1583,CONTAINER,袋,1,high,
+44,桶,0.1523,CONTAINER,桶,1,high,
+45,KWH,0.1516,ENERGY,千瓦时,1,high,
+46,根,0.1491,COUNT,个,1,high,
+47,包,0.1355,CONTAINER,包,1,high,
+48,m3,0.1156,VOLUME,立方米,1,high,
+49,份,0.1133,SERVICE,份,1,high,
+50,kWh,0.1061,ENERGY,千瓦时,1,high,
+51,笔,0.1055,SERVICE,笔,1,high,交易笔数
+52,W,0.0985,POWER,瓦,1,medium,功率不是能量 不并入千瓦时
+53,T,0.0984,MASS,千克,1000,medium,T=ton 存疑
+54,KVA,0.0958,POWER,伏安,1,medium,视在功率
+55,万千瓦时,0.0918,ENERGY,千瓦时,10000,high,
+56,卷,0.0841,CONTAINER,卷,1,high,
+57,吨(MT),0.0838,MASS,千克,1000,high,
+58,kW.h,0.0814,ENERGY,千瓦时,1,high,
+59,罐,0.0769,CONTAINER,罐,1,high,
+60,组,0.0719,SET,套,1,medium,组=套
+61,平方,0.0708,AREA,平方米,1,high,
+62,码,0.0703,LENGTH,千米,0.0009144,high,yard
+63,元,0.0696,MONEY,元,1,high,数量填成金额 单价恒为1 建议剔除
+64,kwh,0.0652,ENERGY,千瓦时,1,high,
+65,Kg,0.0581,MASS,千克,1,high,
+66,㎡,0.0570,AREA,平方米,1,high,
+67,湿吨,0.0510,MASS,千克,1000,low,含水量不同 与干吨不可比
+68,KM,0.0508,LENGTH,千米,1,high,
+69,把,0.0476,COUNT,个,1,high,
+70,千个,0.0459,COUNT,个,1000,high,倍数前缀
+71,KW.H,0.0446,ENERGY,千瓦时,1,high,
+72,pcs,0.0444,COUNT,个,1,high,
+73,M,0.0444,LENGTH,千米,0.001,high,
+74,每一个,0.0441,COUNT,个,1,high,
+75,付,0.0435,SET,副,1,medium,付=副
+76,1,0.0426,OTHER,OTHER,1,high,无意义取值
+77,副,0.0424,SET,副,1,high,
+78,平米,0.0414,AREA,平方米,1,high,
+79,平方英尺,0.0403,AREA,平方米,0.09290304,high,
+80,瓦,0.0399,POWER,瓦,1,medium,
+81,单,0.0387,SERVICE,单,1,high,
+82,列,0.0375,OTHER,OTHER,1,low,含义不明
+83,kW·h,0.0370,ENERGY,千瓦时,1,high,
+84,Pcs,0.0356,COUNT,个,1,high,
+85,千度,0.0351,ENERGY,千瓦时,1000,high,
+86,期,0.0332,SERVICE,期,1,high,
+87,Nm3,0.0331,VOLUME,立方米,1,medium,标准立方米
+88,MW.H,0.0323,ENERGY,千瓦时,1000,high,
+89,Each,0.0306,COUNT,个,1,high,
+90,粒,0.0306,COUNT,个,1,high,
+91,t,0.0303,MASS,千克,1000,medium,
+92,无,0.0301,UNKNOWN,UNKNOWN,1,high,字面填了"无"
+93,票,0.0294,SERVICE,票,1,high,
+94,吉焦,0.0274,ENERGY,千瓦时,277.7778,high,1GJ=277.78kWh
+95,m,0.0261,LENGTH,千米,0.001,high,
+96,标方,0.0261,VOLUME,立方米,1,medium,标准立方米
+97,部,0.0258,COUNT,个,1,high,
+98,金属吨,0.0256,MASS,千克,1000,low,含金属量口径 与毛重不可比
+99,公里,0.0249,LENGTH,千米,1,high,
+100,SET,0.0243,SET,套,1,high,
+101,KW/H,0.0240,ENERGY,千瓦时,1,medium,kWh 误写
+102,册,0.0233,COUNT,个,1,high,
+103,ST,0.0224,SET,套,1,medium,ST=set 存疑
+104,kw.h,0.0213,ENERGY,千瓦时,1,high,
+105,-,0.0209,UNKNOWN,UNKNOWN,1,high,占位符
+106,年,0.0195,TIME,月,12,high,
+107,千只,0.0188,COUNT,个,1000,high,倍数前缀
+108,本,0.0187,COUNT,个,1,high,
+109,万度,0.0187,ENERGY,千瓦时,10000,high,
+110,SH,0.0186,OTHER,OTHER,1,low,含义不明
+111,式,0.0182,OTHER,OTHER,1,low,含义不明
+112,万只,0.0181,COUNT,个,10000,high,倍数前缀
+113,万张,0.0171,COUNT,个,10000,high,倍数前缀
+114,台套,0.0169,SET,套,1,medium,
+115,枚,0.0169,COUNT,个,1,high,
+116,樘,0.0168,COUNT,个,1,high,门窗计量
+117,斤,0.0167,MASS,千克,0.5,high,
+118,架,0.0167,COUNT,个,1,high,
+119,MT,0.0166,MASS,千克,1000,high,metric ton
+120,令,0.0164,CONTAINER,令,1,medium,令=500张 暂不换算
+121,千克铀,0.0158,MASS,千克,1,low,仅2条 铀含量口径
+122,千公斤,0.0156,MASS,千克,1000,high,
+123,车,0.0155,CONTAINER,车,1,high,整车装载量未知
+124,M3,0.0150,VOLUME,立方米,1,high,
